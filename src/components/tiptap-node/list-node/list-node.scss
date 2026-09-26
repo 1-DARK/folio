@@ -16,6 +16,19 @@
   }
 }
 
+
+@media (max-width: 768px) {
+  .tiptap.ProseMirror {
+    ol, ul {
+      margin-left: 15px !important;
+     
+    }
+  }
+  ul.top-level-block[data-type="tasklist" i]{
+      margin-left: 0px !important;
+  }
+}
+
 .tiptap.ProseMirror {
   ol, ul {
     padding-left: 1.2em;  

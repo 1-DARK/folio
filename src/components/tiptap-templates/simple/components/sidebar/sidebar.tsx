@@ -56,7 +56,7 @@ export const Sidebar = memo(() => {
         borderTopRightRadius: floatingActive ? "var(--tt-radius-xl)" : 0,
         borderBottomRightRadius: floatingActive ? "var(--tt-radius-xl)" : 0,
         width: isMobile
-          ? "min(250px, 85vw)"
+          ? "min(300px, 89vw)"
           : floatingActive
             ? drawerWidth
             : sidebarWidth,

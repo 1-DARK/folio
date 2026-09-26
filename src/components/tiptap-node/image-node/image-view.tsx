@@ -4,6 +4,7 @@ import type { ImageOptions } from "./image";
 import { useEffect, useRef, useState } from "react";
 import { ImageNodeSkeleton } from "./image-node-skeleton";
 import "./image-node.scss";
+import { useIsMobile } from "src/hooks/use-breakpoint";
 
 type Align = "left" | "center" | "right";
 type WidthPreset = "25%" | "50%" | "75%" | "100%";
@@ -31,7 +32,11 @@ function ImageViewInner(props: NodeViewProps) {
   const align: Align = props.node.attrs.align ?? "left";
   const widthPreset: WidthPreset | null = props.node.attrs.widthPreset ?? null;
   const showCaption: boolean = props.node.attrs.showCaption ?? false;
-  const currentWidth: number | null = props.node.attrs.width ?? null;
+
+  const isMobile = useIsMobile();
+  const currentWidth: number | null = isMobile
+    ? null
+    : (props.node.attrs.width ?? null);
 
   // Natural dimensions, captured once on the image's first successful load and
   // persisted to the node. With them, every later load reserves the exact box

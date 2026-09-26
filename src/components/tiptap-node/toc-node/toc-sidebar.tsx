@@ -3,6 +3,7 @@ import { TocContent } from "./toc-content";
 import { useEditorRefs } from "src/components/tiptap-templates/simple/context/editor-refs-context";
 import { useEffect } from "react";
 import { useTocActions } from "./toc-context";
+import { useIsMobile } from "src/hooks/use-breakpoint";
 
 interface Props {
   maxShowCount?: number;
@@ -22,6 +23,9 @@ function TocSidebarImpl({
   useEffect(() => {
     refsRef.current.setTocContent = setTocContent;
   }, [setTocContent, refsRef]);
+
+  const isMobile = useIsMobile();
+  if (isMobile) return null;
 
   return (
     <aside className={`toc-sidebar ${className}`}>

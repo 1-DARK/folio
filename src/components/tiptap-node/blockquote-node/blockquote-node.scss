@@ -36,3 +36,11 @@
     }
   }
 }
+
+@media (max-width: 768px) {
+  .tiptap.ProseMirror {
+    blockquote {
+      margin-left: 15px !important;
+    }
+  }
+}
