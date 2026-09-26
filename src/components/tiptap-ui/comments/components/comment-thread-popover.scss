@@ -1,13 +1,147 @@
-.comment-thread-popover {
-  width: min(360px, calc(100vw - 24px));
-  max-height: min(60vh, 480px);
-  overflow-y: auto;
-  padding: 8px;
-  border-radius: var(--tt-radius-lg, 10px);
-  box-shadow: var(--tt-shadow-elevated-sm);
+// Highlights on commented text (drawn by the comment plugin's decorations).
+// Lives here because this stylesheet is always loaded with the popover —
+// it used to sit in the (removed) sidebar's stylesheet.
+.tiptap .thread-anchor {
+  background-color: color-mix(
+    in srgb,
+    var(--tt-color-highlight-yellow, #fbe89a) 55%,
+    transparent
+  );
+  border-bottom: 2px solid var(--tt-color-highlight-yellow-contrast, #e6c229);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
 
-  // On narrow screens, widen toward full-width and keep it comfortably padded.
-  @media (max-width: 640px) {
-    width: calc(100vw - 24px);
+  &.hovered,
+  &:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--tt-color-highlight-yellow, #fbe89a) 80%,
+      transparent
+    );
+  }
+
+  &.selected {
+    background-color: var(--tt-color-highlight-yellow, #fbe89a);
+  }
+}
+
+// Inline comment popover (Notion style): anchored under the commented text,
+// the thread's comments, and an "Add a comment…" row at the bottom.
+.comment-thread-popover {
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border: 0.5px solid var(--tt-border-color);
+  border-radius: var(--tt-radius-lg, 10px);
+  background: var(--tt-bg-color);
+  box-shadow: var(
+    --tt-shadow-elevated-md,
+    0 8px 24px color-mix(in srgb, var(--tt-text-primary) 14%, transparent)
+  );
+  animation: ctp-in 0.12s ease-out;
+}
+
+.ctp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 10px;
+
+  &__comments {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  // Draft: the commented text above the composer.
+  &__quote {
+    padding-left: 10px;
+    border-left: 3px solid var(--tt-color-highlight-yellow-contrast, #e6c229);
+    border-radius: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: color-mix(in srgb, var(--tt-text-primary) 70%, transparent);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__composer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+
+    .comment-mention-editor {
+      flex: 1;
+      min-width: 0;
+
+      .ProseMirror {
+        min-width: 0;
+        min-height: 24px;
+        padding: 2px 0;
+        background: transparent;
+      }
+    }
+
+    &--reply {
+      padding-top: 10px;
+      border-top: 0.5px solid var(--tt-border-color);
+    }
+  }
+
+  &__send {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 50%;
+    background: var(--tt-brand-color-500, #2b7fff);
+    color: #fff;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+  }
+}
+
+@keyframes ctp-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment-thread-popover {
+    animation: none;
+  }
+}
+
+// Touch: bigger send target, 16px editor so iOS doesn't zoom on focus.
+@media (hover: none) {
+  .ctp__send {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ctp__composer {
+    min-height: 40px;
+  }
+}
+
+@media (hover: none) and (max-width: 640px) {
+  .ctp .comment-mention-editor .ProseMirror {
+    font-size: 16px;
   }
 }

@@ -38,6 +38,8 @@ interface CommentCardProps {
   onEdit: (content: string) => void;
   onDelete: () => void;
   onReact?: (next: Reactions) => void;
+  /** The commented text, shown as a quote under the header (first comment). */
+  quote?: string;
   /** Shows the resolve / reopen button in the hover bar (thread's first comment). */
   onResolve?: () => void;
   resolved?: boolean;
@@ -55,6 +57,7 @@ export const CommentCard = ({
   onEdit,
   onDelete,
   onReact,
+  quote,
   onResolve,
   resolved = false,
   showActions,
@@ -137,7 +140,8 @@ export const CommentCard = ({
   const hasReactions = Object.values(reactions).some(
     (ids) => (ids?.length ?? 0) > 0,
   );
-  const hasBar = !deleted && !isComposing && (!!onReact || !!onResolve || showActions);
+  const hasBar =
+    !deleted && !isComposing && (!!onReact || !!onResolve || showActions);
   const barVisible = hovered || menuOpen;
 
   const commentWrapperClass: string[] = ["comment"];
@@ -152,7 +156,10 @@ export const CommentCard = ({
       <div className="profile-group comment__head">
         <Avatar size="sm" src={avatarUrl} name={name} />
         <span className="comment__name">{name}</span>
-        <span className="comment__time" title={new Date(createdAt).toLocaleString()}>
+        <span
+          className="comment__time"
+          title={new Date(createdAt).toLocaleString()}
+        >
           {formatRelativeTime(createdAt, t, i18n.language)}
         </span>
 
@@ -266,6 +273,8 @@ export const CommentCard = ({
           </div>
         )}
       </div>
+
+      {quote && !deleted && <div className="comment__quote">{quote}</div>}
 
       {deleted && (
         <div className="comment-content comment__body">

@@ -76,6 +76,21 @@
     }
   }
 
+  // The commented text (inline comments), under the header.
+  .comment__quote {
+    margin: 2px 0 2px var(--comment-gutter);
+    padding-left: 10px;
+    border-left: 3px solid var(--tt-color-highlight-yellow-contrast, #e6c229);
+    border-radius: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: color-mix(in srgb, var(--tt-text-primary) 70%, transparent);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   .comment__body {
     padding-left: var(--comment-gutter);
 

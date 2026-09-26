@@ -1,12 +1,11 @@
 // simple-editor-content.tsx
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { EditorContent, useCurrentEditor } from "@tiptap/react";
 
 import { BubbleMenu } from "src/components/tiptap-ui/bubble-menu/bubble-menu";
 import { DragHandle } from "src/components/tiptap-ui/drag-handle/drag-handle";
-import { ThreadSidebar } from "src/components/tiptap-ui/comments/components/thread-sidebar";
 import { ImageBubble } from "src/components/tiptap-ui/image-bubble";
 import { CoverHeader } from "src/components/tiptap-ui/cover";
 import { FloatingMenu } from "@tiptap/react/menus";
@@ -26,6 +25,7 @@ import { EditorBodySkeleton } from "./components/skeletons";
 import { usePageComment } from "./hooks/use-page-comment";
 import { DiscussionPane } from "src/components/tiptap-ui/discussion-pane";
 import { CommentThreadPopover } from "src/components/tiptap-ui/comments/components/comment-thread-popover";
+import { useSyncThreadsToEditor } from "src/components/tiptap-ui/comments/hooks/use-sync-threads-to-editor";
 import { BlockCommentHandle } from "src/components/tiptap-ui/block-comment-handle";
 import { useLayoutMode } from "./hooks/use-layout-mode";
 import { calculatePaddingLeft, calculateSidebarWidth } from "src/lib/utils";
@@ -34,7 +34,7 @@ import { calculatePaddingLeft, calculateSidebarWidth } from "src/lib/utils";
 // Memoized leaves
 // ============================================================
 
-function useWhyDidYouRender(name: string, props: Record<string, unknown>) {
+function useWhyDidYouRender(_: string, props: Record<string, unknown>) {
   const prev = useRef(props);
   useEffect(() => {
     const changes: Record<string, { from: unknown; to: unknown }> = {};
@@ -83,16 +83,6 @@ const EditorContentMemo = React.memo(function EditorContentMemo({
       className={`simple-editor-content ${hasThreads ? "has-threads" : ""}`}
     />
   );
-});
-
-const ThreadSidebarMemo = React.memo(function ThreadSidebarMemo({
-  setHasThreads,
-}: {
-  setHasThreads: (v: boolean) => void;
-}) {
-  const { editor } = useCurrentEditor();
-
-  return <ThreadSidebar editor={editor} setHasThreads={setHasThreads} />;
 });
 
 const FloatingMenuMemo = React.memo(function FloatingMenuMemo({
@@ -150,8 +140,7 @@ const FloatingMenuMemo = React.memo(function FloatingMenuMemo({
 const StableShell = React.memo(function StableShell() {
   const { editorWrapperRef, translateX, onDiscussionOpenChanged } =
     useEditorLayoutActions();
-  const { collapsed, discussionOpen, commentDisplayMode } =
-    useEditorLayoutState();
+  const { collapsed, discussionOpen } = useEditorLayoutState();
   const { expandedWidth } = useEditorLayoutTransient();
   const { isMobile, mode } = useLayoutMode();
   const sidebarWidth = calculateSidebarWidth(mode, collapsed, expandedWidth);
@@ -169,9 +158,13 @@ const StableShell = React.memo(function StableShell() {
     floatingRef,
   } = useCoverActions();
 
-  const [hasThreads, setHasThreads] = useState(false);
+  // Inline comments open in a popover now — nothing reserves a right gutter.
+  const hasThreads = false;
 
   const { editor } = useCurrentEditor();
+
+  // Highlights for the page's open inline comments (+ the local draft).
+  useSyncThreadsToEditor(editor, activePageId);
 
   useWhyDidYouRender("stableShell", {
     hasThreads,
@@ -234,9 +227,7 @@ const StableShell = React.memo(function StableShell() {
       </section>
 
       <div className="right-gutter-container">
-        {commentDisplayMode === "popover" && !discussionOpen ? (
-          <CommentThreadPopover key="comment-thread-popover" editor={editor} />
-        ) : discussionOpen ? (
+        {discussionOpen && (
           <div className="right-gutter" style={{ minWidth: 320 }}>
             <DiscussionPane
               key="discussion-pane"
@@ -245,15 +236,10 @@ const StableShell = React.memo(function StableShell() {
               onClose={() => onDiscussionOpenChanged(false)}
             />
           </div>
-        ) : (
-          <div className="right-gutter" style={{ minWidth: 0 }}>
-            <ThreadSidebarMemo
-              key="thread-sidebar"
-              setHasThreads={setHasThreads}
-            />
-          </div>
         )}
       </div>
+
+      <CommentThreadPopover editor={editor} />
     </>
   );
 });
