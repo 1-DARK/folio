@@ -95,6 +95,23 @@
       "noReplies": "Pas encore de retours — sois le premier."
     }
   },
+  "comments":{
+    "resolve": "Résoudre", 
+    "reopen": "Rouvrir",
+     "more": "Plus", 
+    "reply": "Répondre", 
+    "edit": "Modifier", 
+    "delete": "Supprimer", 
+    "deleted": "Commentaire supprimé", 
+    "editPlaceholder": "Modifier le commentaire…", 
+    "cancel": "Annuler", 
+    "save": "Enregistrer",
+     "send": "Envoyer", 
+    "addComment": "Ajoute un commentaire…",
+     "showResolved_one": "{{count}} commentaire résolu", 
+    "showResolved_other": "{{count}} commentaires résolus", "
+    hideResolved": "Masquer les commentaires résolus"
+  },
   "showcase": {
     "defaultName": "Vitrine",
     "roomType": "Type",

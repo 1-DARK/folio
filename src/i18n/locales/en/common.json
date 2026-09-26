@@ -246,6 +246,23 @@
     "decline": "Decline",
     "manageMembers": "Members"
   },
+  "comments": {
+    "resolve": "Resolve",
+    "reopen": "Re-open",
+    "more": "More",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleted": "Comment was deleted",
+    "editPlaceholder": "Edit comment…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "send": "Send",
+    "addComment": "Add a comment…",
+    "showResolved_one": "{{count}} resolved comment",
+    "showResolved_other": "{{count}} resolved comments",
+    "hideResolved": "Hide resolved comments"
+  },
   "open": "Search in pages",
   "close": "Close search",
   "hint": "Type to search across your pages",

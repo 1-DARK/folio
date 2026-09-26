@@ -1,78 +1,187 @@
+// One comment: avatar · name · relative time on the first row (with a hover
+// action bar on the right), the body indented under the name, then reaction
+// chips. Shared by the sidebar threads, the popover, and page comments.
 .comment {
+  --comment-gutter: 30px; // avatar (22px) + gap (8px): body aligns with name
+
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  cursor: pointer;
   margin: 1px;
 
-  .profile-group {
+  .profile-group.comment__head {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 24px;
+    min-width: 0;
+  }
+
+  .comment__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tt-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .comment__time {
+    font-size: 12px;
+    color: var(--tt-text-color-subtle, color-mix(in srgb, var(--tt-text-color) 50%, transparent));
+    white-space: nowrap;
+  }
+
+  // Hover action bar (react · resolve · more), Notion-style pill.
+  .comment__bar {
+    position: absolute;
+    top: -2px;
+    right: 0;
     display: flex;
     align-items: center;
-    gap: 4px;
-  }
+    gap: 1px;
+    padding: 2px;
+    border: 0.5px solid var(--tt-border-color);
+    border-radius: var(--tt-radius-md, 6px);
+    background: var(--tt-bg-color);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--tt-text-primary) 8%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
 
-  // Name + timestamp. Was cramped ("You21:52:59") because the two labels had
-  // no separation — lay them in a row with a gap and a dimmer time.
-  .label-group {
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 4px;
-    min-width: 0;
-
-    label:first-child {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--tt-text-primary);
+    &.is-visible {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    label:last-child {
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--tt-text-color-subtle, color-mix(in srgb, var(--tt-text-color) 50%, transparent));
+    .reaction-picker__trigger,
+    .comment__bar-btn {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 24px;
+      padding: 0;
+      border: none;
+      border-radius: var(--tt-radius-sm, 4px);
+      background: transparent;
+      color: color-mix(in srgb, var(--tt-text-primary) 60%, transparent);
+      cursor: pointer;
+
+      &:hover {
+        background: color-mix(in srgb, var(--tt-text-primary) 8%, transparent);
+        color: var(--tt-text-primary);
+      }
     }
   }
 
-  .comment-content {
-    // The inline style sets row/center; keep the body readable and aligned
-    // under the avatar row. The p has a marginLeft:10 inline — align it to the
-    // profile group instead of a magic number by using the avatar gutter.
+  .comment__body {
+    padding-left: var(--comment-gutter);
+
     p {
       font-size: 14px;
       line-height: 1.5;
       color: var(--tt-text-primary);
       margin: 0;
-     
+    }
+  }
+
+  .comment-body-wrapper {
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--tt-text-primary);
+    word-break: break-word;
+  }
+
+  .comment__reactions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-left: var(--comment-gutter);
+    margin-top: 4px;
+
+    .reaction-chips {
+      margin-top: 0;
+    }
+
+    .reaction-picker__trigger {
+      width: 26px;
+      height: 22px;
+      border: 0.5px solid var(--tt-border-color);
+      border-radius: 12px;
     }
   }
 
   .comment-edit {
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 56px;
-      resize: vertical;
-      padding: 6px 8px;
-      font-size: 14px;
-      line-height: 1.5;
-      color: var(--tt-text-primary);
-      background: var(--tt-bg-color);
-      border: 0.5px solid var(--tt-border-color);
-      border-radius: var(--tt-radius-md, 6px);
-      outline: none;
-      font-family: inherit;
-
-      &:focus { border-color: var(--tt-brand-color-500, #2b7fff); }
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   &.deleted {
     opacity: 0.5;
     font-style: italic;
+  }
+}
+
+// ── Touch screens (no hover) ────────────────────────────────────────────────
+// The hover bar can't appear without a pointer, so on touch devices its
+// buttons sit inline at the end of the header row, always visible, with
+// finger-sized targets.
+@media (hover: none) {
+  .comment {
+    .comment__bar {
+      position: static;
+      margin-left: auto;
+      padding: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      opacity: 1;
+      pointer-events: auto;
+
+      .reaction-picker__trigger,
+      .comment__bar-btn {
+        width: 32px;
+        height: 32px;
+      }
+    }
+
+    .comment__reactions .reaction-picker__trigger {
+      width: 32px;
+      height: 28px;
+    }
+  }
+
+  .reaction-chip {
+    height: 28px;
+    padding: 0 10px;
+  }
+}
+
+// ── Narrow screens ─────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .comment {
+    --comment-gutter: 0px; // body goes full width under the header
+
+    .comment__time {
+      font-size: 11px;
+    }
+
+    // The editor's default 250px min-width overflows a phone screen.
+    .comment-edit .comment-mention-editor .ProseMirror {
+      min-width: 0;
+    }
+  }
+}
+
+// iOS zooms the page when focusing text under 16px — keep editors at 16px on
+// touch devices.
+@media (hover: none) and (max-width: 640px) {
+  .comment .comment-mention-editor .ProseMirror {
+    font-size: 16px;
   }
 }

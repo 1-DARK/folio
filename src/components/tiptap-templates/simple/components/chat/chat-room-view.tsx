@@ -113,10 +113,8 @@ import {
 import { chatRoomIdFromPath, otherDmMember, roomTitle } from "./chat-utils";
 import { InviteToRoomModal } from "./chat-modals";
 import { MentionPicker, type MentionItem } from "./mention-picker";
-import { setPageChatOpen } from "./page-chat-store";
 import { StudySessionBar, StudyStartMenu } from "./study-session";
 import {
-  pageChatKey,
   subscribePendingBlocks,
   takePendingBlock,
   type SharedBlockDraft,
@@ -368,12 +366,6 @@ export function RoomContent({
     room.kind === "room" &&
     !!meId &&
     (myMembership?.role === "owner" || room.createdBy === meId);
-  console.log("canDeleteRoom", {
-    meId,
-    createdBy: room.createdBy,
-    myRole: myMembership?.role,
-    kind: room.kind,
-  });
   const [inviteOpen, setInviteOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<ReplyContext | null>(null);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
@@ -405,13 +397,7 @@ export function RoomContent({
     return [...byId.values()];
   }, [room, peopleById, scopePeople, meId]);
 
-  const pendingKeys = useMemo(
-    () =>
-      room.kind === "page" && room.pageId
-        ? [room.id, pageChatKey(room.pageId)]
-        : [room.id],
-    [room.id, room.kind, room.pageId],
-  );
+  const pendingKeys = useMemo(() => [room.id], [room.id]);
 
   const items = useMemo<Item[]>(() => {
     const out: Item[] = [];
@@ -632,7 +618,6 @@ export function RoomContent({
   const openDiscussedPage = () => {
     if (!room.pageId) return;
     setActivePageId(room.pageId);
-    setPageChatOpen(true);
   };
 
   // Share your work = the database's New: a row from the default row
