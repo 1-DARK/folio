@@ -212,15 +212,6 @@ export async function openDm(otherPersonId: string): Promise<string> {
   return data as string;
 }
 
-// Open (lazily creating) a page's discussion; joins you if you can comment.
-export async function openPageChat(pageId: string): Promise<string> {
-  const { data, error } = await supabase.rpc("open_page_chat", {
-    p_page: pageId,
-  });
-  fail(error);
-  return data as string;
-}
-
 export async function markChatRead(roomId: string): Promise<void> {
   const { error } = await supabase.rpc("mark_chat_read", { p_room: roomId });
   fail(error);

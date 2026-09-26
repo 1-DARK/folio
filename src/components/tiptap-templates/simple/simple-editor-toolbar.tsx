@@ -13,13 +13,7 @@ import { LinkIcon } from "src/components/tiptap-icons/link-icon";
 import { MorePopover } from "./more-popover";
 import { useActivePageState } from "./context/active-page-context";
 import type { View } from "src/types";
-import {
-  Home,
-  LibraryBig,
-  Menu,
-  MessageSquareText,
-  MessagesSquare,
-} from "lucide-react";
+import { Home, LibraryBig, Menu, MessageSquareText } from "lucide-react";
 import { PageCategorySelect } from "./components/page-category-select";
 import { Breadcrumbs } from "./breadcrumbs";
 import { usePatchPage } from "src/hooks/use-patch-page";
@@ -43,12 +37,6 @@ import { LockIcon, StarIcon } from "src/components/tiptap-icons";
 import { QuickOpenTrigger } from "./components/quick-open-trigger";
 import { useSearch } from "./context/search-context";
 import { requestFindFocus } from "src/lib/find-store";
-import {
-  togglePageChat,
-  usePageChatOpen,
-} from "./components/chat/page-chat-store";
-import { useExistingPageRoom } from "src/hooks/use-page-chat";
-import { useUnreadCounts } from "src/hooks/use-chat";
 
 function Expand() {
   const { collapsed } = useEditorLayoutState();
@@ -138,55 +126,6 @@ function DiscussionTrigger() {
         className="tiptap-button-icon"
         style={{ color: "var(--tt-text-primary)" }}
       />
-    </Button>
-  );
-}
-
-// Opens the page's discussion drawer. The unread dot only reads an EXISTING
-// room (no room is created just by showing the button).
-function PageChatTrigger() {
-  const { t } = useTranslation();
-  const open = usePageChatOpen();
-  const { activePageId } = useActivePageState();
-  const room = useExistingPageRoom(activePageId);
-  const { data: unread = {} } = useUnreadCounts();
-  const hasUnread = !!room && (unread[room.id] ?? 0) > 0;
-
-  if (!activePageId) return null;
-
-  return (
-    <Button
-      variant="ghost"
-      size="large"
-      data-active={open}
-      onClick={togglePageChat}
-      tooltip={t("chat.pageDiscussion", "Discussion")}
-      style={{
-        position: "relative",
-        width: "1.25rem",
-        height: "1.25rem",
-        minWidth: "1.25rem",
-        minHeight: "1.25rem",
-      }}
-    >
-      <MessagesSquare
-        className="tiptap-button-icon"
-        style={{ color: "var(--tt-text-primary)" }}
-      />
-      {hasUnread && (
-        <span
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: -1,
-            right: -1,
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            background: "var(--sidebar-accent, var(--tt-brand-color-500))",
-          }}
-        />
-      )}
     </Button>
   );
 }
@@ -339,13 +278,7 @@ export const DesktopToolbarContent = ({ view }: ContentProps) => {
           </>
         )}
 
-        {view === "page" && (
-          <>
-            <PageChatTrigger />
-            <Spacer orientation="horizontal" size={8} />
-            <MorePopover />
-          </>
-        )}
+        {view === "page" && <MorePopover />}
       </ToolbarGroup>
     </>
   );
@@ -375,11 +308,7 @@ export const TabletToolbarContent = ({ view }: ContentProps) => {
         )}
 
         {view === "page" && (
-          <>
-            <PageChatTrigger />
-            <Spacer orientation="horizontal" size={5} />
-            <MorePopover includeTheme={true} editedPage={activePage} />
-          </>
+          <MorePopover includeTheme={true} editedPage={activePage} />
         )}
       </ToolbarGroup>
     </>
@@ -406,7 +335,6 @@ export const MobileToolbarContent = ({ view }: ContentProps) => {
         <QuickOpenTrigger compact />
         {view === "page" && (
           <>
-            <PageChatTrigger />
             <MorePopover
               includeTheme
               includeUndoRedo

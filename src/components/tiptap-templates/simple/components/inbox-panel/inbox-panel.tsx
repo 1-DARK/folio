@@ -14,7 +14,6 @@ import { useChatRooms } from "src/hooks/use-chat";
 import type { Notification, NotificationType } from "src/types";
 import { useActivePageActions } from "../../context/active-page-context";
 import { chatPath, useOpenChatRoom } from "../chat/chat-utils";
-import { setPageChatOpen } from "../chat/page-chat-store";
 import { setPendingScrollTarget } from "./pending-scroll-target";
 import "./inbox-panel.scss";
 
@@ -47,10 +46,9 @@ export function InboxPanel() {
         });
       }
 
-      // Page discussion → the page with its drawer.
+      // Old page-discussion mention (page discussions were removed) → the page.
       if (n.sourcePageId) {
         setActivePageId(String(n.sourcePageId));
-        setPageChatOpen(true);
         return;
       }
       // Room or DM → the room, in the right space.

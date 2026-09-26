@@ -1,21 +1,20 @@
 import { useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { FileText, Hash, Lock, MessagesSquare, X } from "lucide-react";
+import { FileText, Hash, Lock, X } from "lucide-react";
 import { useChatRooms } from "src/hooks/use-chat";
 import { useCurrentPerson } from "src/hooks/use-session";
 import {
   clearDiscussRequest,
-  pageChatKey,
   setPendingBlock,
   useDiscussRequest,
 } from "./block-share-store";
-import { setPageChatOpen } from "./page-chat-store";
 import { useOpenChatRoom } from "./chat-utils";
 import "./chat-blocks.scss";
 
-// Destination picker for "Discuss in chat…": this page's discussion, or a
-// room you've joined in the current space. Mounted once (AppOverlays).
+// Destination picker for "Discuss in chat…": a room you've joined in the
+// current space. (Talking about a block ON its page is a comment.) Mounted
+// once (AppOverlays).
 export function DiscussBlockHost() {
   const { t } = useTranslation();
   const draft = useDiscussRequest();
@@ -38,12 +37,6 @@ export function DiscussBlockHost() {
   }, [draft]);
 
   if (!draft) return null;
-
-  const toPageDiscussion = () => {
-    setPendingBlock(pageChatKey(draft.pageId), draft);
-    setPageChatOpen(true);
-    clearDiscussRequest();
-  };
 
   const toRoom = (roomId: string) => {
     const room = joined.find((r) => r.id === roomId);
@@ -85,34 +78,33 @@ export function DiscussBlockHost() {
         </div>
 
         <div className="dbd__label">{t("chat.sendTo", "Send to")}</div>
-        <button type="button" className="dbd__row" onClick={toPageDiscussion}>
-          <MessagesSquare size={15} />
-          <span>{t("chat.thisPageDiscussion", "This page's discussion")}</span>
-        </button>
-
-        {joined.length > 0 && (
-          <>
-            <div className="dbd__label">{t("chat.rooms", "Rooms")}</div>
-            <div className="dbd__list">
-              {joined.map((room) => (
-                <button
-                  key={room.id}
-                  type="button"
-                  className="dbd__row"
-                  onClick={() => toRoom(room.id)}
-                >
-                  {room.visibility === "private" ? (
-                    <Lock size={14} />
-                  ) : (
-                    <Hash size={15} />
-                  )}
-                  <span>
-                    {room.name || t("chat.untitledRoom", "Untitled room")}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </>
+        {joined.length > 0 ? (
+          <div className="dbd__list">
+            {joined.map((room) => (
+              <button
+                key={room.id}
+                type="button"
+                className="dbd__row"
+                onClick={() => toRoom(room.id)}
+              >
+                {room.visibility === "private" ? (
+                  <Lock size={14} />
+                ) : (
+                  <Hash size={15} />
+                )}
+                <span>
+                  {room.name || t("chat.untitledRoom", "Untitled room")}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="dbd__label">
+            {t(
+              "chat.noRoomsToShare",
+              "Join a room in this space to discuss this block there.",
+            )}
+          </p>
         )}
       </div>
     </div>,

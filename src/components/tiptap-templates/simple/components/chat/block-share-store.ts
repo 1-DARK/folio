@@ -34,12 +34,9 @@ export function useDiscussRequest(): SharedBlockDraft | null {
 }
 
 // ── 2. A destination was picked → the matching composer takes the block ─────
-// Keyed by room id, or pageChatKey(pageId) for a page's discussion (whose room
-// id may not exist yet — it's created when the drawer opens).
+// Keyed by room id.
 const pending = new Map<string, SharedBlockDraft>();
 const pendingListeners = new Set<() => void>();
-
-export const pageChatKey = (pageId: string) => `page:${pageId}`;
 
 export function setPendingBlock(key: string, draft: SharedBlockDraft) {
   pending.set(key, draft);
