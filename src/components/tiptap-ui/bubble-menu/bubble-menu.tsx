@@ -31,8 +31,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { NodeSelection } from "@tiptap/pm/state";
 import { CommentButton } from "src/components/tiptap-ui/comment-button";
-import { useDeleteThread } from "src/hooks/use-delete-thread";
-import { useThreadsBase } from "src/hooks/use-threads";
+import { SuggestButton } from "../suggest-button";
 
 interface MoreOptionsPopoverProps
   extends Omit<ButtonProps, "type">, UseMarkConfig {}
@@ -120,36 +119,22 @@ export function Group({ children }: { children: React.ReactNode }) {
 export function BubbleMenu({ editor }: { editor: Editor | null }) {
   const [visible, setVisible] = useState(true);
 
-  const { data: draftedThreads } = useThreadsBase((threads) =>
-    (threads ?? []).filter((t) => t.status === "drafted"),
-  );
-  const draftedThreadsRef = useRef(draftedThreads);
-  useEffect(
-    () => void (draftedThreadsRef.current = draftedThreads),
-    [draftedThreads],
-  );
-  const deleteThread = useDeleteThread();
-
-  const onAction = () => {
-    setVisible(false);
-    draftedThreads?.forEach((t) => deleteThread.mutate({ id: t.id }));
-  };
+  // Comment / suggest / highlight hide the menu so it doesn't sit on top of
+  // the popover; the next selection change brings it back. Drafts are local
+  // now (draft-store) — nothing is saved as "drafted" anymore, so there are
+  // no draft rows to clean up here.
+  const onAction = () => setVisible(false);
 
   const bubbleContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!editor) return;
-    const handler = () => {
-      setVisible(true);
-      draftedThreadsRef.current?.forEach((t) =>
-        deleteThread.mutate({ id: t.id }),
-      );
-    };
+    const handler = () => setVisible(true);
     editor.on("selectionUpdate", handler);
     return () => {
       editor.off("selectionUpdate", handler);
     };
-  }, [editor, deleteThread]);
+  }, [editor]);
 
   if (!editor) return null;
 
@@ -237,22 +222,11 @@ export function BubbleMenu({ editor }: { editor: Editor | null }) {
                 <LinkPopover hideWhenUnavailable={true} editor={editor} />
               </Group>
 
-              <CommentButton onClick={onAction} editor={editor} />
-
-              {/* <CommentButton
-            editor={editor}
-            onClick={() => {
-              suppressBubbleMenu.current = true;
-
-              // Re-enable after the comment flow resolves —
-              // either on next selection change or after a short delay
-              const handler = () => {
-                suppressBubbleMenu.current = false;
-                editor.off("selectionUpdate", handler);
-              };
-              editor.on("selectionUpdate", handler);
-            }}
-          /> */}
+              {/* Group 4 — comments */}
+              <Group>
+                <CommentButton onClick={onAction} editor={editor} />
+                <SuggestButton onClick={onAction} editor={editor} />
+              </Group>
 
               <MoreOptionsPopover
                 type="bold"

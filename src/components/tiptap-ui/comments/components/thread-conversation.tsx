@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { Editor, JSONContent } from "@tiptap/core";
 import { useTranslation } from "react-i18next";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Check, X } from "lucide-react";
 import { Avatar } from "src/components/tiptap-ui-primitive/avatar";
 import type { ID, Thread } from "src/types";
 import { useCommentsByThread } from "src/hooks/use-comments";
@@ -16,12 +16,12 @@ import { useCurrentPerson } from "src/hooks/use-session";
 import { usePersonNames } from "src/hooks/use-person-names";
 import { makeComment } from "src/utils/make-comment";
 import { newId } from "src/lib/id";
-
+import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { commentThreadPluginKey } from "../extensions";
 import { CommentMentionEditor, type CommentEditorRef } from "../editor";
 import { CommentCard } from "./comment-card";
 import "./comment-thread-popover.scss";
 import { anchorText, useNotifyMentions } from "../utils";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
 
 // An existing thread: its comments (quote on the first one), reactions,
 // resolve / re-open, edit / delete, and an "Add a comment…" reply row.
@@ -56,6 +56,77 @@ export function ThreadConversation({
   const [isEmpty, setIsEmpty] = useState(true);
   const quote = anchorText(editor, thread.id, thread.anchor);
   const resolved = thread.status === "resolved";
+  const suggestion = thread.suggestion ?? null;
+  const pending = !!suggestion && suggestion.state === "pending" && !resolved;
+  const [stale, setStale] = useState(false);
+
+  // Accept: replace the anchored text with the suggestion ("" deletes it),
+  // then resolve. Refuses when the text changed since it was suggested, so an
+  // old suggestion never overwrites newer edits.
+  const acceptSuggestion = () => {
+    if (!suggestion || !editor || editor.isDestroyed) return;
+    const live = commentThreadPluginKey
+      .getState(editor.state)
+      ?.threads.find((th) => th.id === thread.id)?.anchor;
+    if (!live || live.to <= live.from) {
+      setStale(true);
+      return;
+    }
+    const current = editor.state.doc.textBetween(live.from, live.to, " ");
+    if (current.trim() !== suggestion.original.trim()) {
+      setStale(true);
+      return;
+    }
+    editor.view.dispatch(
+      editor.state.tr.insertText(suggestion.text, live.from, live.to),
+    );
+    mutateThread.mutate({
+      id: thread.id,
+      patch: {
+        status: "resolved",
+        suggestion: { ...suggestion, state: "accepted" },
+      },
+    });
+    onClose?.();
+  };
+
+  const rejectSuggestion = () => {
+    if (!suggestion) return;
+    mutateThread.mutate({
+      id: thread.id,
+      patch: {
+        status: "resolved",
+        suggestion: { ...suggestion, state: "rejected" },
+      },
+    });
+    onClose?.();
+  };
+
+  const suggestionActions = pending ? (
+    <div className="comment__suggestion-actions">
+      <button
+        type="button"
+        className="ctp__action ctp__action--accept"
+        onClick={acceptSuggestion}
+        disabled={!editor}
+      >
+        <Check size={14} />
+        {t("comments.accept", "Accept")}
+      </button>
+      <button type="button" className="ctp__action" onClick={rejectSuggestion}>
+        <X size={14} />
+        {t("comments.reject", "Reject")}
+      </button>
+      {stale && (
+        <span className="comment__suggestion-error">
+          {t(
+            "comments.suggestionStale",
+            "The text changed since this was suggested.",
+          )}
+        </span>
+      )}
+    </div>
+  ) : null;
 
   const toggleResolved = () => {
     mutateThread.mutate({
@@ -102,7 +173,9 @@ export function ThreadConversation({
             content={c.body}
             createdAt={c.createdAt}
             deleted={false}
-            quote={i === 0 ? quote : undefined}
+            quote={i === 0 && !suggestion ? quote : undefined}
+            suggestion={i === 0 ? suggestion : undefined}
+            suggestionActions={i === 0 ? suggestionActions : undefined}
             reactions={c.reactions}
             authorId={c.personId}
             commentId={c.id}

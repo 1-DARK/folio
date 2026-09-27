@@ -73,9 +73,9 @@ function buildDecorations(
 
     decorations.push(
       Decoration.inline(from, to, {
-        class: `thread-anchor${isSelected ? " selected" : ""}${
-          isHovered ? " hovered" : ""
-        }`,
+        class: `thread-anchor${thread.suggestion ? " suggestion" : ""}${
+          isSelected ? " selected" : ""
+        }${isHovered ? " hovered" : ""}`,
         "data-thread-id": thread.id,
       }),
     );

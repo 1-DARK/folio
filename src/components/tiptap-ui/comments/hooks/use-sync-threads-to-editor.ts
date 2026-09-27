@@ -45,6 +45,11 @@ export function useSyncThreadsToEditor(
         pageId: draft.pageId,
         anchor: { from: draft.from, to: draft.to },
         status: "drafted",
+        // Suggestion drafts get the suggestion highlight right away.
+        suggestion:
+          draft.kind === "suggestion"
+            ? { original: "", text: "", state: "pending" }
+            : null,
       });
     }
     return open;
@@ -114,12 +119,19 @@ export function useSyncThreadsToEditor(
     clearCommentDraft();
   }, [pageId]);
 
-  // The comment button dispatches { type: "draftThread", from, to, threadId }.
+  // The comment / suggest buttons dispatch
+  // { type: "draftThread", from, to, threadId, kind }.
   useEffect(() => {
     if (!editor || !pageId) return;
     const onTransaction = ({ transaction }: { transaction: Transaction }) => {
       const meta = transaction.getMeta(commentThreadPluginKey) as
-        | { type?: string; from?: number; to?: number; threadId?: string }
+        | {
+            type?: string;
+            from?: number;
+            to?: number;
+            threadId?: string;
+            kind?: "comment" | "suggestion";
+          }
         | undefined;
       if (
         meta?.type === "draftThread" &&
@@ -134,6 +146,7 @@ export function useSyncThreadsToEditor(
           from: meta.from,
           to: meta.to,
           createdAt: Date.now(),
+          kind: meta.kind === "suggestion" ? "suggestion" : "comment",
         });
       }
     };

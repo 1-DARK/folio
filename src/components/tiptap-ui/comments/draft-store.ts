@@ -13,6 +13,8 @@ export interface CommentDraft {
   /** When the draft started — the popover shows the more recent of this and
    *  the last clicked thread. */
   createdAt: number;
+  /** "suggestion" = propose replacement text instead of a plain comment. */
+  kind: "comment" | "suggestion";
 }
 
 let draft: CommentDraft | null = null;

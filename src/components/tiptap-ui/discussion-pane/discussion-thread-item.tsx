@@ -5,8 +5,8 @@ import type { Thread } from "src/types";
 import { useCommentsByThread } from "src/hooks/use-comments";
 import { usePersonNames } from "src/hooks/use-person-names";
 import { CommentCard } from "../comments/components/comment-card";
-import { anchorText } from "../comments/utils";
 import { ThreadConversation } from "../comments/components/thread-conversation";
+import { anchorText } from "../comments/utils";
 
 // Clicks on these never select / expand the card (they do their own thing).
 const INTERACTIVE =
@@ -89,7 +89,8 @@ function ThreadPreview({
         content={first.body}
         createdAt={first.createdAt}
         authorId={first.personId}
-        quote={quote || undefined}
+        quote={thread.suggestion ? undefined : quote || undefined}
+        suggestion={thread.suggestion ?? undefined}
         deleted={false}
         onEdit={() => {}}
         onDelete={() => {}}

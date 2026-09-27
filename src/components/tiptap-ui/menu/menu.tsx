@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 //import { RecordDragMenu } from "src/components/tiptap-node/inline-database/components/record-drag-menu";
 import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
 import { requestDiscussBlock } from "src/components/tiptap-templates/simple/components/chat/block-share-store";
+import { SuggestButton } from "../suggest-button";
 
 const SNAPSHOT_MAX = 600;
 
@@ -105,6 +106,17 @@ export function Menu({
             }}
             showTooltip={false}
             text="Comment"
+            editor={editor}
+            onClick={onAction}
+          />
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <SuggestButton
+            style={{
+              justifyContent: "flex-start",
+            }}
+            showTooltip={false}
+            text="Suggest"
             editor={editor}
             onClick={onAction}
           />

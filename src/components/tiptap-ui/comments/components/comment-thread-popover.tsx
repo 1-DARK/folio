@@ -27,8 +27,8 @@ import {
   type CommentDraft,
 } from "../draft-store";
 import { CommentMentionEditor, type CommentEditorRef } from "../editor";
-import { ThreadConversation } from "./thread-conversation";
 import { anchorText, useNotifyMentions } from "../utils";
+import { ThreadConversation } from "./thread-conversation";
 import "./comment-thread-popover.scss";
 
 const POPOVER_WIDTH = 380;
@@ -154,7 +154,20 @@ export function CommentThreadPopover({ editor }: { editor: Editor | null }) {
       style={{ position: "fixed", visibility: "hidden", top: 0, left: 0 }}
       role="dialog"
     >
-      {showDraft && pageDraft ? (
+      {showDraft && pageDraft && pageDraft.kind === "suggestion" ? (
+        <SuggestionDraftContent
+          key={pageDraft.threadId}
+          editor={editor}
+          draft={pageDraft}
+          onPosted={(id) =>
+            setOpen({
+              threadId: id,
+              pageId: pageDraft.pageId,
+              openedAt: Date.now(),
+            })
+          }
+        />
+      ) : showDraft && pageDraft ? (
         <DraftContent
           key={pageDraft.threadId}
           editor={editor}
@@ -344,6 +357,126 @@ function DraftContent({
           aria-label={t("comments.send", "Send")}
           disabled={isEmpty || posting}
           onClick={() => editorRef.current?.submit()}
+        >
+          <ArrowUp size={15} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── A suggested replacement for a selection (not saved until posted) ──────
+// The new text starts as the selected text, so you edit it in place; the
+// note is optional. Posting creates a thread carrying the suggestion.
+function SuggestionDraftContent({
+  editor,
+  draft,
+  onPosted,
+}: {
+  editor: Editor;
+  draft: CommentDraft;
+  onPosted: (threadId: ID) => void;
+}) {
+  const { t } = useTranslation();
+  const { person } = useCurrentPerson();
+  const createThread = useCreateThread();
+  const createComment = useCreateComment();
+  const notifyMentions = useNotifyMentions();
+  const noteRef = useRef<CommentEditorRef>(null);
+  const [noteEmpty, setNoteEmpty] = useState(true);
+  const [posting, setPosting] = useState(false);
+  // The text as it was when the suggestion started (read once, on mount).
+  const [original] = useState(() =>
+    anchorText(editor, draft.threadId, { from: draft.from, to: draft.to }),
+  );
+  const [text, setText] = useState(original);
+  // One line of text: newlines would land as raw characters in the paragraph.
+  const proposed = text.replace(/\s*\n\s*/g, " ");
+  const changed = proposed.trim() !== original.trim();
+
+  const submit = async (note: JSONContent | null) => {
+    if (!person || posting || !changed) return;
+    const live = commentThreadPluginKey
+      .getState(editor.state)
+      ?.threads.find((th) => th.id === draft.threadId)?.anchor ?? {
+      from: draft.from,
+      to: draft.to,
+    };
+    setPosting(true);
+    try {
+      await createThread.mutateAsync(
+        makeThread({
+          id: draft.threadId,
+          pageId: draft.pageId,
+          anchor: { from: live.from, to: live.to },
+          status: "open",
+          suggestion: { original, text: proposed, state: "pending" },
+        }),
+      );
+      // The first comment carries the author (and the optional note).
+      const commentId = newId();
+      createComment.mutate({
+        comment: makeComment({
+          id: commentId,
+          threadId: draft.threadId,
+          text: note ? JSON.stringify(note) : "",
+          authorId: person.id,
+        }),
+        threadId: draft.threadId,
+      });
+      if (note) notifyMentions(note, commentId, draft.threadId);
+      clearCommentDraft();
+      onPosted(draft.threadId);
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  // With a note, let the note editor hand over its JSON; without, post now.
+  const send = () => {
+    if (noteEmpty) void submit(null);
+    else noteRef.current?.submit();
+  };
+
+  return (
+    <div className="ctp">
+      <div className="ctp__suggest-label">
+        {t("comments.suggestEdit", "Suggest an edit")}
+      </div>
+      {original && <div className="ctp__suggest-old">{original}</div>}
+      <textarea
+        className="ctp__suggest-input"
+        autoFocus
+        rows={2}
+        value={text}
+        placeholder={t("comments.suggestPlaceholder", "Replace with…")}
+        onChange={(e) => setText(e.target.value)}
+        onFocus={(e) => e.currentTarget.select()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            send();
+          }
+        }}
+      />
+      <div className="ctp__composer">
+        <Avatar
+          size="sm"
+          src={person?.avatarUrl ?? undefined}
+          name={person?.name ?? ""}
+        />
+        <CommentMentionEditor
+          ref={noteRef}
+          placeholder={t("comments.suggestNote", "Add a note (optional)…")}
+          onSubmit={(json) => void submit(json)}
+          onEmptyChange={setNoteEmpty}
+        />
+        <button
+          type="button"
+          className="ctp__send"
+          aria-label={t("comments.send", "Send")}
+          disabled={!changed || posting}
+          onClick={send}
         >
           <ArrowUp size={15} />
         </button>

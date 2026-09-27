@@ -23,6 +23,134 @@
   &.selected {
     background-color: var(--tt-color-highlight-yellow, #fbe89a);
   }
+
+  // Suggested edits: green instead of yellow.
+  &.suggestion {
+    background-color: color-mix(in srgb, #22c55e 16%, transparent);
+    border-bottom-color: #22c55e;
+
+    &.hovered,
+    &:hover {
+      background-color: color-mix(in srgb, #22c55e 26%, transparent);
+    }
+
+    &.selected {
+      background-color: color-mix(in srgb, #22c55e 34%, transparent);
+    }
+  }
+}
+
+// ── Suggestions (old → new) ────────────────────────────────────────────────
+.comment__suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 2px;
+  padding-left: 10px;
+  border-left: 3px solid #22c55e;
+  border-radius: 0;
+  font-size: 14px;
+  line-height: 1.45;
+
+  &-old {
+    color: color-mix(in srgb, var(--tt-text-primary) 60%, transparent);
+    text-decoration: line-through;
+    text-decoration-color: #ef4444;
+  }
+
+  &-new {
+    color: var(--tt-text-primary);
+    background: color-mix(in srgb, #22c55e 14%, transparent);
+    border-radius: 3px;
+    padding: 0 3px;
+    align-self: flex-start;
+  }
+
+  &-note {
+    font-size: 12px;
+    color: color-mix(in srgb, var(--tt-text-primary) 55%, transparent);
+  }
+
+  &-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  &-error {
+    flex-basis: 100%;
+    font-size: 12px;
+    color: #dc2626;
+  }
+}
+
+.ctp__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0.5px solid var(--tt-border-color);
+  border-radius: var(--tt-radius-md, 6px);
+  background: transparent;
+  color: var(--tt-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--tt-text-primary) 6%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &--accept {
+    border-color: #22c55e;
+    color: #15803d;
+  }
+}
+
+.ctp__suggest-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--tt-text-primary) 55%, transparent);
+}
+
+.ctp__suggest-old {
+  padding-left: 10px;
+  border-left: 3px solid #ef4444;
+  border-radius: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--tt-text-primary) 60%, transparent);
+  text-decoration: line-through;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ctp__suggest-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 0.5px solid #22c55e;
+  border-radius: var(--tt-radius-md, 6px);
+  background: color-mix(in srgb, #22c55e 6%, transparent);
+  color: var(--tt-text-primary);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+  outline: none;
+
+  &:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, #22c55e 30%, transparent);
+  }
 }
 
 // Target pulse when the Comments pane jumps to a comment (highlight spans,
@@ -167,7 +295,8 @@
 }
 
 @media (hover: none) and (max-width: 640px) {
-  .ctp .comment-mention-editor .ProseMirror {
+  .ctp .comment-mention-editor .ProseMirror,
+  .ctp__suggest-input {
     font-size: 16px;
   }
 }

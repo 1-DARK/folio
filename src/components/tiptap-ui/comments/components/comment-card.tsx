@@ -1,7 +1,7 @@
 import { Avatar } from "src/components/tiptap-ui-primitive/avatar";
 import { Button, ButtonGroup } from "src/components/tiptap-ui-primitive/button";
 import { Check, Edit, Ellipsis, RotateCcw, Trash } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Popover,
@@ -16,7 +16,7 @@ import { CommentBody } from "./comment-body";
 import { CommentMentionEditor, type CommentEditorRef } from "../editor";
 import { ReactionChips } from "./reaction-chips";
 import { ReactionPicker } from "./reaction-picker";
-import type { Person, Reactions } from "src/types";
+import type { Person, Reactions, ThreadSuggestion } from "src/types";
 import { toggleReaction, parseReactions } from "src/lib/comment-reactions";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { usePeople } from "src/hooks/use-people";
@@ -40,6 +40,10 @@ interface CommentCardProps {
   onReact?: (next: Reactions) => void;
   /** The commented text, shown as a quote under the header (first comment). */
   quote?: string;
+  /** A suggested replacement: shown instead of the quote (old → new). */
+  suggestion?: ThreadSuggestion | null;
+  /** Rendered under the suggestion (Accept / Reject). */
+  suggestionActions?: ReactNode;
   /** Shows the resolve / reopen button in the hover bar (thread's first comment). */
   onResolve?: () => void;
   resolved?: boolean;
@@ -58,6 +62,8 @@ export const CommentCard = ({
   onDelete,
   onReact,
   quote,
+  suggestion,
+  suggestionActions,
   onResolve,
   resolved = false,
   showActions,
@@ -274,7 +280,30 @@ export const CommentCard = ({
         )}
       </div>
 
-      {quote && !deleted && <div className="comment__quote">{quote}</div>}
+      {suggestion && !deleted ? (
+        <div className="comment__suggestion">
+          {suggestion.original && (
+            <div className="comment__suggestion-old">{suggestion.original}</div>
+          )}
+          {suggestion.text ? (
+            <div className="comment__suggestion-new">{suggestion.text}</div>
+          ) : (
+            <div className="comment__suggestion-note">
+              {t("comments.suggestDelete", "Delete this text")}
+            </div>
+          )}
+          {suggestion.state !== "pending" && (
+            <div className="comment__suggestion-note">
+              {suggestion.state === "accepted"
+                ? t("comments.suggestionAccepted", "Accepted")
+                : t("comments.suggestionRejected", "Rejected")}
+            </div>
+          )}
+          {suggestionActions}
+        </div>
+      ) : (
+        quote && !deleted && <div className="comment__quote">{quote}</div>
+      )}
 
       {deleted && (
         <div className="comment-content comment__body">
@@ -284,11 +313,14 @@ export const CommentCard = ({
 
       {!isComposing && !deleted && (
         <>
-          <div className="comment-content comment__body">
-            <div className="comment-body-wrapper">
-              <CommentBody body={content} />
+          {/* A suggestion can be posted without a note — no empty body. */}
+          {content && (
+            <div className="comment-content comment__body">
+              <div className="comment-body-wrapper">
+                <CommentBody body={content} />
+              </div>
             </div>
-          </div>
+          )}
 
           {onReact && hasReactions && (
             <div className="comment__reactions">

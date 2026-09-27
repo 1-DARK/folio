@@ -915,6 +915,18 @@ export type ThreadStatus =
   | "open"
   | "deleted";
 
+// A suggested replacement for the anchored text (a "suggestion" thread).
+//   original — the text when it was suggested (shown struck through, and
+//              checked on accept so a stale suggestion can't overwrite edits)
+//   text     — the proposed replacement ("" = suggest deleting it)
+export type SuggestionState = "pending" | "accepted" | "rejected";
+
+export type ThreadSuggestion = {
+  original: string;
+  text: string;
+  state: SuggestionState;
+};
+
 export type Thread = {
   id: ID;
   anchor: {
@@ -923,6 +935,8 @@ export type Thread = {
   } | null;
   status: ThreadStatus;
   pageId: ID;
+  /** Set on suggestion threads; absent / null on plain comment threads. */
+  suggestion?: ThreadSuggestion | null;
 };
 
 export type MeasuredThread = {
