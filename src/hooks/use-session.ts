@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "src/api/supabase-client";
 import type { Person } from "src/types";
+import { clearOfflineData } from "src/lib/query-persistence";
 
 export const queryKeys = {
   session: ["session"] as const,
@@ -34,23 +35,69 @@ function toPerson(row: PeopleRow): Person {
 }
 
 /**
+ * The session the SDK keeps in localStorage (`sb-<project>-auth-token`), read
+ * directly. Used only when getSession() fails to refresh an expired access
+ * token — i.e. offline. On a real auth failure (revoked refresh token) the
+ * SDK has already removed it from storage, so this finds nothing and the
+ * person is correctly signed out.
+ */
+function readStoredSession(): Session | null {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !/^sb-.+-auth-token$/.test(key)) continue;
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as
+        | (Session & { currentSession?: Session })
+        | null;
+      // Older SDK versions nested it under currentSession.
+      const stored = parsed?.currentSession ?? parsed;
+      if (stored?.user?.id && stored.refresh_token) return stored;
+    }
+  } catch {
+    /* storage blocked or malformed */
+  }
+  return null;
+}
+
+/**
  * The Supabase auth session, held in ONE shared query-cache entry rather than
  * per-component state. Every caller reads the same resolved session, so
  * getSession() runs once for the app instead of once per consumer.
+ *
+ * Offline: getSession() can't refresh an access token older than an hour and
+ * returns null with an error — which used to land on the sign-in screen. The
+ * stored session is used instead, so a signed-in person can open the app
+ * offline; the SDK refreshes it (TOKEN_REFRESHED below) once the network is
+ * back, and everything keyed on the token reconnects.
  */
 export function useSession() {
   const queryClient = useQueryClient();
 
   const { data: session, isLoading: loading } = useQuery({
     queryKey: queryKeys.session,
-    queryFn: async (): Promise<Session | null> =>
-      (await supabase.auth.getSession()).data.session,
+    queryFn: async (): Promise<Session | null> => {
+      const { data, error } = await supabase.auth.getSession();
+      if (data.session) return data.session;
+      return error ? readStoredSession() : null;
+    },
     staleTime: Infinity,
+    // Resolving the session reads local storage — it must run offline too
+    // (React Query pauses "online" queries while offline).
+    networkMode: "always",
   });
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      (event, newSession) => {
+        // Signed out (or the session was revoked): drop every offline copy
+        // on this device — saved queries and page docs. This also clears
+        // the session entry, so the gate re-resolves to the sign-in screen.
+        if (event === "SIGNED_OUT") {
+          clearOfflineData(() => queryClient.clear());
+          return;
+        }
         queryClient.setQueryData(queryKeys.session, newSession);
         queryClient.invalidateQueries({ queryKey: queryKeys.currentPerson });
       },
@@ -72,6 +119,9 @@ export function useSession() {
  * (single() demands exactly one row; zero rows is treated as a request
  * failure) and lets the caller render an explicit "no profile found" state
  * instead of an uncaught query error.
+ *
+ * Offline, the person comes from the saved query cache (see
+ * query-persistence); a paused fetch doesn't count as loading.
  */
 export function useCurrentPerson() {
   const { session, loading: sessionLoading } = useSession();

@@ -21,9 +21,13 @@ export const QUERY_CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
 /** Bump when a cached shape changes incompatibly — old caches are dropped. */
 export const QUERY_CACHE_BUSTER = "v1";
 
-// Query keys (first segment) never written to disk: things whose values
-// don't survive JSON (Notification.timestamp is a Date) or go stale fast.
-const NOT_PERSISTED = new Set<string>(["notifications"]);
+// Query keys (first segment) never written to disk:
+//   notifications — Notification.timestamp is a Date, which JSON turns into a
+//                   string
+//   session       — the Supabase session (tokens) already lives in the SDK's
+//                   own storage; a restored copy would be stale, and
+//                   staleTime: Infinity would keep serving it
+const NOT_PERSISTED = new Set<string>(["notifications", "session"]);
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
