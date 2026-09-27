@@ -3,7 +3,7 @@ import type { Provider } from "@supabase/supabase-js";
 import { supabase } from "src/api/supabase-client";
 import { Input } from "src/components/tiptap-ui-primitive/input";
 import { Button } from "src/components/tiptap-ui-primitive/button";
-import { FolioIcon } from "../sidebar/folio-icon";
+import { FolioMark } from "../folio-mark";
 import { PROVIDERS } from "./utils";
 import "./sign-in.scss";
 
@@ -129,7 +129,7 @@ export function SignIn() {
       <div className="sign-in">
         <div className="sign-in__card">
           <div className="sign-in__brand">
-            <FolioIcon className="sign-in__brand-icon" />
+            <FolioMark className="sign-in__brand-icon" />
           </div>
           <h1 className="sign-in__title">Check your email</h1>
           <p className="sign-in__subtitle">
@@ -158,7 +158,7 @@ export function SignIn() {
     <div className="sign-in">
       <div className="sign-in__card">
         <div className="sign-in__brand">
-          <FolioIcon className="sign-in__brand-icon" />
+          <FolioMark className="sign-in__brand-icon" />
         </div>
 
         <h1 className="sign-in__title">
