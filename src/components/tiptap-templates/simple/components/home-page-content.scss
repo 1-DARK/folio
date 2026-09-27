@@ -9,3 +9,189 @@
 .recent-list{
   overflow-y: auto;
 }
+
+// The home page still scrolls (wheel, trackpad, touch, keyboard) — only the
+// scrollbar itself is hidden.
+.home-page-content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+// ── Learn row ───────────────────────────────────────────────────────────────
+// Cover: a quiet panel with the guide's icon (swap for an image later).
+.home-guide-card {
+  cursor: pointer;
+
+  &__cover {
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tt-hover-bg-color, rgba(0, 0, 0, 0.04));
+    color: var(--tt-text-secondary, var(--tt-theme-muted));
+    border-radius: inherit;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  // No page yet: readable, but clearly not clickable.
+  &.is-soon {
+    cursor: default;
+
+    .home-guide-card__cover {
+      opacity: 0.7;
+    }
+  }
+}
+
+// ── Templates row ───────────────────────────────────────────────────────────
+.home-template-card {
+  cursor: pointer;
+
+  &.is-busy {
+    cursor: progress;
+    opacity: 0.7;
+  }
+}
+
+// ── Sideways rows (recent, learn, templates) ────────────────────────────────
+// A fog fades the edge of the cards that has more to show. On desktop the
+// fog strip itself is the arrow button — a bare chevron, no circle — layered
+// above the cards so a click there scrolls instead of opening a card.
+.home-carousel {
+  &__header {
+    min-height: 24px;
+    margin-bottom: 10px;
+  }
+
+  &__viewport {
+    position: relative;
+  }
+
+  &__track {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    // Vertical room for card shadows (overflow would clip them). No
+    // horizontal negative margin — that made the page itself scroll.
+    padding: 6px 0 12px;
+    margin: -6px 0 -12px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+  }
+
+  &__item {
+    // Narrow screens: a card never takes more than ~80% of the row, so the
+    // next one always peeks in and the row reads as swipeable.
+    flex: 0 0 min(var(--home-card-w, 180px), 80%);
+    width: min(var(--home-card-w, 180px), 80%);
+    scroll-snap-align: start;
+
+    > * {
+      height: 100%;
+    }
+  }
+
+  &__fog {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 2;
+    width: 72px;
+    pointer-events: none;
+
+    &--left {
+      left: 0;
+      background: linear-gradient(to right, var(--tt-bg-color) 15%, transparent);
+    }
+
+    &--right {
+      right: 0;
+      background: linear-gradient(to left, var(--tt-bg-color) 15%, transparent);
+    }
+  }
+
+  // The clickable strip over the fog: full height, no fill, chevron only.
+  &__arrow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 3;
+    width: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    border: 0;
+    background: transparent;
+    color: var(--tt-text-secondary, var(--tt-theme-muted));
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease;
+
+    &--left {
+      left: 0;
+      justify-content: flex-start;
+    }
+
+    &--right {
+      right: 0;
+      justify-content: flex-end;
+    }
+
+    &:hover {
+      color: var(--tt-text-color);
+    }
+
+    &:focus-visible {
+      opacity: 1;
+      outline: 2px solid var(--tt-brand-color-500, currentColor);
+      outline-offset: -2px;
+      border-radius: 8px;
+    }
+  }
+
+  &__viewport:hover &__arrow {
+    opacity: 1;
+  }
+}
+
+// Touch screens: swipe the row; no arrows (the fog still shows there's more).
+@media (hover: none) {
+  .home-carousel__arrow {
+    display: none;
+  }
+}
+
+// Phones: slightly tighter rows.
+@media (max-width: 640px) {
+  .home-carousel {
+    &__track {
+      gap: 10px;
+    }
+
+    &__fog {
+      width: 40px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-carousel__arrow {
+    transition: none;
+  }
+}

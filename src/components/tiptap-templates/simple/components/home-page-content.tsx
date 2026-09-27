@@ -5,9 +5,21 @@ import { useCreatePage } from "src/hooks/use-create-page";
 import { useActivePageActions } from "../context/active-page-context";
 import { makePage } from "src/utils/make-page";
 import { PageItemIcon } from "../page-item-icon";
-import { Plus } from "lucide-react";
+import {
+  BookOpen,
+  Clock,
+  Database,
+  LayoutTemplate,
+  Plus,
+  Rocket,
+  SquareStack,
+  Users,
+} from "lucide-react";
+import { useTemplates } from "src/hooks/use-templates";
+import { useClonePage } from "src/components/tiptap-node/inline-database/hooks/use-clone-page";
+import { HOME_GUIDES, type GuideIcon, type HomeGuide } from "./home-guides";
+import { HomeCarousel } from "./home-carousel";
 import { useTranslation } from "react-i18next";
-import { List, ListItem } from "src/components/tiptap-ui-primitive/list/list";
 import { Greeting } from "src/components/tiptap-ui-primitive/greeting/greeting";
 import {
   Board,
@@ -26,9 +38,14 @@ import { useCurrentSpace } from "src/hooks/use-current-space";
 
 const GRID: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fill, minmax(134px, 1fr))",
   gap: 12,
 };
+
+const SECTION_GAP = 36;
+// Card widths in the sideways rows.
+const RECENT_CARD_W = 134;
+const WIDE_CARD_W = 250;
 
 // cover → CSS background (image > gradient > color), same as the gallery
 function coverBackground(cover: PageCover | undefined): string {
@@ -77,14 +94,15 @@ export function HomePageContent({ userName }: { userName?: string }) {
 
   // Home follows the current space: inside a teamspace, only its pages (not
   // the root page itself); in your workspace, everything as before.
+  const { data: templates = [] } = useTemplates();
+  const { clone, cloning } = useClonePage();
+
   const recents = (data ?? []).filter(
     (p) =>
       p.category !== "Template" &&
       (teamspaceId == null ||
         (p.teamspaceId === teamspaceId && p.id !== teamspaceId)),
   );
-  const visited = recents.slice(0, 7);
-  const earlier = recents.slice(7, 12);
 
   const newPage = () => {
     if (!person || !workspaceId) return;
@@ -111,13 +129,32 @@ export function HomePageContent({ userName }: { userName?: string }) {
     setActivePageId(page.id);
   };
 
+  // A template is copied into the current space (its teamspace, or your
+  // private pages) and opened.
+  const applyTemplate = (template: Page) => {
+    if (cloning) return;
+    void clone(
+      template,
+      space.kind === "teamspace"
+        ? {
+            parentId: space.id,
+            teamspaceId: space.id,
+            category: "Teamspaces",
+            generalAccess: "teamspace",
+            generalAccessRole: "edit",
+          }
+        : {},
+    );
+  };
+
   return (
     <div
+      className="home-page-content"
       style={{
         maxWidth: "100%",
-        margin: sidebarCollapsed ? "5vh 12vw" : "5vh auto",
+        margin: sidebarCollapsed ? "0 12vw" : "0 auto",
         paddingLeft: sidebarCollapsed ? 0 : expandedWidth,
-        overflowY: "scroll",
+        overflow: "hidden !important",
       }}
     >
       {/* greeting */}
@@ -159,87 +196,199 @@ export function HomePageContent({ userName }: { userName?: string }) {
 
       {isPending ? (
         <CardGridSkeleton />
-      ) : visited.length === 0 ? (
+      ) : recents.length === 0 ? (
         <EmptyState onNewPage={newPage} />
       ) : (
         <>
           {/* recently visited */}
-          <SectionLabel>{t("home.recentlyVisited")}</SectionLabel>
-          <div style={{ ...GRID, marginBottom: earlier.length ? 32 : 0 }}>
-            {visited.map((page) => (
+          <HomeCarousel
+            title={
+              <SectionLabel icon={<Clock size={14} />} flush>
+                {t("home.recentlyVisited")}
+              </SectionLabel>
+            }
+            label={t("home.recentlyVisited")}
+            cardWidth={RECENT_CARD_W}
+            style={{ marginBottom: SECTION_GAP }}
+          >
+            {recents.map((page) => (
               <RecentCard
                 key={page.id}
                 page={page}
                 onOpen={() => setActivePageId(page.id)}
               />
             ))}
-          </div>
+          </HomeCarousel>
         </>
       )}
 
-      {/* earlier */}
-      {earlier.length > 0 && (
+      {/* learn */}
+      <HomeCarousel
+        title={
+          <SectionLabel icon={<BookOpen size={14} />} flush>
+            {t("home.learn", "Learn")}
+          </SectionLabel>
+        }
+        label={t("home.learn", "Learn")}
+        cardWidth={WIDE_CARD_W}
+        style={{ marginBottom: SECTION_GAP }}
+      >
+        {HOME_GUIDES.map((guide) => (
+          <GuideCard
+            key={guide.id}
+            guide={guide}
+            onOpen={
+              guide.pageId ? () => setActivePageId(guide.pageId!) : undefined
+            }
+          />
+        ))}
+      </HomeCarousel>
+
+      {/* templates */}
+      {templates.length > 0 && (
         <>
-          <SectionLabel>{t("home.earlier")}</SectionLabel>
-          <List className="recent-list" showLines spacing="compact">
-            {earlier.map((page, i) => (
-              <ListItem
-                key={page.id}
-                showLine={i !== earlier.length - 1}
-                onClick={() => setActivePageId(page.id)}
-                style={{ cursor: "pointer" }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <PageItemIcon
-                    cover={page.cover}
-                    styles={{ width: 17, height: 17 }}
-                  />
-                  <span
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: 14,
-                      lineHeight: 1.4,
-                      color: "var(--tt-text-color)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    {page.title || t("page.untitled")}
-                  </span>
-                  <span
-                    style={{ fontSize: 12, color: "var(--tt-text-secondary)" }}
-                  >
-                    {formatRelative(
-                      page.updatedAt ?? page.createdAt,
-                      t,
-                      i18n.language,
-                    )}
-                  </span>
-                </div>
-              </ListItem>
+          <HomeCarousel
+            title={
+              <SectionLabel icon={<LayoutTemplate size={14} />} flush>
+                {t("home.templates", "Start from a template")}
+              </SectionLabel>
+            }
+            label={t("home.templates", "Start from a template")}
+            cardWidth={WIDE_CARD_W}
+            style={{ marginBottom: SECTION_GAP }}
+          >
+            {templates.map((tpl) => (
+              <TemplateCard
+                key={tpl.id}
+                page={tpl}
+                disabled={cloning}
+                onUse={() => applyTemplate(tpl)}
+              />
             ))}
-          </List>
+          </HomeCarousel>
         </>
       )}
     </div>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({
+  children,
+  icon,
+  flush = false,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  /** No bottom margin — the carousel header spaces it. */
+  flush?: boolean;
+}) {
   return (
     <div
       style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 7,
         fontSize: 13,
         fontWeight: 500,
         color: "var(--tt-text-secondary, var(--tt-theme-muted))",
-        marginBottom: 10,
+        marginBottom: flush ? 0 : 10,
       }}
     >
+      {icon}
       {children}
     </div>
+  );
+}
+
+const GUIDE_ICONS: Record<GuideIcon, typeof BookOpen> = {
+  start: Rocket,
+  blocks: SquareStack,
+  databases: Database,
+  collaborate: Users,
+};
+
+// A "Learn" card: a guide page. Without a page yet it reads "Coming soon"
+// and isn't clickable.
+function GuideCard({
+  guide,
+  onOpen,
+}: {
+  guide: HomeGuide;
+  onOpen?: () => void;
+}) {
+  const { t } = useTranslation();
+  const Icon = GUIDE_ICONS[guide.icon];
+  const available = !!onOpen;
+  return (
+    <Board
+      className={`recent-card home-guide-card${available ? "" : " is-soon"}`}
+      onClick={onOpen}
+    >
+      <div className="home-guide-card__cover">
+        <Icon size={34} strokeWidth={1.4} />
+      </div>
+      <BoardContent>
+        <BoardTitle style={{ fontSize: 14, fontWeight: 600 }}>
+          {t(guide.titleKey, guide.title)}
+        </BoardTitle>
+        <BoardMeta>
+          <span
+            style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+          >
+            <BookOpen size={12} />
+            {available
+              ? t("home.readMinutes", "{{count}} min read", {
+                  count: guide.readMinutes,
+                })
+              : t("home.comingSoon", "Coming soon")}
+          </span>
+        </BoardMeta>
+      </BoardContent>
+    </Board>
+  );
+}
+
+// A template card: same look as a recent card, click to use it.
+function TemplateCard({
+  page,
+  disabled,
+  onUse,
+}: {
+  page: Page;
+  disabled: boolean;
+  onUse: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Board
+      className={`recent-card home-template-card${disabled ? " is-busy" : ""}`}
+      onClick={disabled ? undefined : onUse}
+    >
+      <BoardCover
+        height={96}
+        style={{ background: coverBackground(page.cover) }}
+      />
+      <BoardIcon hang size={20} align="start">
+        <PageItemIcon cover={page.cover} styles={{ width: 18, height: 18 }} />
+      </BoardIcon>
+      <BoardContent>
+        <BoardTitle style={{ fontSize: 14, fontWeight: 600 }}>
+          {page.title || t("page.untitled")}
+        </BoardTitle>
+        <span
+          style={{
+            fontSize: 12,
+            color: "var(--tt-text-secondary)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {getPageExcerpt(page)}
+        </span>
+        <BoardMeta>{t("home.useTemplate", "Use template")}</BoardMeta>
+      </BoardContent>
+    </Board>
   );
 }
 
