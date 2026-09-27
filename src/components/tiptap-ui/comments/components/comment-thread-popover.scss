@@ -25,6 +25,32 @@
   }
 }
 
+// Target pulse when the Comments pane jumps to a comment (highlight spans,
+// or the block of a resolved comment / the page comments).
+.comment-target-flash {
+  animation: comment-target-flash 1.6s ease-out;
+  border-radius: 3px;
+}
+
+@keyframes comment-target-flash {
+  0%,
+  35% {
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--tt-color-highlight-yellow-contrast, #e6c229) 70%, transparent);
+    background-color: var(--tt-color-highlight-yellow, #fbe89a);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment-target-flash {
+    animation: none;
+    background-color: var(--tt-color-highlight-yellow, #fbe89a);
+  }
+}
+
 // Inline comment popover (Notion style): anchored under the commented text,
 // the thread's comments, and an "Add a comment…" row at the bottom.
 .comment-thread-popover {

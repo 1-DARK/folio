@@ -1,98 +1,108 @@
-import { useState } from "react";
+import type { MouseEvent } from "react";
 import type { Editor } from "@tiptap/core";
+import { useTranslation } from "react-i18next";
 import type { Thread } from "src/types";
 import { useCommentsByThread } from "src/hooks/use-comments";
 import { usePersonNames } from "src/hooks/use-person-names";
-import { useCurrentPerson } from "src/hooks/use-session";
 import { CommentCard } from "../comments/components/comment-card";
-import { ThreadComposer } from "../comments/components/thread-composer";
-import { usePatchComment } from "src/hooks/use-patch-comment";
-import { patchComment } from "src/api/comments";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { anchorText } from "../comments/utils";
+import { ThreadConversation } from "../comments/components/thread-conversation";
 
-// A thread row in the discussion pane. Collapsed by default (first comment +
-// reply count); expands on click to show all comments + a reply box. Selecting
-// it also scrolls to / activates the thread in the doc (via onSelect).
+// Clicks on these never select / expand the card (they do their own thing).
+const INTERACTIVE =
+  "button, a, input, textarea, [contenteditable='true'], [data-radix-popper-content-wrapper]";
+
+// A thread in the discussion pane. Collapsed: a preview (quote, first
+// comment, reply count). Expanded: the exact same conversation as the inline
+// comment popover — reactions, resolve, edit / delete, reply.
+// Clicking the card selects it (the pane scrolls the page to its text).
 export function DiscussionThreadItem({
   thread,
+  editor,
+  expanded,
   onSelect,
+  onCollapse,
 }: {
   thread: Thread;
   editor: Editor | null;
+  expanded: boolean;
   onSelect: () => void;
+  onCollapse: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const { data: comments = [] } = useCommentsByThread(thread.id);
-  const resolveName = usePersonNames();
-  const { person } = useCurrentPerson();
-  const { activePage, activePageId } = useActivePageState();
-
   const first = comments[0];
-  const replyCount = Math.max(0, comments.length - 1);
-
-  const updateComment = usePatchComment(({ id, patch }) =>
-    patchComment(id, patch),
-  );
-
   if (!first) return null;
+
+  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Portaled menus (reaction picker, "more") bubble here through React —
+    // ignore anything outside the card's own DOM, and its controls.
+    if (!e.currentTarget.contains(target)) return;
+    if (target.closest(INTERACTIVE)) return;
+    onSelect();
+  };
 
   return (
     <div
       className={`discussion-item${expanded ? " is-expanded" : ""}${
         thread.status === "resolved" ? " is-resolved" : ""
       }`}
-      onClick={() => {
-        onSelect();
-        setExpanded((v) => !v);
-      }}
+      onClick={handleClick}
     >
       {expanded ? (
-        <>
-          {comments.map((c) => (
-            <CommentCard
-              key={c.id}
-              name={resolveName(c.personId)}
-              content={c.body}
-              createdAt={c.createdAt}
-              deleted={false}
-              onEdit={() => {}}
-              onDelete={() => {}}
-              showActions={c.personId === person?.id}
-              reactions={c.reactions}
-              onReact={(next) =>
-                updateComment.mutate({ id: c.id, patch: { reactions: next } })
-              }
-              authorId={c.personId}
-              commentId={c.id}
-              pageId={activePageId ?? undefined}
-              pageTitle={activePage?.title}
-              threadId={thread.id}
-            />
-          ))}
-          <div
-            className="discussion-item__reply"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ThreadComposer threadId={thread.id} />
-          </div>
-        </>
+        <ThreadConversation
+          editor={editor}
+          thread={thread}
+          onClose={onCollapse}
+        />
       ) : (
-        <>
-          <CommentCard
-            name={resolveName(first.personId)}
-            content={first.body}
-            createdAt={first.createdAt}
-            deleted={false}
-            onEdit={() => {}}
-            onDelete={() => {}}
-            showActions={false}
-          />
-          {replyCount > 0 && (
-            <span className="discussion-item__count">
-              {replyCount} {replyCount === 1 ? "reply" : "replies"}
-            </span>
-          )}
-        </>
+        <ThreadPreview
+          editor={editor}
+          thread={thread}
+          first={first}
+          replyCount={comments.length - 1}
+        />
+      )}
+    </div>
+  );
+}
+
+function ThreadPreview({
+  editor,
+  thread,
+  first,
+  replyCount,
+}: {
+  editor: Editor | null;
+  thread: Thread;
+  first: { personId: string; body: string; createdAt: number };
+  replyCount: number;
+}) {
+  const { t } = useTranslation();
+  const resolveName = usePersonNames();
+  const quote = anchorText(editor, thread.id, thread.anchor);
+
+  return (
+    <div className="ctp">
+      <CommentCard
+        name={resolveName(first.personId)}
+        content={first.body}
+        createdAt={first.createdAt}
+        authorId={first.personId}
+        quote={quote || undefined}
+        deleted={false}
+        onEdit={() => {}}
+        onDelete={() => {}}
+        showActions={false}
+      />
+      {replyCount > 0 && (
+        <span className="discussion-item__count">
+          {replyCount === 1
+            ? t("comments.oneReply", "1 reply")
+            : t("comments.replyCount", "{{count}} replies", {
+                count: replyCount,
+              })}
+        </span>
       )}
     </div>
   );

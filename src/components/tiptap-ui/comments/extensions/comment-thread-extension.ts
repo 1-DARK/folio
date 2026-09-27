@@ -3,6 +3,7 @@ import type { ID, Thread } from "src/types";
 import { Plugin, PluginKey, NodeSelection } from "@tiptap/pm/state";
 import { CellSelection } from "@tiptap/pm/tables";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { scrollToThread } from "./utils/scrollToThread";
 
 interface CommentThreadStorage {
@@ -32,6 +33,57 @@ export const commentThreadPluginKey = new PluginKey<CommentThreadState>(
   "commentThreadPlugin",
 );
 
+// Module-level so the key (and so the plugin's state) survives the editor
+// rebuilding its plugins — e.g. when the view re-mounts after the page sync.
+// Created inside addProseMirrorPlugins, every rebuild got a fresh key and the
+// highlights started empty until some unrelated transaction.
+const commentThreadDecorationPluginKey = new PluginKey<DecorationSet>(
+  "commentThreadDecorationPlugin",
+);
+
+// The last thread list sent by useSyncThreadsToEditor. The plugin state starts
+// from it instead of []: whenever the editor builds a fresh state (view
+// re-mount, state re-creation on page load…) the threads were wiped with no
+// transaction to notice it, and the highlights only came back on the next
+// setThreads — which is what the comment button's draft was triggering.
+let syncedThreads: Thread[] = [];
+
+export function setSyncedThreads(threads: Thread[]) {
+  syncedThreads = threads;
+}
+
+function buildDecorations(
+  pluginState: CommentThreadState | undefined,
+  doc: ProseMirrorNode,
+): DecorationSet {
+  if (!pluginState) return DecorationSet.empty;
+  const { selectedThread, hoveredThread, threads } = pluginState;
+  const docSize = doc.content.size;
+  const decorations: Decoration[] = [];
+
+  for (const thread of threads) {
+    if (!thread.anchor) continue; // page-level — no text range to decorate
+
+    const from = Math.max(1, Math.min(thread.anchor.from, docSize));
+    const to = Math.max(1, Math.min(thread.anchor.to, docSize));
+    if (to <= from) continue;
+
+    const isSelected = selectedThread?.id === thread.id;
+    const isHovered = hoveredThread?.id === thread.id;
+
+    decorations.push(
+      Decoration.inline(from, to, {
+        class: `thread-anchor${isSelected ? " selected" : ""}${
+          isHovered ? " hovered" : ""
+        }`,
+        "data-thread-id": thread.id,
+      }),
+    );
+  }
+
+  return DecorationSet.create(doc, decorations);
+}
+
 export const CommentThreadExtension = Extension.create({
   name: "commentThreadExtension",
 
@@ -49,7 +101,7 @@ export const CommentThreadExtension = Extension.create({
 
         state: {
           init: (): CommentThreadState => ({
-            threads: [],
+            threads: syncedThreads,
             selectedThread: null,
             hoveredThread: null,
           }),
@@ -90,13 +142,17 @@ export const CommentThreadExtension = Extension.create({
                   // take the incoming as-is.
                   if (!existing.anchor || !incoming.anchor) return incoming;
 
-                  // Keep the live (remapped) anchor unless it collapsed while the DB has a
-                  // real range — then recover from the DB.
-                  const existingCollapsed =
-                    existing.anchor.from === existing.anchor.to;
+                  // Keep the live (remapped) anchor unless it broke while the DB has a
+                  // real range — then recover from the DB. "Broke" = collapsed, or
+                  // pushed past the end of the doc (anchors mapped while the doc was
+                  // still empty get shifted by the whole content when it loads).
+                  const docSize = tr.doc.content.size;
+                  const existingBroken =
+                    existing.anchor.from >= existing.anchor.to ||
+                    existing.anchor.to > docSize;
                   const incomingValid =
                     incoming.anchor.to > incoming.anchor.from;
-                  if (existingCollapsed && incomingValid) {
+                  if (existingBroken && incomingValid) {
                     return incoming;
                   }
                   return { ...incoming, anchor: existing.anchor };
@@ -204,40 +260,17 @@ export const CommentThreadExtension = Extension.create({
 
       // Decoration plugin: renders highlights from the state above.
       new Plugin({
-        key: new PluginKey("commentThreadDecorationPlugin"),
+        key: commentThreadDecorationPluginKey,
 
         state: {
-          init: () => DecorationSet.empty,
+          // Built at init too, so a fresh state shows highlights right away.
+          init: (_, state) =>
+            buildDecorations(commentThreadPluginKey.getState(state), state.doc),
 
           apply(tr, oldDecorations, _, newState) {
             const pluginState = commentThreadPluginKey.getState(newState);
             if (!pluginState) return oldDecorations.map(tr.mapping, tr.doc);
-
-            const { selectedThread, hoveredThread, threads } = pluginState;
-            const docSize = newState.doc.content.size;
-            const decorations: Decoration[] = [];
-
-            for (const thread of threads) {
-              if (!thread.anchor) continue; // page-level — no text range to decorate
-
-              const from = Math.max(1, Math.min(thread.anchor.from, docSize));
-              const to = Math.max(1, Math.min(thread.anchor.to, docSize));
-              if (to <= from) continue;
-
-              const isSelected = selectedThread?.id === thread.id;
-              const isHovered = hoveredThread?.id === thread.id;
-
-              decorations.push(
-                Decoration.inline(from, to, {
-                  class: `thread-anchor${isSelected ? " selected" : ""}${
-                    isHovered ? " hovered" : ""
-                  }`,
-                  "data-thread-id": thread.id,
-                }),
-              );
-            }
-
-            return DecorationSet.create(newState.doc, decorations);
+            return buildDecorations(pluginState, newState.doc);
           },
         },
 

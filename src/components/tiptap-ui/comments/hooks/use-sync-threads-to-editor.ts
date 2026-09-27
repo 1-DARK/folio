@@ -1,9 +1,13 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Editor } from "@tiptap/core";
 import type { Transaction } from "@tiptap/pm/state";
 import type { ID, Thread } from "src/types";
 import { useThreadsByPage } from "src/hooks/use-threads";
-import { commentThreadPluginKey } from "../extensions/comment-thread-extension";
+import { useEditorSync } from "src/components/tiptap-templates/simple/context/editor-sync-context";
+import {
+  commentThreadPluginKey,
+  setSyncedThreads,
+} from "../extensions/comment-thread-extension";
 import {
   clearCommentDraft,
   setCommentDraft,
@@ -25,6 +29,7 @@ export function useSyncThreadsToEditor(
 ) {
   const { data: threadsData } = useThreadsByPage(pageId);
   const draft = useCommentDraft();
+  const { isSyncing } = useEditorSync();
 
   const threads = useMemo<Thread[]>(() => {
     const open = (threadsData ?? []).filter(
@@ -45,26 +50,63 @@ export function useSyncThreadsToEditor(
     return open;
   }, [threadsData, draft, pageId]);
 
+  const threadsRef = useRef(threads);
   useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-    editor.view.dispatch(
-      editor.view.state.tr.setMeta(commentThreadPluginKey, {
-        type: "setThreads",
-        threads,
-      }),
-    );
-    // Force a decoration rebuild after the state settles — a fresh editor's
-    // decoration plugin otherwise stays empty until an unrelated transaction.
-    const raf = requestAnimationFrame(() => {
+    threadsRef.current = threads;
+    // Also seeds the plugin: any fresh editor state starts from this list.
+    setSyncedThreads(threads);
+  }, [threads]);
+
+  // Send the threads now, and again on the next frame: the editor view is
+  // (re)mounted when the page sync ends (the skeleton is swapped for the
+  // editor), which can reset the plugin state without any transaction — that
+  // is why the highlights only appeared after clicking the comment button
+  // (the draft forced a re-send). Re-running on isSyncing covers that swap.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || isSyncing) return;
+    const send = () => {
       if (editor.isDestroyed) return;
       editor.view.dispatch(
         editor.view.state.tr.setMeta(commentThreadPluginKey, {
-          type: "scroll",
+          type: "setThreads",
+          threads,
         }),
       );
-    });
+    };
+    send();
+    const raf = requestAnimationFrame(send);
     return () => cancelAnimationFrame(raf);
-  }, [editor, threads]);
+  }, [editor, threads, isSyncing]);
+
+  // Re-send after document changes. The page content often arrives AFTER the
+  // threads (collab sync, or the shared editor still showing the previous
+  // page); that wholesale replacement maps every anchor down to ~0 and the
+  // highlights vanish. The plugin's setThreads keeps live anchors and only
+  // recovers the saved range for ones that collapsed, so re-sending is safe.
+  // Debounced so typing doesn't dispatch on every keystroke.
+  useEffect(() => {
+    if (!editor) return;
+    let timer: number | null = null;
+    const onTransaction = ({ transaction }: { transaction: Transaction }) => {
+      if (!transaction.docChanged) return;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        if (editor.isDestroyed) return;
+        editor.view.dispatch(
+          editor.view.state.tr.setMeta(commentThreadPluginKey, {
+            type: "setThreads",
+            threads: threadsRef.current,
+          }),
+        );
+      }, 120);
+    };
+    editor.on("transaction", onTransaction);
+    return () => {
+      editor.off("transaction", onTransaction);
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, [editor]);
 
   // A draft doesn't follow you to another page (the draft store is external,
   // so clearing it here is an external-system update, not React state).
