@@ -4,6 +4,7 @@ import { Server } from "@hocuspocus/server";
 import { SQLite } from "@hocuspocus/extension-sqlite";
 import { TiptapTransformer } from "@hocuspocus/transformer";
 import { jwtVerify, createRemoteJWKSet } from "jose";
+import * as Y from "yjs";
 import { seedExtensions } from "./seed-schema";
 
 // Guarantee the doc has a title as its first child. The client used to insert
@@ -92,6 +93,61 @@ interface PageRecord {
   content?: unknown;
 }
 
+// ── Durable Yjs state ────────────────────────────────────────────────────────
+// pages.content (JSON) keeps the TEXT but not the Yjs identity of each piece
+// of it. Re-seeding from JSON after SQLite is wiped creates the same text
+// with brand-new ids, and any client still holding the old doc (an open tab,
+// or an offline copy with unsent edits) merges BOTH → duplicated content.
+// So the binary Yjs state is stored too, in its own table (public.page_ydocs,
+// service-role only — kept off `pages` so the app's `select *` never downloads
+// it), and a wiped server reloads the exact same doc. JSON stays for search,
+// previews and first-time seeding.
+
+interface YdocRecord {
+  state: string | null; // bytea, returned by PostgREST as "\x<hex>"
+}
+
+function bytesFromBytea(value: string | null | undefined): Uint8Array | null {
+  if (!value || !value.startsWith("\\x")) return null;
+  const hex = value.slice(2);
+  if (hex.length === 0) return null;
+  return new Uint8Array(Buffer.from(hex, "hex"));
+}
+
+const byteaFromBytes = (bytes: Uint8Array) =>
+  `\\x${Buffer.from(bytes).toString("hex")}`;
+
+async function loadYdocState(pageId: string): Promise<Uint8Array | null> {
+  const rows = await sb<YdocRecord[]>(
+    `/page_ydocs?page_id=eq.${encodeURIComponent(pageId)}&select=state`,
+  );
+  return bytesFromBytea(rows?.[0]?.state);
+}
+
+async function storeYdocState(
+  pageId: string,
+  state: Uint8Array,
+): Promise<void> {
+  const res = await fetch(`${REST}/page_ydocs?on_conflict=page_id`, {
+    method: "POST",
+    headers: {
+      apikey: SERVICE_ROLE!,
+      Authorization: `Bearer ${SERVICE_ROLE!}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify({
+      page_id: pageId,
+      state: byteaFromBytes(state),
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`page_ydocs upsert ${res.status}: ${body}`);
+  }
+}
+
 type CollabAccess = "edit" | "view";
 
 interface AuthContext {
@@ -108,9 +164,14 @@ const server = new Server<AuthContext>({
     }),
   ],
 
-  // Seed a brand-new document ONCE, before any client edits it. Race-free: the
-  // doc is hydrated from stored content here, so by the time the client's
-  // Collaboration extension and TitleNode see it, it's already correct.
+  // Hydrate a document the server doesn't hold, before any client edits it.
+  // Race-free: by the time the client's Collaboration extension and TitleNode
+  // see it, it's already correct. Order:
+  //   1. SQLite had it (this container's copy) → nothing to do.
+  //   2. The durable Yjs state in Supabase → load it, SAME ids as the copies
+  //      clients hold, so reconnecting tabs / offline edits merge cleanly.
+  //   3. Neither (a page never opened since this shipped) → seed from JSON
+  //      once; onStoreDocument then saves its Yjs state for next time.
   async onLoadDocument({ documentName, document }) {
     // Not empty → the doc already has real content (from SQLite/prior edits).
     if (!document.isEmpty("default")) return;
@@ -118,6 +179,20 @@ const server = new Server<AuthContext>({
     const pageId = documentName.startsWith("page:")
       ? documentName.slice("page:".length)
       : documentName;
+
+    try {
+      const state = await loadYdocState(pageId);
+      if (state) {
+        Y.applyUpdate(document, state);
+        if (!document.isEmpty("default")) return;
+      }
+    } catch (err) {
+      // Fall back to JSON rather than leaving the page blank.
+      console.error(
+        `[onLoadDocument] ydoc load failed for ${documentName}:`,
+        err,
+      );
+    }
 
     const rows = await sb<PageRecord[]>(
       `/pages?id=eq.${encodeURIComponent(pageId)}&select=id,content`,
@@ -215,6 +290,18 @@ const server = new Server<AuthContext>({
         `[onStoreDocument] refusing to write empty content for ${documentName}`,
       );
       return;
+    }
+
+    // The durable Yjs state (same guard as the JSON: an empty doc — e.g. a
+    // failed seed — must never replace a real one). Independent of the JSON
+    // write below: either failing doesn't block the other.
+    try {
+      await storeYdocState(pageId, Y.encodeStateAsUpdate(document));
+    } catch (err) {
+      console.error(
+        `[onStoreDocument] ydoc store failed for ${documentName}:`,
+        err,
+      );
     }
 
     try {
