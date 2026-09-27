@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Page, PageCategory, ID } from "../types";
 import { queryKeys } from "../lib/queryKeys";
 import { fetchPages, fetchPage } from "../api/pages";
@@ -52,11 +52,23 @@ export function useRows(sourceId: ID) {
 }
 
 // ─── the detail query ────────────────────────────────────────────────────────
+// Seeded from the pages list (which already holds every page) so opening a
+// page never waits on its own fetch — and works offline, where that fetch
+// can't run. The list's fetch time is passed along, so a stale seed still
+// refetches as soon as the network allows.
 export function usePage(id: ID | null) {
+  const qc = useQueryClient();
+  const { workspaceId } = useCurrentWorkspace();
+  const listKey = queryKeys.pages.lists(workspaceId ?? "");
   return useQuery({
     queryKey: queryKeys.pages.detail(id ?? ""),
     queryFn: () => fetchPage(id!),
     enabled: id != null,
+    initialData: () =>
+      id != null
+        ? qc.getQueryData<Page[]>(listKey)?.find((p) => p.id === id)
+        : undefined,
+    initialDataUpdatedAt: () => qc.getQueryState(listKey)?.dataUpdatedAt,
   });
 }
 

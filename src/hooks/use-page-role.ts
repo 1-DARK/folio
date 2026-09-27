@@ -5,12 +5,18 @@ import { useMemo } from "react";
 
 // The current user's effective role on a page. Cached per page. Returns
 // undefined while loading; null if the user has no access at all.
+//
+// Kept in the cache for the whole session (gcTime: Infinity) so a page you
+// already opened stays editable offline — the default 5-minute GC dropped the
+// role, the refetch can't run offline, and the editor fell back to read-only.
+// staleTime 0 still refetches on every mount while online.
 export function usePageRole(pageId: ID | null | undefined) {
   return useQuery({
     queryKey: ["page-role", pageId],
     queryFn: () => fetchPageRole(pageId as ID),
     enabled: !!pageId,
     staleTime: 0,
+    gcTime: Infinity,
     refetchOnWindowFocus: true,
   });
 }

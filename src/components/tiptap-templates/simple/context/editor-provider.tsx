@@ -21,7 +21,7 @@ import { useDataSources } from "src/hooks/use-data-sources";
 import type { DataSource, Page } from "src/types";
 import { useCollabDoc } from "../hooks/use-collab-doc";
 import { useCurrentPerson } from "src/hooks/use-session";
-import { EditorSyncContext } from "./editor-sync-context"; // adjust path
+import { EditorSyncContext } from "./editor-sync-context";
 import { useCreatePage } from "src/hooks/use-create-page";
 import { makePage } from "src/utils/make-page";
 import { useScrollToPendingTarget } from "../components/inbox-panel";
@@ -303,7 +303,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     [dataSources],
   );
 
-  const { ydoc, provider, isSynced } = useCollabDoc(activePage ?? null);
+  const { ydoc, provider, isSynced, unavailableOffline } = useCollabDoc(
+    activePage ?? null,
+  );
 
   useWhyDidYouRender("editor-provider", {
     extensions,
@@ -321,7 +323,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const isSyncing = !!activePage && !ready;
 
   return (
-    <EditorSyncContext.Provider value={{ isSyncing }}>
+    <EditorSyncContext.Provider value={{ isSyncing, unavailableOffline }}>
       <EditorRefsContext.Provider value={refsRef}>
         <CollabProviderContext.Provider value={provider ?? null}>
           {ready ? (

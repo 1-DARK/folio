@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { routes, location } from "./routes";
 import { Outlet, Router } from "@tanstack/react-location";
@@ -14,40 +15,72 @@ import { NotificationProvider } from "./components/tiptap-ui/notification";
 import { PageCapabilitiesProvider } from "./components/tiptap-templates/simple/context/page-capabilities-provider";
 import { ToastProvider } from "./components/tiptap-templates/simple/components/toast";
 import { Sidebar } from "./components/tiptap-templates/simple/components/sidebar";
+import { OfflineCacheGuard } from "./components/tiptap-templates/simple/components/offline/offline-cache-guard";
+import {
+  QUERY_CACHE_BUSTER,
+  QUERY_CACHE_MAX_AGE,
+  queryPersister,
+  shouldPersistQuery,
+} from "./lib/query-persistence";
 
-const client = new QueryClient();
+// gcTime must be at least the persisted maxAge, or restored queries would be
+// garbage-collected (and dropped from disk) before anything uses them.
+const client = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: QUERY_CACHE_MAX_AGE,
+    },
+  },
+});
 
 function App() {
   return (
-    <QueryClientProvider client={client}>
+    <PersistQueryClientProvider
+      client={client}
+      persistOptions={{
+        persister: queryPersister,
+        maxAge: QUERY_CACHE_MAX_AGE,
+        buster: QUERY_CACHE_BUSTER,
+        dehydrateOptions: {
+          shouldDehydrateQuery: shouldPersistQuery,
+          // Paused mutations can't be resumed after a reload (their
+          // functions aren't registered as defaults) — don't save them.
+          shouldDehydrateMutation: () => false,
+        },
+      }}
+      // Anything queued while restoring goes out once the cache is back.
+      onSuccess={() => void client.resumePausedMutations()}
+    >
       <AuthGate>
-        <EditorLayoutProvider>
-          <SearchProvider>
-            <TemplatesProvider>
-              <PageViewProvider>
-                <Router location={location} routes={routes}>
-                  <LibraryProvider>
-                    <ActivePageProvider>
-                      <WorkspaceSettingsProvider>
-                        <PageCapabilitiesProvider>
-                          <NotificationProvider>
-                            <ToastProvider>
-                              <Sidebar />
-                              <Outlet />
-                            </ToastProvider>
-                          </NotificationProvider>
-                        </PageCapabilitiesProvider>
-                      </WorkspaceSettingsProvider>
-                    </ActivePageProvider>
-                  </LibraryProvider>
-                </Router>
-              </PageViewProvider>
-            </TemplatesProvider>
-          </SearchProvider>
-        </EditorLayoutProvider>
+        <OfflineCacheGuard>
+          <EditorLayoutProvider>
+            <SearchProvider>
+              <TemplatesProvider>
+                <PageViewProvider>
+                  <Router location={location} routes={routes}>
+                    <LibraryProvider>
+                      <ActivePageProvider>
+                        <WorkspaceSettingsProvider>
+                          <PageCapabilitiesProvider>
+                            <NotificationProvider>
+                              <ToastProvider>
+                                <Sidebar />
+                                <Outlet />
+                              </ToastProvider>
+                            </NotificationProvider>
+                          </PageCapabilitiesProvider>
+                        </WorkspaceSettingsProvider>
+                      </ActivePageProvider>
+                    </LibraryProvider>
+                  </Router>
+                </PageViewProvider>
+              </TemplatesProvider>
+            </SearchProvider>
+          </EditorLayoutProvider>
+        </OfflineCacheGuard>
       </AuthGate>
       <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 
