@@ -37,6 +37,7 @@ import { LockIcon, StarIcon } from "src/components/tiptap-icons";
 import { QuickOpenTrigger } from "./components/quick-open-trigger";
 import { useSearch } from "./context/search-context";
 import { requestFindFocus } from "src/lib/find-store";
+import { UserMenu } from "./user-menu";
 
 function Expand() {
   const { collapsed } = useEditorLayoutState();
@@ -279,6 +280,10 @@ export const DesktopToolbarContent = ({ view }: ContentProps) => {
         )}
 
         {view === "page" && <MorePopover />}
+
+        {/* Account — always the last item, at the far right. */}
+        <Spacer orientation="horizontal" size={8} />
+        <UserMenu />
       </ToolbarGroup>
     </>
   );
@@ -310,6 +315,9 @@ export const TabletToolbarContent = ({ view }: ContentProps) => {
         {view === "page" && (
           <MorePopover includeTheme={true} editedPage={activePage} />
         )}
+
+        <Spacer orientation="horizontal" size={6} />
+        <UserMenu />
       </ToolbarGroup>
     </>
   );
@@ -353,6 +361,9 @@ export const MobileToolbarContent = ({ view }: ContentProps) => {
             />
           </>
         )}
+
+        <Spacer orientation="horizontal" size={4} />
+        <UserMenu />
       </ToolbarGroup>
     </>
   );
