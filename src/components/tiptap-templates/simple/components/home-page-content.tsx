@@ -1,4 +1,4 @@
-import type { Page, PageCover } from "src/types";
+import type { Page, PageCover, Person } from "src/types";
 import type { TFunction } from "i18next";
 import { useRecentPages } from "src/hooks/use-pages";
 import { useCreatePage } from "src/hooks/use-create-page";
@@ -35,6 +35,9 @@ import "./home-page-content.scss";
 import { useEditorLayout } from "../context/editor-layout-context";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useCurrentSpace } from "src/hooks/use-current-space";
+import { useIsMobile } from "src/hooks/use-breakpoint";
+import { usePeople } from "src/hooks/use-people";
+import { Avatar } from "src/components/tiptap-ui-primitive/avatar";
 
 const GRID: React.CSSProperties = {
   display: "grid",
@@ -45,7 +48,7 @@ const GRID: React.CSSProperties = {
 const SECTION_GAP = 36;
 // Card widths in the sideways rows.
 const RECENT_CARD_W = 134;
-const WIDE_CARD_W = 250;
+const WIDE_CARD_W = 200;
 
 // cover → CSS background (image > gradient > color), same as the gallery
 function coverBackground(cover: PageCover | undefined): string {
@@ -147,12 +150,19 @@ export function HomePageContent({ userName }: { userName?: string }) {
     );
   };
 
+  const isMobile = useIsMobile();
+  const marginLeftRight = isMobile ? "10px" : "12vw";
+
   return (
     <div
       className="home-page-content"
       style={{
         maxWidth: "100%",
-        margin: sidebarCollapsed ? "0 12vw" : "0 auto",
+        margin: isMobile
+          ? `0 ${marginLeftRight}`
+          : sidebarCollapsed
+            ? `0 ${marginLeftRight}`
+            : "0 auto",
         paddingLeft: sidebarCollapsed ? 0 : expandedWidth,
         overflow: "hidden !important",
       }}
@@ -394,6 +404,16 @@ function TemplateCard({
 
 function RecentCard({ page, onOpen }: { page: Page; onOpen: () => void }) {
   const { t, i18n } = useTranslation();
+  // The page's author (owner), from the shared people query — no extra fetch.
+  const { data: people = [] } = usePeople();
+  const author = page.ownerId
+    ? (people as Person[]).find((p) => p.id === page.ownerId)
+    : undefined;
+  const edited = formatRelative(
+    page.updatedAt ?? page.createdAt,
+    t,
+    i18n.language,
+  );
   return (
     <Board className="recent-card" onClick={onOpen}>
       <BoardCover
@@ -409,27 +429,38 @@ function RecentCard({ page, onOpen }: { page: Page; onOpen: () => void }) {
           {page.title || t("page.untitled")}
         </BoardTitle>
 
-        <span
+        {/* Author avatar + when it was last edited */}
+        <div
           style={{
-            fontSize: 11,
-            color: "var(--tt-text-color)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginTop: 4,
+            minWidth: 0,
           }}
+          title={
+            author
+              ? `${author.name} · ${t("home.edited", { time: edited })}`
+              : t("home.edited", { time: edited })
+          }
         >
-          {getPageExcerpt(page)}
-        </span>
-
-        <BoardMeta>
-          {t("home.edited", {
-            time: formatRelative(
-              page.updatedAt ?? page.createdAt,
-              t,
-              i18n.language,
-            ),
-          })}
-        </BoardMeta>
+          <Avatar
+            size="sm"
+            src={author?.avatarUrl ?? undefined}
+            name={author?.name ?? ""}
+          />
+          <span
+            style={{
+              fontSize: 12,
+              color: "var(--tt-text-secondary, var(--tt-theme-muted))",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {edited}
+          </span>
+        </div>
       </BoardContent>
     </Board>
   );
