@@ -1,0 +1,177 @@
+// The landing's editor: a Folio page inside a frame. The app's editor
+// styles (simple-editor.scss) do the content; this only sets the page's
+// gutters and the cover / icon head.
+
+.landing-page-surface {
+  position: relative;
+  min-width: 0;
+
+  // The app's page padding comes from the layout; here the frame is the page.
+  .simple-editor-content .tiptap.ProseMirror.simple-editor {
+    padding: 8px 56px 48px;
+    outline: none;
+
+    // The app leaves room above the title for a cover; the head does that.
+    > :first-child {
+      margin-top: 0;
+    }
+  }
+
+  // The app offsets blocks by the sidebar width; there's no sidebar here.
+  --block-margin-left: 0px;
+  --block-padding-left: 0px;
+}
+
+// ── Cover + icon ──────────────────────────────────────────────────────────
+.landing-page-head {
+  position: relative;
+
+  &__cover {
+    position: relative;
+    height: 180px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+
+    &:hover .landing-page-head__cover-actions {
+      opacity: 1;
+    }
+  }
+
+  &__cover-actions {
+    position: absolute;
+    right: 16px;
+    bottom: 12px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+
+    // Readable on any cover.
+    .tiptap-button {
+      background: rgba(255, 255, 255, 0.85);
+      color: #37352f;
+      backdrop-filter: blur(4px);
+    }
+  }
+
+  &__inner {
+    position: relative;
+    padding: 28px 56px 4px;
+  }
+
+  &.has-cover &__inner {
+    padding-top: 0;
+  }
+
+  &__icon {
+    width: 78px;
+    height: 78px;
+    min-width: 78px;
+    padding: 0;
+    border-radius: 12px;
+
+    .has-cover & {
+      margin-top: -39px; // half over the cover, like a Folio page
+    }
+  }
+
+  &__emoji {
+    font-size: 58px;
+    line-height: 1;
+  }
+
+  &__icon-img {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  // "Add icon · Add cover": shown on hover, like above a page title.
+  &__add {
+    display: flex;
+    gap: 4px;
+    margin: 6px 0 2px -6px;
+    min-height: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover &__add,
+  &__add:focus-within {
+    opacity: 1;
+  }
+
+  &__popover {
+    z-index: 60;
+  }
+}
+
+@media (hover: none) {
+  .landing-page-head__add,
+  .landing-page-head__cover-actions {
+    opacity: 1;
+  }
+}
+
+// ── Collaboration: two windows side by side ───────────────────────────────
+.landing-collab {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+
+  &__window {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-radius: 14px;
+    border: 1px solid var(--tt-border-color);
+    background: var(--tt-bg-color);
+    overflow: hidden;
+  }
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--tt-border-color);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  &__avatar {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  &__page {
+    max-height: 440px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+
+    .simple-editor-content .tiptap.ProseMirror.simple-editor {
+      padding: 20px 28px 32px;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-collab {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-page-surface .simple-editor-content .tiptap.ProseMirror.simple-editor,
+  .landing-page-head__inner {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

@@ -116,7 +116,14 @@ export function Group({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function BubbleMenu({ editor }: { editor: Editor | null }) {
+export function BubbleMenu({
+  editor,
+  comments = true,
+}: {
+  editor: Editor | null;
+  /** Comment / suggest buttons; off where there's no page (the landing). */
+  comments?: boolean;
+}) {
   const [visible, setVisible] = useState(true);
 
   // Comment / suggest / highlight hide the menu so it doesn't sit on top of
@@ -223,10 +230,12 @@ export function BubbleMenu({ editor }: { editor: Editor | null }) {
               </Group>
 
               {/* Group 4 — comments */}
-              <Group>
-                <CommentButton onClick={onAction} editor={editor} />
-                <SuggestButton onClick={onAction} editor={editor} />
-              </Group>
+              {comments && (
+                <Group>
+                  <CommentButton onClick={onAction} editor={editor} />
+                  <SuggestButton onClick={onAction} editor={editor} />
+                </Group>
+              )}
 
               <MoreOptionsPopover
                 type="bold"

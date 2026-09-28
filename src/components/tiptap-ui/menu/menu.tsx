@@ -22,7 +22,7 @@ import { Button } from "src/components/tiptap-ui-primitive/button";
 import { CommentButton } from "../../../features/comments/comment-button";
 import { useTranslation } from "react-i18next";
 //import { RecordDragMenu } from "src/features/database/components/record-drag-menu";
-import { useActivePageState } from "src/features/pages/context/active-page-context";
+import { useOptionalActivePage } from "src/features/pages/context/active-page-context";
 import { requestDiscussBlock } from "src/features/chat/block-share-store";
 import { SuggestButton } from "../../../features/comments/suggest-button";
 
@@ -60,7 +60,9 @@ export function Menu({
   target?: string;
 }) {
   const { t } = useTranslation();
-  const { activePageId, activePage } = useActivePageState();
+  // Optional: the block menu also opens on the landing, where there's no
+  // page — comment, suggest and discuss need one, so they hide there.
+  const { activePageId, activePage } = useOptionalActivePage();
 
   // if (target === "Record") {
   //   return <RecordDragMenu onAction={onAction} />;
@@ -99,28 +101,32 @@ export function Menu({
             onResetAllFormatting={onAction}
           />
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <CommentButton
-            style={{
-              justifyContent: "flex-start",
-            }}
-            showTooltip={false}
-            text="Comment"
-            editor={editor}
-            onClick={onAction}
-          />
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <SuggestButton
-            style={{
-              justifyContent: "flex-start",
-            }}
-            showTooltip={false}
-            text="Suggest"
-            editor={editor}
-            onClick={onAction}
-          />
-        </DropdownMenuItem>
+        {activePageId && (
+          <>
+            <DropdownMenuItem asChild>
+              <CommentButton
+                style={{
+                  justifyContent: "flex-start",
+                }}
+                showTooltip={false}
+                text="Comment"
+                editor={editor}
+                onClick={onAction}
+              />
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <SuggestButton
+                style={{
+                  justifyContent: "flex-start",
+                }}
+                showTooltip={false}
+                text="Suggest"
+                editor={editor}
+                onClick={onAction}
+              />
+            </DropdownMenuItem>
+          </>
+        )}
         {block && activePageId && (
           <DropdownMenuItem asChild>
             <Button
