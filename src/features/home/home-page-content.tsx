@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Page, PageCover, Person } from "src/types";
 import type { TFunction } from "i18next";
 import { useRecentPages } from "src/hooks/use-pages";
@@ -18,6 +19,8 @@ import {
 import { useTemplates } from "src/hooks/use-templates";
 import { useClonePage } from "src/features/database/hooks/use-clone-page";
 import { HOME_GUIDES, type GuideIcon, type HomeGuide } from "./home-guides";
+import { ShowcaseReader } from "src/features/showcase/showcase-reader";
+import type { ShowcaseId } from "src/features/showcase/showcases";
 import { HomeCarousel } from "./home-carousel";
 import { useTranslation } from "react-i18next";
 import { Greeting } from "src/features/home/greeting/greeting";
@@ -89,6 +92,8 @@ export function HomePageContent({ userName }: { userName?: string }) {
   const { setActivePageId } = useActivePageActions();
   const { collapsed: sidebarCollapsed, expandedWidth } = useEditorLayout();
   const createPage = useCreatePage();
+  // Learn guide open in the reader (null = closed).
+  const [openGuide, setOpenGuide] = useState<ShowcaseId | null>(null);
 
   const { person } = useCurrentPerson();
   const { workspaceId } = useCurrentWorkspace();
@@ -248,11 +253,16 @@ export function HomePageContent({ userName }: { userName?: string }) {
             key={guide.id}
             guide={guide}
             onOpen={
-              guide.pageId ? () => setActivePageId(guide.pageId!) : undefined
+              guide.pageId
+                ? () => setActivePageId(guide.pageId!)
+                : guide.showcaseId
+                  ? () => setOpenGuide(guide.showcaseId)
+                  : undefined
             }
           />
         ))}
       </HomeCarousel>
+      <ShowcaseReader id={openGuide} onClose={() => setOpenGuide(null)} />
 
       {/* templates */}
       {templates.length > 0 && (

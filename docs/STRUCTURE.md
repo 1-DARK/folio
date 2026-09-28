@@ -22,6 +22,8 @@ src/
     inbox/            inbox and notifications
     workspace/        workspace settings, people, teamspaces, switcher
     versions/         version history
+    showcase/         showcase pages shipped with the app (Learn guides,
+                      landing previews) and their read-only viewer
   components/
     brand/            FolioMark
     tiptap-node/      ┐

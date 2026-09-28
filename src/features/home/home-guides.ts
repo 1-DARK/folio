@@ -1,8 +1,10 @@
 import type { ID } from "src/types";
+import type { ShowcaseId } from "src/features/showcase/showcases";
 
-// The "Learn" row on the home page. Each guide is meant to be a real Folio
-// page (written in Folio, published to everyone): set `pageId` once it
-// exists and the card opens it. Until then the card shows "Coming soon".
+// The "Learn" row on the home page. Each guide is a showcase page shipped
+// with the app (src/features/showcase) and opens read-only over the home
+// page. Set `pageId` instead to point a card at a real Folio page; with
+// neither, the card shows "Coming soon".
 //
 // Kept as plain config so guides can be added, reordered or pointed at a
 // future documentation engine without touching the home page component.
@@ -16,12 +18,14 @@ export interface HomeGuide {
   titleKey: string;
   title: string;
   readMinutes: number;
+  showcaseId: ShowcaseId | null;
   pageId: ID | null;
 }
 
 export const HOME_GUIDES: HomeGuide[] = [
   {
     id: "getting-started",
+    showcaseId: "getting-started",
     icon: "start",
     titleKey: "home.guides.gettingStarted",
     title: "Getting started with Folio",
@@ -30,6 +34,7 @@ export const HOME_GUIDES: HomeGuide[] = [
   },
   {
     id: "blocks",
+    showcaseId: "blocks",
     icon: "blocks",
     titleKey: "home.guides.blocks",
     title: "Write with blocks",
@@ -38,6 +43,7 @@ export const HOME_GUIDES: HomeGuide[] = [
   },
   {
     id: "databases",
+    showcaseId: "databases",
     icon: "databases",
     titleKey: "home.guides.databases",
     title: "Organize anything with databases",
@@ -46,6 +52,7 @@ export const HOME_GUIDES: HomeGuide[] = [
   },
   {
     id: "collaborate",
+    showcaseId: "collaborate",
     icon: "collaborate",
     titleKey: "home.guides.collaborate",
     title: "Work together: comments, suggestions and rooms",

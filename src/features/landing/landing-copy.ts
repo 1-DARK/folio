@@ -93,7 +93,7 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         { title: "Notes de réunion", body: "Ordre du jour, décisions et actions." },
         { title: "Wiki d’équipe", body: "Tout ce que votre équipe doit savoir." },
         { title: "Suivi de projet", body: "Tâches, responsables et échéances." },
-        { title: "Base de ressources", body: "Documents, liens et fichiers, bien rangés." },
+        { title: "Page de cours", body: "Leçons, équations, code et exercices." },
       ],
     },
     blocks: {
@@ -188,7 +188,7 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         { title: "Meeting notes", body: "Agenda, decisions and action items." },
         { title: "Team wiki", body: "Everything your team needs to know." },
         { title: "Project tracker", body: "Tasks, owners and deadlines." },
-        { title: "Resource library", body: "Documents, links and files, neatly organized." },
+        { title: "Course page", body: "Lessons, equations, code and exercises." },
       ],
     },
     blocks: {
