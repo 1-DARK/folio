@@ -42,6 +42,8 @@ const isInForbiddenBlock = (editor: Editor) =>
 
 interface SlashCommandOptions {
   commands: SlashItem[];
+  /** Keep only some items (e.g. the landing's provider-free editor). */
+  filter?: (item: SlashItem) => boolean;
 }
 
 declare module "@tiptap/core" {
@@ -98,6 +100,7 @@ export const SlashCommand = Extension.create<
 
   addProseMirrorPlugins() {
     const editor = this.editor;
+    const keep = this.options.filter ?? (() => true);
     let reactRenderer: ReactRenderer<any> | null = null;
     let selectedIndex = 0;
     let destroyed = false;
@@ -244,7 +247,7 @@ export const SlashCommand = Extension.create<
 
         // Rebuild fresh each query so a language switch re-localizes the menu
         // (and so filtering matches the translated titles).
-        const commands = getSlashCommands(i18n.t);
+        const commands = getSlashCommands(i18n.t).filter(keep);
 
         const q = (query || "").toLowerCase();
 

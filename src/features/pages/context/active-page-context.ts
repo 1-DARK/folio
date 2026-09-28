@@ -30,3 +30,18 @@ export function useActivePageState() {
 export function useActivePage() {
   return { ...useActivePageActions(), ...useActivePageState() };
 }
+
+// For UI that also renders outside the app's providers (the landing's live
+// editor): no provider → no active page, and setting one does nothing.
+const NO_ACTIVE_PAGE: ActivePageActions & ActivePageState = {
+  setActivePageId: () => {},
+  activePageId: null,
+  activePage: undefined,
+  isLoading: false,
+};
+export function useOptionalActivePage(): ActivePageActions & ActivePageState {
+  const actions = useContext(ActivePageActionsContext);
+  const state = useContext(ActivePageStateContext);
+  if (!actions || !state) return NO_ACTIVE_PAGE;
+  return { ...actions, ...state };
+}

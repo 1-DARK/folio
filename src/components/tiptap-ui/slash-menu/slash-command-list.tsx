@@ -8,7 +8,7 @@ import { Button, ButtonGroup } from "src/components/tiptap-ui-primitive/button";
 import "./slash-command-list.scss";
 import { useMenuNavigation } from "src/hooks/use-menu-navigation";
 import type { SlashCommand as SlashItem } from "./slash-commands";
-import { useActivePage } from "src/features/pages/context/active-page-context";
+import { useOptionalActivePage } from "src/features/pages/context/active-page-context";
 import { useCreatePage } from "src/hooks/use-create-page";
 import { makeChildPage } from "src/utils/make-page";
 import { Badge } from "src/components/tiptap-ui-primitive/badge";
@@ -23,7 +23,9 @@ export default function SlashList(props: Props) {
   const { items = [], onClickItem, onClose, editor } = props;
   const { t } = useTranslation();
   const createPage = useCreatePage();
-  const { activePageId, activePage, setActivePageId } = useActivePage();
+  // Optional: the slash menu also runs in the landing's live editor, outside
+  // the app's providers (there, "new page" isn't offered).
+  const { activePageId, activePage, setActivePageId } = useOptionalActivePage();
   const isSelectable = (item: SlashItem) => item.type === "command";
 
   const selectableItems = useMemo(() => items.filter(isSelectable), [items]);
