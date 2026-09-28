@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LANDING_COPY, type LandingLang } from "./landing-copy";
 import { FolioMark } from "../../components/brand/folio-mark";
+import { ShowcasePreview } from "../showcase/showcase-preview";
+import { getShowcase, type ShowcaseId } from "../showcase/showcases";
+import { snippets } from "../showcase/content/snippets";
 import "./landing.scss";
 
 type LandingTheme = "light" | "dark";
@@ -29,6 +32,21 @@ function Shot({ label, ratio }: { label: string; ratio: string }) {
     </div>
   );
 }
+
+// Live previews: real Folio pages (src/features/showcase) instead of
+// screenshots. Template cards follow the order of c.templates.items; blocks
+// tabs without a snippet keep their placeholder.
+const TEMPLATE_SHOWCASES: ShowcaseId[] = [
+  "meeting-notes",
+  "team-wiki",
+  "project-tracker",
+  "course",
+];
+const TAB_SNIPPETS: Partial<Record<string, keyof typeof snippets>> = {
+  math: "math",
+  code: "code",
+  db: "db",
+};
 
 /**
  * The public page signed-out visitors see at "/". A feature tour in the
@@ -156,16 +174,34 @@ export function Landing({
             </a>
           </div>
           <div className="landing-hero__shot">
-            <Shot label={c.hero.shot} ratio="12 / 7" />
+            <ShowcasePreview
+              className="landing-live"
+              content={getShowcase("team-wiki", lang)}
+              ratio="12 / 7"
+              pageWidth={1100}
+              dark={theme === "dark"}
+              label={c.hero.shot}
+            />
           </div>
         </section>
 
         <section id="templates" className="landing-section">
           <h2 className="landing-h3">{c.templates.title}</h2>
           <div className="landing-grid landing-grid--4">
-            {c.templates.items.map((tp) => (
+            {c.templates.items.map((tp, n) => (
               <div key={tp.title} className="landing-card landing-card--flush">
-                <Shot label={tp.title} ratio="16 / 10" />
+                {TEMPLATE_SHOWCASES[n] ? (
+                  <ShowcasePreview
+                    className="landing-live"
+                    content={getShowcase(TEMPLATE_SHOWCASES[n], lang)}
+                    ratio="16 / 10"
+                    pageWidth={620}
+                    dark={theme === "dark"}
+                    label={tp.title}
+                  />
+                ) : (
+                  <Shot label={tp.title} ratio="16 / 10" />
+                )}
                 <div className="landing-card__body">
                   <span className="landing-card__title">{tp.title}</span>
                   <span className="landing-muted">{tp.body}</span>
@@ -214,7 +250,18 @@ export function Landing({
                 {c.blocks.type} {tab.command}
               </code>
             </div>
-            <Shot label={tab.label} ratio="16 / 9" />
+            {TAB_SNIPPETS[tab.id] ? (
+              <ShowcasePreview
+                className="landing-live"
+                content={snippets[TAB_SNIPPETS[tab.id]!][lang]}
+                ratio="16 / 9"
+                pageWidth={720}
+                dark={theme === "dark"}
+                label={tab.title}
+              />
+            ) : (
+              <Shot label={tab.label} ratio="16 / 9" />
+            )}
           </div>
         </section>
 

@@ -303,6 +303,22 @@
   }
 }
 
+// ── Live previews (showcase pages) ────────────────────────────────────────
+.landing-live {
+  border-radius: 12px;
+  border: 1px solid var(--l-border);
+}
+
+.landing-hero__shot .landing-live {
+  border-radius: 14px;
+}
+
+.landing-card--flush > .landing-live {
+  border: 0;
+  border-bottom: 1px solid var(--l-border);
+  border-radius: 0;
+}
+
 // ── Sections ──────────────────────────────────────────────────────────────
 .landing-hero {
   display: flex;

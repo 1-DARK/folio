@@ -1,0 +1,38 @@
+.showcase-preview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--tt-bg-color);
+  color: var(--tt-text-color);
+  // Parents (the landing hero) may center text; a page never is.
+  text-align: left;
+
+  &__page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 12px 48px 0;
+    box-sizing: border-box;
+    transform-origin: top left;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  // Fade out at the bottom edge, where the page is cropped.
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 22%;
+    background: linear-gradient(to bottom, transparent, var(--tt-bg-color));
+    pointer-events: none;
+  }
+}
+
+// Start at the title: no page-top spacing inside a frame.
+.showcase-preview .tiptap.ProseMirror.showcase-viewer__doc > :first-child {
+  margin-top: 0;
+  padding-top: 0;
+}

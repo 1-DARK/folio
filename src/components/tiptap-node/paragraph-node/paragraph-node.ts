@@ -125,7 +125,10 @@ export const ParagraphNode = Paragraph.extend({
                 )
               ) {
                 const absPos = offset + 1 + colOffset + 1 + column.content.size;
-                tr.insert(absPos, schema.nodes.paragraph.create());
+                // Map through the paragraphs already inserted into earlier
+                // columns — otherwise the second column's paragraph lands
+                // inside its text, splitting it.
+                tr.insert(tr.mapping.map(absPos), schema.nodes.paragraph.create());
                 modified = true;
               }
             });

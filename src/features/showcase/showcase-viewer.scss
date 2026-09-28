@@ -1,0 +1,50 @@
+// Read-only showcase page. Inherits the page editor's styles (.simple-editor);
+// only undoes what assumes a live, editable page.
+
+.showcase-viewer {
+  width: 100%;
+  min-width: 0;
+
+  .tiptap.ProseMirror.showcase-viewer__doc {
+    // The editor's content-visibility optimisation skips off-screen blocks;
+    // previews are short and often scaled, so render everything.
+    content-visibility: visible;
+    contain: none;
+    outline: none;
+    cursor: default;
+
+    > * {
+      content-visibility: visible;
+    }
+  }
+
+  // Editing affordances: placeholders, gap cursors, add / close tab buttons,
+  // column resizers and drop zones.
+  .ProseMirror-gapcursor,
+  .is-empty::before,
+  .tab-add,
+  .tab-item__close,
+  .column-resizer,
+  .column-drop-zone {
+    display: none !important;
+  }
+
+  // The trailing empty paragraph the editor keeps for typing.
+  .tiptap.ProseMirror.showcase-viewer__doc > p:last-child:empty,
+  .tiptap.ProseMirror.showcase-viewer__doc > p:last-child:has(> br:only-child) {
+    display: none;
+  }
+
+  // Compact: for frames on the landing page and cards.
+  &--compact {
+    font-size: 0.8125rem;
+
+    .tiptap.ProseMirror.showcase-viewer__doc {
+      h1[data-type="title"],
+      .title-node,
+      > p:first-child {
+        font-size: 1.75em;
+      }
+    }
+  }
+}
