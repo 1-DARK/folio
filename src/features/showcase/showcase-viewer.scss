@@ -29,10 +29,12 @@
     display: none !important;
   }
 
-  // The trailing empty paragraph the editor keeps for typing.
-  .tiptap.ProseMirror.showcase-viewer__doc > p:last-child:empty,
-  .tiptap.ProseMirror.showcase-viewer__doc > p:last-child:has(> br:only-child) {
-    display: none;
+  // The trailing empty paragraph the editor keeps for typing (read-only only).
+  &:not(.showcase-viewer--editable) {
+    .tiptap.ProseMirror.showcase-viewer__doc > p:last-child:empty,
+    .tiptap.ProseMirror.showcase-viewer__doc > p:last-child:has(> br:only-child) {
+      display: none;
+    }
   }
 
   // Compact: for frames on the landing page and cards.
@@ -46,5 +48,28 @@
         font-size: 1.75em;
       }
     }
+  }
+}
+
+// Live editor: a text cursor and a placeholder on the current empty line
+// (the read-only rule above hides placeholders).
+.showcase-viewer--editable {
+  .tiptap.ProseMirror.showcase-viewer__doc {
+    cursor: text;
+  }
+
+  .is-empty.is-editor-empty::before,
+  p.is-empty.has-focus::before {
+    display: block !important;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: var(--tt-text-secondary, #9b9a97);
+  }
+
+  .tab-add,
+  .tab-item__close {
+    display: revert !important;
   }
 }

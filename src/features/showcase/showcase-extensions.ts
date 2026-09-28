@@ -39,6 +39,10 @@ import {
   NodeBackground,
   NodeColor,
 } from "src/components/tiptap-extension";
+import { Placeholder } from "@tiptap/extensions";
+import { SlashCommand } from "src/components/tiptap-ui/slash-menu";
+import { getSlashCommands } from "src/components/tiptap-ui/slash-menu/slash-commands";
+import i18n from "src/i18n/config";
 
 // Extensions for showcase pages: the same nodes and marks as the page
 // editor, minus everything that needs a signed-in user or the app's
@@ -94,3 +98,40 @@ export const SHOWCASE_EXTENSIONS = [
   NodeAlignment.configure({ useStyle: false }),
   NodeColor.configure({ useStyle: false }),
 ];
+
+// Editable variant, for the landing's live editor and "Try it" examples:
+// the same nodes plus the slash menu (limited to the blocks above) and a
+// placeholder. Nothing here saves anything.
+
+const EDITABLE_SLASH_IDS = new Set([
+  "style", "p", "h1", "h2", "h3", "styleDivider", "bulletList", "orderedList",
+  "taskList", "insert", "separator", "quote", "codeBlock", "table", "column2",
+  "column3", "tabs", "codeGroup", "insertDivider", "mathBlock", "mathInline",
+  "callout", "appendix",
+]);
+
+/** Slash items the showcase editor can actually run (and the color ones). */
+const isShowcaseSlashItem = (c: { id: string }) =>
+  EDITABLE_SLASH_IDS.has(c.id) || c.id.startsWith("color-");
+
+export function showcaseSlashCommands() {
+  return getSlashCommands(i18n.t).filter(isShowcaseSlashItem);
+}
+
+export function makeEditableShowcaseExtensions() {
+  return [
+    ...SHOWCASE_EXTENSIONS,
+    SlashCommand.configure({
+      commands: showcaseSlashCommands(),
+      filter: isShowcaseSlashItem,
+    }),
+    Placeholder.configure({
+      includeChildren: true,
+      showOnlyCurrent: true,
+      placeholder: ({ node }) => {
+        if (node.type.name === "title") return i18n.t("page.untitled", "Untitled");
+        return i18n.t("landing.typeSlash", "Type / for blocks");
+      },
+    }),
+  ];
+}
