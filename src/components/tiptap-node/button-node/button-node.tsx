@@ -12,9 +12,9 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
-import { LinkPicker } from "src/components/tiptap-ui/link-picker/link-picker"; // adjust path
+import { LinkPicker } from "src/components/tiptap-ui/link-picker/link-picker";
 import { useEditorEditable } from "./use-editor-editable";
-import { useActivePageActions } from "src/features/pages/context/active-page-context";
+import { useOptionalActivePage } from "src/features/pages/context/active-page-context";
 import { ResizableNodeProvider } from "../figure-node";
 import { ResizableNodeContext } from "../figure-node/resize-node-context";
 import "./button-node.scss";
@@ -115,7 +115,8 @@ function ButtonView({ node, editor, updateAttributes }: NodeViewProps) {
   };
   const editable = useEditorEditable(editor);
   const [open, setOpen] = useState(false);
-  const { setActivePageId } = useActivePageActions();
+  // Optional: the node also renders on the landing, outside the app's providers.
+  const { setActivePageId } = useOptionalActivePage();
 
   const navigate = () => {
     if (!href) return;

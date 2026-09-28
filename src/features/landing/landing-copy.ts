@@ -1,6 +1,7 @@
-// All landing text, French and English. The page is a product tour: a
-// sidebar tree of sections (like a Folio workspace), one page per feature,
-// each ending with "Try it yourself" examples that open as editable pages.
+// All landing text, French and English. The page is a product tour: a top
+// nav of pages (Editor, Organize, Teamspaces, Together, Offline), each made
+// of feature sections ending with "Try it yourself" examples that open in
+// the real editor.
 //
 // Positioning: a workspace for docs, wikis and resources. Schools and
 // students are one audience among several, so the copy stays general.
@@ -23,13 +24,20 @@ export type SectionId =
   | "rooms"
   | "offline";
 
-export type GroupId = "write" | "organize" | "together" | "anywhere";
+/** Pages in the top nav (the overview is the logo / "#/"). */
+export type NavId =
+  | "editor"
+  | "organize"
+  | "teamspaces"
+  | "together"
+  | "offline";
 
 /** Screenshot slots, filled in landing-shots.ts once the images exist. */
 export type ShotId = "B" | "C" | "E" | "F" | "G" | "H";
 
 export type SectionVisual =
   | { kind: "editor"; examples: ShowcaseId[] }
+  | { kind: "collab"; example: ShowcaseId }
   | { kind: "blocks" }
   | { kind: "templates" }
   | { kind: "databases" }
@@ -48,15 +56,17 @@ export interface SectionCopy {
 
 /** Language-independent shape of the tour. */
 export const TOUR: {
-  groups: { id: GroupId; sections: SectionId[] }[];
+  nav: { id: NavId; sections: Exclude<SectionId, "overview">[] }[];
   visuals: Record<Exclude<SectionId, "overview">, SectionVisual>;
   tries: Partial<Record<SectionId, ShowcaseId[]>>;
 } = {
-  groups: [
-    { id: "write", sections: ["editor", "blocks", "covers", "templates"] },
-    { id: "organize", sections: ["workspaces", "teamspaces", "databases"] },
+  nav: [
+    { id: "editor", sections: ["editor", "blocks", "covers"] },
+    // Databases and templates live here until they get their own pages.
+    { id: "organize", sections: ["workspaces", "databases", "templates"] },
+    { id: "teamspaces", sections: ["teamspaces"] },
     { id: "together", sections: ["collaboration", "comments", "rooms"] },
-    { id: "anywhere", sections: ["offline"] },
+    { id: "offline", sections: ["offline"] },
   ],
   visuals: {
     editor: { kind: "editor", examples: ["getting-started", "blocks"] },
@@ -66,7 +76,7 @@ export const TOUR: {
     workspaces: { kind: "shot", shot: "C", ratio: "16 / 10" },
     teamspaces: { kind: "shot", shot: "F", ratio: "16 / 9" },
     databases: { kind: "databases" },
-    collaboration: { kind: "shot", shot: "E", ratio: "16 / 9" },
+    collaboration: { kind: "collab", example: "meeting-notes" },
     comments: { kind: "shot", shot: "G", ratio: "16 / 9" },
     rooms: { kind: "shot", shot: "H", ratio: "16 / 9" },
     offline: { kind: "offline" },
@@ -94,20 +104,40 @@ export interface LandingCopy {
     language: string;
     tour: string;
   };
-  groups: Record<GroupId, string>;
+  nav: Record<NavId, string>;
   sections: Record<SectionId, SectionCopy>;
   hero: { title: string; lead: string; primary: string; secondary: string };
-  editor: { badge: string; hint: string; reset: string; examples: string };
+  editor: {
+    badge: string;
+    hint: string;
+    reset: string;
+    examples: string;
+    addIcon: string;
+    addCover: string;
+    changeCover: string;
+    removeCover: string;
+  };
+  collab: { hint: string; window: (name: string) => string };
   tour: string;
   tryTitle: string;
   /** What each example shows, under its title on a "Try it" card. */
   tryMeta: Record<ShowcaseId, string>;
-  example: { badge: string; banner: string; useTemplate: string; back: string; reset: string };
+  example: {
+    badge: string;
+    banner: string;
+    useTemplate: string;
+    back: string;
+    reset: string;
+  };
   shot: Record<ShotId, string>;
   blockGroups: { title: string; items: { name: string; body: string }[] }[];
   views: string[];
   templatesUse: string;
-  offlineSteps: { pill: string; text: string; tone: "online" | "offline" | "synced" }[];
+  offlineSteps: {
+    pill: string;
+    text: string;
+    tone: "online" | "offline" | "synced";
+  }[];
   roles: { title: string; items: { title: string; body: string }[] };
   final: { title: string; sub: string; primary: string; secondary: string };
   footer: { tagline: string; legal: string };
@@ -125,7 +155,13 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       language: "Language",
       tour: "Product tour",
     },
-    groups: { write: "Write", organize: "Organize", together: "Together", anywhere: "Anywhere" },
+    nav: {
+      editor: "Editor",
+      organize: "Organize",
+      teamspaces: "Teamspaces",
+      together: "Together",
+      offline: "Offline",
+    },
     sections: {
       overview: {
         label: "Overview",
@@ -139,9 +175,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "An editor you already know how to use",
         lead: "Every paragraph, list, table or equation is a block. Type / to add one, drag blocks to move them, use Markdown shortcuts if you prefer the keyboard. This is the real editor: try it.",
         points: [
-          { title: "The / menu", body: "Every block is one keystroke away, with search." },
-          { title: "Markdown shortcuts", body: "# for a heading, - for a list, [] for a to-do, > for a quote." },
-          { title: "Drag and turn into", body: "Grab a block by its handle to move it or turn it into another one." },
+          {
+            title: "The / menu",
+            body: "Every block is one keystroke away, with search.",
+          },
+          {
+            title: "Markdown shortcuts",
+            body: "# for a heading, - for a list, [] for a to-do, > for a quote.",
+          },
+          {
+            title: "Drag and turn into",
+            body: "Grab a block by its handle to move it or turn it into another one.",
+          },
         ],
       },
       blocks: {
@@ -156,9 +201,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Make every page yours",
         lead: "Give each page a cover and an icon, so a wiki full of pages is easy to find your way around.",
         points: [
-          { title: "Covers", body: "Colors, gradients, a photo library, your own image or a link. Reposition it to frame it right." },
-          { title: "Icons", body: "An emoji, an icon from a full library in the color you pick, or your own image." },
-          { title: "Everywhere", body: "A page’s icon follows it into the sidebar, page links and search." },
+          {
+            title: "Covers",
+            body: "Colors, gradients, a photo library, your own image or a link. Reposition it to frame it right.",
+          },
+          {
+            title: "Icons",
+            body: "An emoji, an icon from a full library in the color you pick, or your own image.",
+          },
+          {
+            title: "Everywhere",
+            body: "A page’s icon follows it into the sidebar, page links and search.",
+          },
         ],
       },
       templates: {
@@ -173,9 +227,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "A space for every group you’re part of",
         lead: "One workspace per organization, with its own members, guests and settings. Switch between them in one click.",
         points: [
-          { title: "Workspaces", body: "One per company, school or association." },
-          { title: "Members and guests", body: "Invite your team, and guests who only see what you share with them." },
-          { title: "Private pages", body: "Your own pages stay private until you share them." },
+          {
+            title: "Workspaces",
+            body: "One per company, school or association.",
+          },
+          {
+            title: "Members and guests",
+            body: "Invite your team, and guests who only see what you share with them.",
+          },
+          {
+            title: "Private pages",
+            body: "Your own pages stay private until you share them.",
+          },
         ],
       },
       teamspaces: {
@@ -184,9 +247,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "A space for each team, class or project",
         lead: "Inside a workspace, teamspaces keep each group’s pages, rooms and templates together. Open ones anyone can join; closed ones by invitation.",
         points: [
-          { title: "Members and groups", body: "Add people one by one, or attach a whole group at once." },
-          { title: "Open or closed", body: "Open to the whole workspace, or joined by invitation only." },
-          { title: "Pinned pages and templates", body: "Pin what matters and keep the team’s own templates close." },
+          {
+            title: "Members and groups",
+            body: "Add people one by one, or attach a whole group at once.",
+          },
+          {
+            title: "Open or closed",
+            body: "Open to the whole workspace, or joined by invitation only.",
+          },
+          {
+            title: "Pinned pages and templates",
+            body: "Pin what matters and keep the team’s own templates close.",
+          },
         ],
       },
       databases: {
@@ -195,9 +267,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Turn any list into a tool",
         lead: "A database is a list of records, each one a page, shown the way the work needs it. Type /database in any page, or start from an example.",
         points: [
-          { title: "Six views", body: "Table, board, list, gallery, calendar and timeline, on the same records." },
-          { title: "Properties", body: "Text, numbers, select, status, dates, people, relations and more." },
-          { title: "Filter, sort, group", body: "Each view keeps its own, so every person can have theirs." },
+          {
+            title: "Six views",
+            body: "Table, board, list, gallery, calendar and timeline, on the same records.",
+          },
+          {
+            title: "Properties",
+            body: "Text, numbers, select, status, dates, people, relations and more.",
+          },
+          {
+            title: "Filter, sort, group",
+            body: "Each view keeps its own, so every person can have theirs.",
+          },
         ],
       },
       collaboration: {
@@ -206,9 +287,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Write together, on the same page",
         lead: "Everyone edits at once and sees each other’s cursors. Share each page with exactly the people who need it.",
         points: [
-          { title: "Live cursors", body: "See who’s on the page and what they’re writing, as it happens." },
-          { title: "Sharing", body: "Choose who can view, comment, edit or has full access, page by page." },
-          { title: "Version history", body: "Look back at earlier versions of a page and restore one." },
+          {
+            title: "Live cursors",
+            body: "See who’s on the page and what they’re writing, as it happens.",
+          },
+          {
+            title: "Sharing",
+            body: "Choose who can view, comment, edit or has full access, page by page.",
+          },
+          {
+            title: "Version history",
+            body: "Look back at earlier versions of a page and restore one.",
+          },
         ],
       },
       comments: {
@@ -217,9 +307,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Discuss the work where it is",
         lead: "Comment on a precise passage, suggest new wording instead of overwriting someone’s text, and bring people in with @.",
         points: [
-          { title: "Comments", body: "Select any passage and comment. Resolve the thread once it’s settled." },
-          { title: "Suggestions", body: "Propose new wording; the author accepts or rejects it in one click." },
-          { title: "Mentions and inbox", body: "Type @ to bring someone in. They get a notification in their inbox." },
+          {
+            title: "Comments",
+            body: "Select any passage and comment. Resolve the thread once it’s settled.",
+          },
+          {
+            title: "Suggestions",
+            body: "Propose new wording; the author accepts or rejects it in one click.",
+          },
+          {
+            title: "Mentions and inbox",
+            body: "Type @ to bring someone in. They get a notification in their inbox.",
+          },
         ],
       },
       rooms: {
@@ -228,9 +327,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Talk next to the work",
         lead: "Rooms are chats for a team or a project. Share a block from any page into a room to discuss it; the room keeps the link back.",
         points: [
-          { title: "Rooms and messages", body: "Per team or project, plus direct messages." },
-          { title: "Replies, reactions, files", body: "Everything a team chat needs, next to your pages." },
-          { title: "Share a block", body: "Send any block of a page into a room to talk about it." },
+          {
+            title: "Rooms and messages",
+            body: "Per team or project, plus direct messages.",
+          },
+          {
+            title: "Replies, reactions, files",
+            body: "Everything a team chat needs, next to your pages.",
+          },
+          {
+            title: "Share a block",
+            body: "Send any block of a page into a room to talk about it.",
+          },
         ],
       },
       offline: {
@@ -248,9 +356,17 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
     },
     editor: {
       badge: "Live editor",
-      hint: "Type / to add a block. Nothing is saved.",
+      hint: "Type /, select text, drag a block, add a cover. Nothing is saved.",
       reset: "Reset",
       examples: "Examples",
+      addIcon: "Add icon",
+      addCover: "Add cover",
+      changeCover: "Change cover",
+      removeCover: "Remove",
+    },
+    collab: {
+      hint: "Two windows, one page. Type in either one and watch the other.",
+      window: (name) => `${name}’s window`,
     },
     tour: "Take the tour",
     tryTitle: "Try it yourself",
@@ -280,50 +396,83 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       H: "Screenshot — a room with messages and a shared block",
     },
     blockGroups: [
-      { title: "Write", items: [
-        { name: "Text and headings", body: "Three heading levels" },
-        { name: "Lists and to-dos", body: "Bullets, numbers, checkboxes" },
-        { name: "Toggle", body: "Hide details until opened" },
-        { name: "Callout", body: "Tips, warnings, key facts" },
-        { name: "Quote", body: "Pull out what matters" },
-        { name: "Mentions and emoji", body: "@people, @pages, :emoji:" },
-      ] },
-      { title: "Organize", items: [
-        { name: "Columns", body: "Two, three or four" },
-        { name: "Tabs", body: "Several panels in one place" },
-        { name: "Table", body: "Rows and columns of text" },
-        { name: "Table of contents", body: "Follows your headings" },
-        { name: "Page links", body: "Build a wiki" },
-        { name: "Database", body: "Six views of the same records" },
-      ] },
-      { title: "Media", items: [
-        { name: "Image", body: "Resize, caption, align" },
-        { name: "Files and PDF preview", body: "Read documents in the page" },
-        { name: "Video and YouTube", body: "Upload or embed" },
-        { name: "Audio", body: "Recordings and podcasts" },
-        { name: "Web bookmark", body: "A link with its preview" },
-      ] },
-      { title: "Technical", items: [
-        { name: "Code", body: "Highlighted, one-click copy" },
-        { name: "Code group", body: "One tab per language" },
-        { name: "Equations", body: "LaTeX, inline or as a block" },
-        { name: "Buttons", body: "Link to a page or a site" },
-        { name: "Containers", body: "Group blocks in a frame" },
-      ] },
+      {
+        title: "Write",
+        items: [
+          { name: "Text and headings", body: "Three heading levels" },
+          { name: "Lists and to-dos", body: "Bullets, numbers, checkboxes" },
+          { name: "Toggle", body: "Hide details until opened" },
+          { name: "Callout", body: "Tips, warnings, key facts" },
+          { name: "Quote", body: "Pull out what matters" },
+          { name: "Mentions and emoji", body: "@people, @pages, :emoji:" },
+        ],
+      },
+      {
+        title: "Organize",
+        items: [
+          { name: "Columns", body: "Two, three or four" },
+          { name: "Tabs", body: "Several panels in one place" },
+          { name: "Table", body: "Rows and columns of text" },
+          { name: "Table of contents", body: "Follows your headings" },
+          { name: "Page links", body: "Build a wiki" },
+          { name: "Database", body: "Six views of the same records" },
+        ],
+      },
+      {
+        title: "Media",
+        items: [
+          { name: "Image", body: "Resize, caption, align" },
+          { name: "Files and PDF preview", body: "Read documents in the page" },
+          { name: "Video and YouTube", body: "Upload or embed" },
+          { name: "Audio", body: "Recordings and podcasts" },
+          { name: "Web bookmark", body: "A link with its preview" },
+        ],
+      },
+      {
+        title: "Technical",
+        items: [
+          { name: "Code", body: "Highlighted, one-click copy" },
+          { name: "Code group", body: "One tab per language" },
+          { name: "Equations", body: "LaTeX, inline or as a block" },
+          { name: "Buttons", body: "Link to a page or a site" },
+          { name: "Containers", body: "Group blocks in a frame" },
+        ],
+      },
     ],
     views: ["Table", "Board", "List", "Gallery", "Calendar", "Timeline"],
     templatesUse: "Open it",
     offlineSteps: [
-      { pill: "Online", text: "You write with your team, live.", tone: "online" },
-      { pill: "Offline", text: "You keep going. Nothing is lost.", tone: "offline" },
-      { pill: "Synced", text: "Everything goes out when you reconnect.", tone: "synced" },
+      {
+        pill: "Online",
+        text: "You write with your team, live.",
+        tone: "online",
+      },
+      {
+        pill: "Offline",
+        text: "You keep going. Nothing is lost.",
+        tone: "offline",
+      },
+      {
+        pill: "Synced",
+        text: "Everything goes out when you reconnect.",
+        tone: "synced",
+      },
     ],
     roles: {
       title: "For teams, schools and communities",
       items: [
-        { title: "Teams", body: "Wiki, documentation, meetings and projects in one shared space." },
-        { title: "Schools and students", body: "Courses, assignments and group work, organized for a whole class." },
-        { title: "Communities and clubs", body: "Resources, decisions and showcases of your work, all together." },
+        {
+          title: "Teams",
+          body: "Wiki, documentation, meetings and projects in one shared space.",
+        },
+        {
+          title: "Schools and students",
+          body: "Courses, assignments and group work, organized for a whole class.",
+        },
+        {
+          title: "Communities and clubs",
+          body: "Resources, decisions and showcases of your work, all together.",
+        },
       ],
     },
     final: {
@@ -332,7 +481,10 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       primary: "Get started free",
       secondary: "Log in",
     },
-    footer: { tagline: "The workspace for your docs, wiki and resources.", legal: "Privacy · Terms" },
+    footer: {
+      tagline: "The workspace for your docs, wiki and resources.",
+      legal: "Privacy · Terms",
+    },
     notFound: "This page doesn’t exist.",
   },
 
@@ -346,7 +498,13 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       language: "Langue",
       tour: "Visite du produit",
     },
-    groups: { write: "Écrire", organize: "Organiser", together: "Ensemble", anywhere: "Partout" },
+    nav: {
+      editor: "Éditeur",
+      organize: "Organiser",
+      teamspaces: "Espaces d’équipe",
+      together: "Ensemble",
+      offline: "Hors ligne",
+    },
     sections: {
       overview: {
         label: "Vue d’ensemble",
@@ -360,9 +518,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Un éditeur que vous savez déjà utiliser",
         lead: "Chaque paragraphe, liste, tableau ou équation est un bloc. Tapez / pour en ajouter un, glissez les blocs pour les déplacer, utilisez les raccourcis Markdown si vous préférez le clavier. C’est le vrai éditeur : essayez-le.",
         points: [
-          { title: "Le menu /", body: "Chaque bloc est à une touche, avec la recherche." },
-          { title: "Raccourcis Markdown", body: "# pour un titre, - pour une liste, [] pour une case à cocher, > pour une citation." },
-          { title: "Glisser et transformer", body: "Attrapez un bloc par sa poignée pour le déplacer ou le changer en un autre." },
+          {
+            title: "Le menu /",
+            body: "Chaque bloc est à une touche, avec la recherche.",
+          },
+          {
+            title: "Raccourcis Markdown",
+            body: "# pour un titre, - pour une liste, [] pour une case à cocher, > pour une citation.",
+          },
+          {
+            title: "Glisser et transformer",
+            body: "Attrapez un bloc par sa poignée pour le déplacer ou le changer en un autre.",
+          },
         ],
       },
       blocks: {
@@ -377,9 +544,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Des pages à votre image",
         lead: "Donnez à chaque page une couverture et une icône : un wiki plein de pages devient facile à parcourir.",
         points: [
-          { title: "Couvertures", body: "Couleurs, dégradés, une photothèque, votre image ou un lien. Repositionnez-la pour bien la cadrer." },
-          { title: "Icônes", body: "Un emoji, une icône d’une bibliothèque complète dans la couleur de votre choix, ou votre image." },
-          { title: "Partout", body: "L’icône d’une page la suit dans la barre latérale, les liens et la recherche." },
+          {
+            title: "Couvertures",
+            body: "Couleurs, dégradés, une photothèque, votre image ou un lien. Repositionnez-la pour bien la cadrer.",
+          },
+          {
+            title: "Icônes",
+            body: "Un emoji, une icône d’une bibliothèque complète dans la couleur de votre choix, ou votre image.",
+          },
+          {
+            title: "Partout",
+            body: "L’icône d’une page la suit dans la barre latérale, les liens et la recherche.",
+          },
         ],
       },
       templates: {
@@ -394,9 +570,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Un espace pour chaque groupe dont vous faites partie",
         lead: "Un espace de travail par organisation, avec ses membres, ses invités et ses réglages. Passez de l’un à l’autre en un clic.",
         points: [
-          { title: "Espaces de travail", body: "Un par entreprise, école ou association." },
-          { title: "Membres et invités", body: "Invitez votre équipe, et des invités qui ne voient que ce que vous partagez." },
-          { title: "Pages privées", body: "Vos pages restent privées jusqu’à ce que vous les partagiez." },
+          {
+            title: "Espaces de travail",
+            body: "Un par entreprise, école ou association.",
+          },
+          {
+            title: "Membres et invités",
+            body: "Invitez votre équipe, et des invités qui ne voient que ce que vous partagez.",
+          },
+          {
+            title: "Pages privées",
+            body: "Vos pages restent privées jusqu’à ce que vous les partagiez.",
+          },
         ],
       },
       teamspaces: {
@@ -405,9 +590,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Un espace pour chaque équipe, classe ou projet",
         lead: "Dans un espace de travail, les espaces d’équipe rassemblent les pages, salons et modèles de chaque groupe. Ouverts à tous, ou fermés et sur invitation.",
         points: [
-          { title: "Membres et groupes", body: "Ajoutez des personnes une à une, ou tout un groupe d’un coup." },
-          { title: "Ouvert ou fermé", body: "Ouvert à tout l’espace de travail, ou sur invitation seulement." },
-          { title: "Pages épinglées et modèles", body: "Épinglez l’essentiel et gardez les modèles de l’équipe à portée." },
+          {
+            title: "Membres et groupes",
+            body: "Ajoutez des personnes une à une, ou tout un groupe d’un coup.",
+          },
+          {
+            title: "Ouvert ou fermé",
+            body: "Ouvert à tout l’espace de travail, ou sur invitation seulement.",
+          },
+          {
+            title: "Pages épinglées et modèles",
+            body: "Épinglez l’essentiel et gardez les modèles de l’équipe à portée.",
+          },
         ],
       },
       databases: {
@@ -416,9 +610,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Une liste qui devient un outil",
         lead: "Une base de données est une liste de fiches, chacune une page, affichée comme le travail l’exige. Tapez /base dans n’importe quelle page, ou partez d’un exemple.",
         points: [
-          { title: "Six vues", body: "Tableau, kanban, liste, galerie, calendrier et chronologie, sur les mêmes fiches." },
-          { title: "Propriétés", body: "Texte, nombres, sélection, statut, dates, personnes, relations et plus." },
-          { title: "Filtrer, trier, grouper", body: "Chaque vue garde les siens : à chacun sa vue." },
+          {
+            title: "Six vues",
+            body: "Tableau, kanban, liste, galerie, calendrier et chronologie, sur les mêmes fiches.",
+          },
+          {
+            title: "Propriétés",
+            body: "Texte, nombres, sélection, statut, dates, personnes, relations et plus.",
+          },
+          {
+            title: "Filtrer, trier, grouper",
+            body: "Chaque vue garde les siens : à chacun sa vue.",
+          },
         ],
       },
       collaboration: {
@@ -427,9 +630,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Écrivez ensemble, sur la même page",
         lead: "Tout le monde modifie en même temps et voit les curseurs des autres. Partagez chaque page avec exactement les bonnes personnes.",
         points: [
-          { title: "Curseurs en direct", body: "Voyez qui est sur la page et ce qu’il écrit, au moment où il l’écrit." },
-          { title: "Partage", body: "Lecture, commentaire, modification ou accès complet, page par page." },
-          { title: "Historique des versions", body: "Revenez aux versions précédentes d’une page et restaurez-en une." },
+          {
+            title: "Curseurs en direct",
+            body: "Voyez qui est sur la page et ce qu’il écrit, au moment où il l’écrit.",
+          },
+          {
+            title: "Partage",
+            body: "Lecture, commentaire, modification ou accès complet, page par page.",
+          },
+          {
+            title: "Historique des versions",
+            body: "Revenez aux versions précédentes d’une page et restaurez-en une.",
+          },
         ],
       },
       comments: {
@@ -438,9 +650,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Discutez du travail là où il est",
         lead: "Commentez un passage précis, proposez une formulation au lieu d’écraser le texte d’un autre, et faites venir les bonnes personnes avec @.",
         points: [
-          { title: "Commentaires", body: "Sélectionnez un passage et commentez. Résolvez la discussion une fois tranchée." },
-          { title: "Suggestions", body: "Proposez une formulation ; l’auteur l’accepte ou la refuse en un clic." },
-          { title: "Mentions et boîte de réception", body: "Tapez @ pour faire venir quelqu’un. Il reçoit une notification." },
+          {
+            title: "Commentaires",
+            body: "Sélectionnez un passage et commentez. Résolvez la discussion une fois tranchée.",
+          },
+          {
+            title: "Suggestions",
+            body: "Proposez une formulation ; l’auteur l’accepte ou la refuse en un clic.",
+          },
+          {
+            title: "Mentions et boîte de réception",
+            body: "Tapez @ pour faire venir quelqu’un. Il reçoit une notification.",
+          },
         ],
       },
       rooms: {
@@ -449,9 +670,18 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
         heading: "Discutez à côté du travail",
         lead: "Les salons sont des discussions d’équipe ou de projet. Partagez un bloc de n’importe quelle page dans un salon pour en parler ; le salon garde le lien.",
         points: [
-          { title: "Salons et messages", body: "Par équipe ou par projet, plus les messages privés." },
-          { title: "Réponses, réactions, fichiers", body: "Tout ce qu’il faut à une équipe, à côté de vos pages." },
-          { title: "Partager un bloc", body: "Envoyez n’importe quel bloc d’une page dans un salon pour en discuter." },
+          {
+            title: "Salons et messages",
+            body: "Par équipe ou par projet, plus les messages privés.",
+          },
+          {
+            title: "Réponses, réactions, fichiers",
+            body: "Tout ce qu’il faut à une équipe, à côté de vos pages.",
+          },
+          {
+            title: "Partager un bloc",
+            body: "Envoyez n’importe quel bloc d’une page dans un salon pour en discuter.",
+          },
         ],
       },
       offline: {
@@ -469,9 +699,17 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
     },
     editor: {
       badge: "Éditeur en direct",
-      hint: "Tapez / pour ajouter un bloc. Rien n’est enregistré.",
+      hint: "Tapez /, sélectionnez du texte, déplacez un bloc, ajoutez une couverture. Rien n’est enregistré.",
       reset: "Réinitialiser",
       examples: "Exemples",
+      addIcon: "Ajouter une icône",
+      addCover: "Ajouter une couverture",
+      changeCover: "Changer la couverture",
+      removeCover: "Retirer",
+    },
+    collab: {
+      hint: "Deux fenêtres, une seule page. Écrivez dans l’une et regardez l’autre.",
+      window: (name) => `Fenêtre de ${name}`,
     },
     tour: "Faire la visite",
     tryTitle: "Essayez vous-même",
@@ -501,50 +739,93 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       H: "Capture — un salon avec des messages et un bloc partagé",
     },
     blockGroups: [
-      { title: "Écrire", items: [
-        { name: "Texte et titres", body: "Trois niveaux de titre" },
-        { name: "Listes et cases à cocher", body: "Puces, numéros, cases" },
-        { name: "Bloc repliable", body: "Cacher les détails" },
-        { name: "Encadré", body: "Astuces, alertes, points clés" },
-        { name: "Citation", body: "Mettre en avant l’essentiel" },
-        { name: "Mentions et emoji", body: "@personnes, @pages, :emoji:" },
-      ] },
-      { title: "Organiser", items: [
-        { name: "Colonnes", body: "Deux, trois ou quatre" },
-        { name: "Onglets", body: "Plusieurs panneaux au même endroit" },
-        { name: "Tableau", body: "Lignes et colonnes de texte" },
-        { name: "Table des matières", body: "Suit vos titres" },
-        { name: "Liens de page", body: "Construire un wiki" },
-        { name: "Base de données", body: "Six vues des mêmes fiches" },
-      ] },
-      { title: "Médias", items: [
-        { name: "Image", body: "Redimensionner, légender, aligner" },
-        { name: "Fichiers et aperçu PDF", body: "Lire les documents dans la page" },
-        { name: "Vidéo et YouTube", body: "Importer ou intégrer" },
-        { name: "Audio", body: "Enregistrements et podcasts" },
-        { name: "Signet web", body: "Un lien avec son aperçu" },
-      ] },
-      { title: "Technique", items: [
-        { name: "Code", body: "Coloré, copie en un clic" },
-        { name: "Groupe de code", body: "Un onglet par langage" },
-        { name: "Équations", body: "LaTeX, en ligne ou en bloc" },
-        { name: "Boutons", body: "Vers une page ou un site" },
-        { name: "Conteneurs", body: "Regrouper des blocs" },
-      ] },
+      {
+        title: "Écrire",
+        items: [
+          { name: "Texte et titres", body: "Trois niveaux de titre" },
+          { name: "Listes et cases à cocher", body: "Puces, numéros, cases" },
+          { name: "Bloc repliable", body: "Cacher les détails" },
+          { name: "Encadré", body: "Astuces, alertes, points clés" },
+          { name: "Citation", body: "Mettre en avant l’essentiel" },
+          { name: "Mentions et emoji", body: "@personnes, @pages, :emoji:" },
+        ],
+      },
+      {
+        title: "Organiser",
+        items: [
+          { name: "Colonnes", body: "Deux, trois ou quatre" },
+          { name: "Onglets", body: "Plusieurs panneaux au même endroit" },
+          { name: "Tableau", body: "Lignes et colonnes de texte" },
+          { name: "Table des matières", body: "Suit vos titres" },
+          { name: "Liens de page", body: "Construire un wiki" },
+          { name: "Base de données", body: "Six vues des mêmes fiches" },
+        ],
+      },
+      {
+        title: "Médias",
+        items: [
+          { name: "Image", body: "Redimensionner, légender, aligner" },
+          {
+            name: "Fichiers et aperçu PDF",
+            body: "Lire les documents dans la page",
+          },
+          { name: "Vidéo et YouTube", body: "Importer ou intégrer" },
+          { name: "Audio", body: "Enregistrements et podcasts" },
+          { name: "Signet web", body: "Un lien avec son aperçu" },
+        ],
+      },
+      {
+        title: "Technique",
+        items: [
+          { name: "Code", body: "Coloré, copie en un clic" },
+          { name: "Groupe de code", body: "Un onglet par langage" },
+          { name: "Équations", body: "LaTeX, en ligne ou en bloc" },
+          { name: "Boutons", body: "Vers une page ou un site" },
+          { name: "Conteneurs", body: "Regrouper des blocs" },
+        ],
+      },
     ],
-    views: ["Tableau", "Kanban", "Liste", "Galerie", "Calendrier", "Chronologie"],
+    views: [
+      "Tableau",
+      "Kanban",
+      "Liste",
+      "Galerie",
+      "Calendrier",
+      "Chronologie",
+    ],
     templatesUse: "L’ouvrir",
     offlineSteps: [
-      { pill: "En ligne", text: "Vous écrivez avec votre équipe, en direct.", tone: "online" },
-      { pill: "Hors ligne", text: "Vous continuez. Rien n’est perdu.", tone: "offline" },
-      { pill: "Synchronisé", text: "Tout part dès le retour du réseau.", tone: "synced" },
+      {
+        pill: "En ligne",
+        text: "Vous écrivez avec votre équipe, en direct.",
+        tone: "online",
+      },
+      {
+        pill: "Hors ligne",
+        text: "Vous continuez. Rien n’est perdu.",
+        tone: "offline",
+      },
+      {
+        pill: "Synchronisé",
+        text: "Tout part dès le retour du réseau.",
+        tone: "synced",
+      },
     ],
     roles: {
       title: "Pour les équipes, les écoles et les communautés",
       items: [
-        { title: "Équipes", body: "Wiki, documentation, réunions et projets dans un seul espace partagé." },
-        { title: "Écoles et étudiants", body: "Cours, devoirs et travaux de groupe, organisés pour toute une promo." },
-        { title: "Communautés et associations", body: "Ressources, décisions et vitrines de vos réalisations, au même endroit." },
+        {
+          title: "Équipes",
+          body: "Wiki, documentation, réunions et projets dans un seul espace partagé.",
+        },
+        {
+          title: "Écoles et étudiants",
+          body: "Cours, devoirs et travaux de groupe, organisés pour toute une promo.",
+        },
+        {
+          title: "Communautés et associations",
+          body: "Ressources, décisions et vitrines de vos réalisations, au même endroit.",
+        },
       ],
     },
     final: {
@@ -553,7 +834,11 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       primary: "Commencer gratuitement",
       secondary: "Se connecter",
     },
-    footer: { tagline: "L’espace de travail pour vos docs, votre wiki et vos ressources.", legal: "Confidentialité · Conditions" },
+    footer: {
+      tagline:
+        "L’espace de travail pour vos docs, votre wiki et vos ressources.",
+      legal: "Confidentialité · Conditions",
+    },
     notFound: "Cette page n’existe pas.",
   },
 };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,13 +11,11 @@ import {
   Code2,
   Columns3,
   Database,
-  FileText,
   Hash,
   Image as ImageIcon,
   LayoutTemplate,
   List,
   ListChecks,
-  Menu,
   MessageSquareText,
   Moon,
   MousePointer2,
@@ -30,22 +28,26 @@ import {
   Users,
   Video,
   WifiOff,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import {
   LANDING_COPY,
   TOUR,
-  type GroupId,
   type LandingCopy,
   type LandingLang,
+  type NavId,
   type SectionId,
   type SectionVisual,
   type ShotId,
 } from "./landing-copy";
 import { LANDING_SHOTS } from "./landing-shots";
 import { FolioMark } from "../../components/brand/folio-mark";
-import { ShowcaseViewer } from "../showcase/showcase-viewer";
+import {
+  Button,
+  ButtonGroup,
+} from "../../components/tiptap-ui-primitive/button";
+import { Card, CardBody } from "src/components/tiptap-ui-primitive/card";
+import { FileText } from "src/components/tiptap-icons";
 import { ShowcasePreview } from "../showcase/showcase-preview";
 import {
   SHOWCASES,
@@ -54,6 +56,12 @@ import {
   type ShowcaseId,
 } from "../showcase/showcases";
 import { snippets } from "../showcase/content/snippets";
+import {
+  LandingEditor,
+  type PageCover,
+  type PageHeadLabels,
+} from "./landing-editor/landing-editor";
+import { CollabDemo, type CollabPerson } from "./landing-editor/collab-demo";
 import "./landing.scss";
 
 // ── Theme ─────────────────────────────────────────────────────────────────
@@ -73,35 +81,69 @@ function initialTheme(): LandingTheme {
     : "light";
 }
 
-// ── Routes: #/section or #/section/example ────────────────────────────────
+// ── Routes: #/ (overview), #/page, #/page/example ─────────────────────────
+type PageId = NavId | "overview";
 interface Route {
-  section: SectionId;
+  page: PageId;
   example: ShowcaseId | null;
 }
 
-const ALL_SECTIONS: SectionId[] = [
-  "overview",
-  ...TOUR.groups.flatMap((g) => g.sections),
-];
+const NAV_IDS = TOUR.nav.map((n) => n.id);
 
 function parseHash(hash: string): Route {
-  const [s, e] = hash.replace(/^#\/?/, "").split("/");
-  const section = (ALL_SECTIONS as string[]).includes(s)
-    ? (s as SectionId)
-    : "overview";
+  const [p, e] = hash.replace(/^#\/?/, "").split("/");
+  const page = (NAV_IDS as string[]).includes(p) ? (p as NavId) : "overview";
   const example = e && e in SHOWCASES ? (e as ShowcaseId) : null;
-  return { section, example };
+  return { page, example };
 }
 
-const sectionHref = (s: SectionId) => (s === "overview" ? "#/" : `#/${s}`);
-const exampleHref = (s: SectionId, e: ShowcaseId) => `#/${s}/${e}`;
+const pageHref = (p: PageId) => (p === "overview" ? "#/" : `#/${p}`);
+const exampleHref = (p: PageId, e: ShowcaseId) =>
+  `#/${p === "overview" ? "editor" : p}/${e}`;
 
-const groupOf = (s: SectionId): GroupId | null =>
-  TOUR.groups.find((g) => g.sections.includes(s))?.id ?? null;
+/** The nav page a feature section lives on. */
+const navOf = (s: Exclude<SectionId, "overview">): NavId =>
+  TOUR.nav.find((n) => n.sections.includes(s))?.id ?? "editor";
 
-// ── Icons ─────────────────────────────────────────────────────────────────
-const SECTION_ICONS: Record<SectionId, LucideIcon> = {
-  overview: PanelsTopLeft,
+// Buttons (not links) move between pages by setting the hash; the
+// hashchange listener does the rest.
+const go = (href: string) => {
+  window.location.hash = href.replace(/^#/, "");
+};
+
+// ── Emojis and icons ──────────────────────────────────────────────────────
+const EXAMPLE_EMOJI: Record<ShowcaseId, string> = {
+  "getting-started": "🚀",
+  blocks: "🧩",
+  databases: "📊",
+  collaborate: "🤝",
+  "team-wiki": "📚",
+  "project-tracker": "✅",
+  "meeting-notes": "🗓️",
+  course: "🎓",
+};
+
+/** A cover per example, so every page opens looking like a real one. */
+const EXAMPLE_COVER: Partial<Record<ShowcaseId, PageCover>> = {
+  "getting-started": {
+    kind: "gradient",
+    value: "linear-gradient(135deg, #e8d5f5 0%, #c4d8f0 100%)",
+  },
+  "team-wiki": {
+    kind: "gradient",
+    value: "linear-gradient(135deg, #5ecfcc 0%, #4ab8d8 100%)",
+  },
+  "meeting-notes": {
+    kind: "gradient",
+    value: "linear-gradient(135deg, #fdf3e7 0%, #fdf3e7 100%)",
+  },
+  course: {
+    kind: "gradient",
+    value: "linear-gradient(135deg, #f5a623 0%, #f5a623 100%)",
+  },
+};
+
+const SECTION_ICONS: Record<Exclude<SectionId, "overview">, LucideIcon> = {
   editor: PenLine,
   blocks: Box,
   covers: ImageIcon,
@@ -114,12 +156,7 @@ const SECTION_ICONS: Record<SectionId, LucideIcon> = {
   rooms: Hash,
   offline: WifiOff,
 };
-const GROUP_ICONS: Record<GroupId, LucideIcon> = {
-  write: PenLine,
-  organize: Building2,
-  together: Users,
-  anywhere: WifiOff,
-};
+
 // One icon per block group item, in LANDING_COPY.blockGroups order.
 const BLOCK_ICONS: LucideIcon[][] = [
   [FileText, ListChecks, ChevronRight, MessageSquareText, Quote, AtSign],
@@ -128,11 +165,23 @@ const BLOCK_ICONS: LucideIcon[][] = [
   [Code2, Code2, Sigma, ArrowRight, Box],
 ];
 
+const COLLAB_PEOPLE: [CollabPerson, CollabPerson] = [
+  { name: "Awa", color: "#6229ff" },
+  { name: "Moussa", color: "#e8504a" },
+];
+
+const headLabels = (c: LandingCopy): PageHeadLabels => ({
+  addIcon: c.editor.addIcon,
+  addCover: c.editor.addCover,
+  changeCover: c.editor.changeCover,
+  removeCover: c.editor.removeCover,
+});
+
 /**
- * The public page signed-out visitors see at "/": a product tour laid out
- * like a Folio workspace. The sidebar is a page tree (Overview, then one
- * page per feature, with their examples under them); each feature page ends
- * with "Try it yourself" examples that open as editable pages. French and
+ * The public page signed-out visitors see at "/": a product tour with a
+ * top nav (Editor, Organize, Teamspaces, Together, Offline). The editor on
+ * it is the real page editor, with its menus, a cover and an icon picker;
+ * the Together page runs two editors live on one document. French and
  * English (follows i18next), light and dark (follows the system until
  * toggled, remembered per browser).
  */
@@ -151,23 +200,11 @@ export function Landing({
   const [route, setRoute] = useState<Route>(() =>
     parseHash(typeof window !== "undefined" ? window.location.hash : ""),
   );
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Set<GroupId>>(() => {
-    const g = groupOf(route.section);
-    return new Set(g ? [g] : ["write"]);
-  });
   const mainRef = useRef<HTMLElement | null>(null);
 
-  // Follow the address bar (links, back / forward): new page → drawer
-  // closed, its group open in the tree.
+  // Follow the address bar (links, back / forward).
   useEffect(() => {
-    const onHash = () => {
-      const next = parseHash(window.location.hash);
-      setRoute(next);
-      setDrawerOpen(false);
-      const g = groupOf(next.section);
-      if (g) setOpenGroups((prev) => (prev.has(g) ? prev : new Set(prev).add(g)));
-    };
+    const onHash = () => setRoute(parseHash(window.location.hash));
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -175,7 +212,14 @@ export function Landing({
   // New page: back to the top.
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
-  }, [route.section, route.example]);
+  }, [route.page, route.example]);
+
+  // The app's primitives (Button, the editor's nodes) read dark mode from
+  // `html.dark`, like the app itself. Once signed in, the app re-applies
+  // the workspace theme when it mounts.
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
   const toggleTheme = () => {
     const next: LandingTheme = theme === "dark" ? "light" : "dark";
@@ -187,264 +231,115 @@ export function Landing({
     }
   };
 
-  const toggleGroup = (g: GroupId) =>
-    setOpenGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(g)) next.delete(g);
-      else next.add(g);
-      return next;
-    });
-
   return (
-    <div
-      className={`landing${drawerOpen ? " is-drawer-open" : ""}`}
-      data-theme={theme}
-      lang={lang}
-    >
-      <Sidebar
-        c={c}
-        lang={lang}
-        route={route}
-        openGroups={openGroups}
-        onToggleGroup={toggleGroup}
-        onClose={() => setDrawerOpen(false)}
-      />
-      <button
-        type="button"
-        className="landing-backdrop"
-        aria-label={c.header.menu}
-        tabIndex={-1}
-        onClick={() => setDrawerOpen(false)}
-      />
-
-      <div className="landing-column">
-        <header className="landing-header">
-          <button
-            type="button"
-            className="landing-icon-btn landing-menu-btn"
-            aria-label={c.header.menu}
-            aria-expanded={drawerOpen}
-            onClick={() => setDrawerOpen((v) => !v)}
-          >
-            <Menu size={18} />
-          </button>
-          <a href="#/" className="landing-header__logo">
-            <FolioMark size={22} title="" />
-            Folio
-          </a>
-          <div className="landing-header__spacer" />
-          <div className="landing-lang" role="group" aria-label={c.header.language}>
-            {(["fr", "en"] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                aria-pressed={lang === l}
-                className={lang === l ? "is-active" : undefined}
-                onClick={() => void i18n.changeLanguage(l)}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="landing-icon-btn"
-            onClick={toggleTheme}
-            aria-label={theme === "dark" ? c.header.themeLight : c.header.themeDark}
-            title={theme === "dark" ? c.header.themeLight : c.header.themeDark}
-          >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
-          <button type="button" className="landing-link-btn" onClick={onSignIn}>
-            {c.header.signIn}
-          </button>
-          <button
-            type="button"
-            className="landing-btn landing-btn--primary landing-btn--sm"
-            onClick={onGetStarted}
-          >
-            {c.header.cta}
-          </button>
-        </header>
-
-        <main ref={mainRef} className="landing-main">
-          {route.example ? (
-            <ExampleView
-              key={`${route.section}/${route.example}`}
-              c={c}
-              lang={lang}
-              route={route as Route & { example: ShowcaseId }}
-              theme={theme}
-              onGetStarted={onGetStarted}
-            />
-          ) : route.section === "overview" ? (
-            <OverviewView
-              c={c}
-              lang={lang}
-              theme={theme}
-              onGetStarted={onGetStarted}
-              onSignIn={onSignIn}
-            />
-          ) : (
-            <SectionView c={c} lang={lang} section={route.section} theme={theme} />
-          )}
-          <footer className="landing-footer">
-            <span className="landing-footer__brand">
-              <FolioMark size={18} title="" />
-              Folio
-            </span>
-            <span className="landing-muted">{c.footer.tagline}</span>
-            <span className="landing-muted">{c.footer.legal}</span>
-          </footer>
-        </main>
-      </div>
-    </div>
-  );
-}
-
-// ── Sidebar: logo + page tree ─────────────────────────────────────────────
-function Sidebar({
-  c,
-  lang,
-  route,
-  openGroups,
-  onToggleGroup,
-  onClose,
-}: {
-  c: LandingCopy;
-  lang: LandingLang;
-  route: Route;
-  openGroups: Set<GroupId>;
-  onToggleGroup: (g: GroupId) => void;
-  onClose: () => void;
-}) {
-  const isCurrent = (s: SectionId) => route.section === s && !route.example;
-  return (
-    <nav className="landing-sidebar" aria-label={c.header.tour}>
-      <div className="landing-sidebar__top">
+    <div className="landing" data-theme={theme} lang={lang}>
+      <header className="landing-header">
         <a href="#/" className="landing-logo">
           <FolioMark size={24} title="" />
           Folio
         </a>
-        <button
-          type="button"
-          className="landing-icon-btn landing-sidebar__close"
-          aria-label={c.header.menu}
-          onClick={onClose}
-        >
-          <X size={18} />
-        </button>
-      </div>
-      <ul className="landing-tree" role="list">
-        <li>
-          <TreeLink
-            href={sectionHref("overview")}
-            icon={SECTION_ICONS.overview}
-            label={c.sections.overview.label}
-            depth={0}
-            current={isCurrent("overview")}
-          />
-        </li>
-        {TOUR.groups.map((g) => {
-          const open = openGroups.has(g.id);
-          const GIcon = GROUP_ICONS[g.id];
-          return (
-            <li key={g.id}>
-              <button
-                type="button"
-                className="landing-tree__row landing-tree__row--group"
-                aria-expanded={open}
-                onClick={() => onToggleGroup(g.id)}
-                style={{ paddingLeft: 4 }}
-              >
-                <ChevronRight
-                  size={13}
-                  className="landing-tree__chevron"
-                  style={{ transform: open ? "rotate(90deg)" : undefined }}
-                />
-                <GIcon size={16} className="landing-tree__icon" />
-                <span>{c.groups[g.id]}</span>
-              </button>
-              {open && (
-                <ul role="list">
-                  {g.sections.map((s) => {
-                    const tries = TOUR.tries[s] ?? [];
-                    const showTries = route.section === s && tries.length > 0;
-                    return (
-                      <li key={s}>
-                        <TreeLink
-                          href={sectionHref(s)}
-                          icon={SECTION_ICONS[s]}
-                          label={c.sections[s].label}
-                          depth={1}
-                          current={isCurrent(s)}
-                          expandable={tries.length > 0}
-                          expanded={showTries}
-                        />
-                        {showTries && (
-                          <ul role="list">
-                            {tries.map((e) => (
-                              <li key={e}>
-                                <TreeLink
-                                  href={exampleHref(s, e)}
-                                  icon={FileText}
-                                  label={showcaseTitle(e, lang)}
-                                  depth={2}
-                                  current={route.example === e}
-                                />
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
-}
 
-function TreeLink({
-  href,
-  icon: Icon,
-  label,
-  depth,
-  current,
-  expandable = false,
-  expanded = false,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  depth: number;
-  current: boolean;
-  expandable?: boolean;
-  expanded?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      className={`landing-tree__row${current ? " is-current" : ""}`}
-      aria-current={current ? "page" : undefined}
-      style={{ paddingLeft: 4 + depth * 16 }}
-    >
-      <span className="landing-tree__chevron-slot">
-        {expandable && (
-          <ChevronRight
-            size={13}
-            className="landing-tree__chevron"
-            style={{ transform: expanded ? "rotate(90deg)" : undefined }}
+        <nav className="landing-nav" aria-label={c.header.tour}>
+          <ButtonGroup orientation="horizontal" className="landing-nav__group">
+            {TOUR.nav.map((n) => (
+              <Button
+                key={n.id}
+                type="button"
+                variant="ghost"
+                aria-current={route.page === n.id ? "page" : undefined}
+                data-active-state={route.page === n.id ? "on" : "off"}
+                onClick={() => go(pageHref(n.id))}
+              >
+                <span className="tiptap-button-text">{c.nav[n.id]}</span>
+              </Button>
+            ))}
+          </ButtonGroup>
+        </nav>
+
+        <div className="landing-header__spacer" />
+
+        <ButtonGroup
+          orientation="horizontal"
+          className="landing-lang"
+          aria-label={c.header.language}
+        >
+          {(["fr", "en"] as const).map((l) => (
+            <Button
+              key={l}
+              type="button"
+              variant="ghost"
+              size="small"
+              aria-pressed={lang === l}
+              data-active-state={lang === l ? "on" : "off"}
+              onClick={() => void i18n.changeLanguage(l)}
+            >
+              <span className="tiptap-button-text">{l.toUpperCase()}</span>
+            </Button>
+          ))}
+        </ButtonGroup>
+        <Button
+          type="button"
+          variant="ghost"
+          size="large"
+          onClick={toggleTheme}
+          aria-label={
+            theme === "dark" ? c.header.themeLight : c.header.themeDark
+          }
+        >
+          {theme === "dark" ? (
+            <Sun className="tiptap-button-icon" />
+          ) : (
+            <Moon className="tiptap-button-icon" />
+          )}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="large"
+          className="landing-header__signin"
+          onClick={onSignIn}
+        >
+          <span className="tiptap-button-text">{c.header.signIn}</span>
+        </Button>
+        <Button
+          type="button"
+          variant="primary"
+          size="large"
+          onClick={onGetStarted}
+        >
+          <span className="tiptap-button-text">{c.header.cta}</span>
+        </Button>
+      </header>
+
+      <main ref={mainRef} className="landing-main">
+        {route.example ? (
+          <ExampleView
+            key={`${route.page}/${route.example}/${lang}`}
+            c={c}
+            lang={lang}
+            route={route as Route & { example: ShowcaseId }}
+            onGetStarted={onGetStarted}
           />
+        ) : route.page === "overview" ? (
+          <OverviewView
+            c={c}
+            lang={lang}
+            onGetStarted={onGetStarted}
+            onSignIn={onSignIn}
+          />
+        ) : (
+          <NavPage c={c} lang={lang} page={route.page} theme={theme} />
         )}
-      </span>
-      <Icon size={16} className="landing-tree__icon" />
-      <span className="landing-tree__label">{label}</span>
-    </a>
+        <footer className="landing-footer">
+          <span className="landing-footer__brand">
+            <FolioMark size={18} title="" />
+            Folio
+          </span>
+          <span className="landing-muted">{c.footer.tagline}</span>
+          <span className="landing-muted">{c.footer.legal}</span>
+        </footer>
+      </main>
+    </div>
   );
 }
 
@@ -452,56 +347,71 @@ function TreeLink({
 function OverviewView({
   c,
   lang,
-  theme,
   onGetStarted,
   onSignIn,
 }: {
   c: LandingCopy;
   lang: LandingLang;
-  theme: LandingTheme;
   onGetStarted: () => void;
   onSignIn: () => void;
 }) {
-  const tourSections = TOUR.groups.flatMap((g) => g.sections);
+  const sections = TOUR.nav.flatMap((n) => n.sections);
   return (
     <div className="landing-page">
       <section className="landing-hero">
         <h1>{c.hero.title}</h1>
         <p className="landing-lead">{c.hero.lead}</p>
         <div className="landing-actions">
-          <button
+          <Button
             type="button"
-            className="landing-btn landing-btn--primary"
+            variant="primary"
+            size="large"
+            className="landing-cta"
             onClick={onGetStarted}
           >
-            {c.hero.primary}
-          </button>
-          <a href={sectionHref("editor")} className="landing-btn landing-btn--secondary">
-            {c.hero.secondary}
-          </a>
+            <span className="tiptap-button-text">{c.hero.primary}</span>
+          </Button>
+          <Button
+            type="button"
+            size="large"
+            className="landing-cta"
+            onClick={() => go(pageHref("editor"))}
+          >
+            <span className="tiptap-button-text">{c.hero.secondary}</span>
+          </Button>
         </div>
       </section>
 
-      <LiveEditor
+      <LiveEditor c={c} lang={lang} examples={TOUR.tries.overview ?? []} />
+      <TryLinks
         c={c}
         lang={lang}
-        theme={theme}
-        examples={TOUR.tries.overview ?? []}
+        page="overview"
+        examples={TOUR.tries.overview}
       />
-      <TryLinks c={c} lang={lang} section="overview" />
 
       <section className="landing-block">
         <h2 className="landing-h2">{c.tour}</h2>
         <div className="landing-grid landing-grid--3">
-          {tourSections.map((s) => {
+          {sections.map((s) => {
             const Icon = SECTION_ICONS[s];
             return (
-              <a key={s} href={sectionHref(s)} className="landing-card landing-card--link">
-                <span className="landing-card__icon">
-                  <Icon size={18} />
-                </span>
-                <span className="landing-card__title">{c.sections[s].label}</span>
-                <span className="landing-muted">{c.sections[s].blurb}</span>
+              <a
+                key={s}
+                href={pageHref(navOf(s))}
+                className="landing-card-link"
+              >
+                <Card className="landing-card">
+                  <CardBody className="landing-card__content">
+                    <span className="landing-card__icon">
+                      <Icon size={18} />
+                    </span>
+                    <span className="landing-card__title">
+                      {c.sections[s].label}
+                    </span>
+                    <span className="landing-muted">{c.sections[s].blurb}</span>
+                  </CardBody>
+                </Card>
               </a>
             );
           })}
@@ -512,10 +422,12 @@ function OverviewView({
         <h2 className="landing-h2">{c.roles.title}</h2>
         <div className="landing-grid landing-grid--3">
           {c.roles.items.map((r) => (
-            <div key={r.title} className="landing-card landing-card--padded">
-              <span className="landing-card__title">{r.title}</span>
-              <span className="landing-muted">{r.body}</span>
-            </div>
+            <Card key={r.title} className="landing-card">
+              <CardBody className="landing-card__content">
+                <span className="landing-card__title">{r.title}</span>
+                <span className="landing-muted">{r.body}</span>
+              </CardBody>
+            </Card>
           ))}
         </div>
       </section>
@@ -524,64 +436,86 @@ function OverviewView({
         <h2>{c.final.title}</h2>
         <p className="landing-lead">{c.final.sub}</p>
         <div className="landing-actions">
-          <button
+          <Button
             type="button"
-            className="landing-btn landing-btn--primary"
+            variant="primary"
+            size="large"
+            className="landing-cta"
             onClick={onGetStarted}
           >
-            {c.final.primary}
-          </button>
-          <button
+            <span className="tiptap-button-text">{c.final.primary}</span>
+          </Button>
+          <Button
             type="button"
-            className="landing-btn landing-btn--secondary"
+            size="large"
+            className="landing-cta"
             onClick={onSignIn}
           >
-            {c.final.secondary}
-          </button>
+            <span className="tiptap-button-text">{c.final.secondary}</span>
+          </Button>
         </div>
       </section>
     </div>
   );
 }
 
-// ── A feature page ────────────────────────────────────────────────────────
-function SectionView({
+// ── A nav page: its feature sections, one after another ───────────────────
+function NavPage({
   c,
   lang,
-  section,
+  page,
   theme,
 }: {
   c: LandingCopy;
   lang: LandingLang;
-  section: Exclude<SectionId, "overview">;
+  page: NavId;
   theme: LandingTheme;
 }) {
-  const s = c.sections[section];
-  const g = groupOf(section);
-  const visual = TOUR.visuals[section];
+  const nav = TOUR.nav.find((n) => n.id === page)!;
   return (
     <div className="landing-page">
-      <header className="landing-page__head">
-        {g && <span className="landing-crumb">{c.groups[g]}</span>}
-        <h1 className="landing-h1">{s.heading}</h1>
-        <p className="landing-lead">{s.lead}</p>
-      </header>
+      {nav.sections.map((section, i) => {
+        const s = c.sections[section];
+        return (
+          <section key={section} className="landing-section" id={section}>
+            <header className="landing-page__head">
+              {i === 0 && <span className="landing-crumb">{c.nav[page]}</span>}
+              {i === 0 ? (
+                <h1 className="landing-h1">{s.heading}</h1>
+              ) : (
+                <h2 className="landing-h1 landing-h1--sub">{s.heading}</h2>
+              )}
+              <p className="landing-lead">{s.lead}</p>
+            </header>
 
-      <Visual c={c} lang={lang} visual={visual} theme={theme} />
+            <Visual
+              c={c}
+              lang={lang}
+              visual={TOUR.visuals[section]}
+              theme={theme}
+            />
 
-      {s.points && (
-        <div className="landing-grid landing-grid--3">
-          {s.points.map((p) => (
-            <div key={p.title} className="landing-point">
-              <span className="landing-card__title">{p.title}</span>
-              <span className="landing-muted">{p.body}</span>
-            </div>
-          ))}
-        </div>
-      )}
+            {s.points && (
+              <div className="landing-grid landing-grid--3">
+                {s.points.map((p) => (
+                  <div key={p.title} className="landing-point">
+                    <span className="landing-card__title">{p.title}</span>
+                    <span className="landing-muted">{p.body}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-      <TryLinks c={c} lang={lang} section={section} />
-      <NextLink c={c} section={section} />
+            <TryLinks
+              c={c}
+              lang={lang}
+              page={page}
+              examples={TOUR.tries[section]}
+            />
+          </section>
+        );
+      })}
+      <NextLink c={c} page={page} />
     </div>
   );
 }
@@ -599,15 +533,33 @@ function Visual({
 }) {
   switch (visual.kind) {
     case "editor":
-      return <LiveEditor c={c} lang={lang} theme={theme} examples={visual.examples} />;
+      return <LiveEditor c={c} lang={lang} examples={visual.examples} />;
+    case "collab":
+      return (
+        <div className="landing-stack">
+          <p className="landing-muted landing-hint">{c.collab.hint}</p>
+          <CollabDemo
+            key={lang}
+            content={getShowcase(visual.example, lang)}
+            people={COLLAB_PEOPLE}
+            windowLabel={c.collab.window}
+          />
+        </div>
+      );
     case "shot":
-      return <Shot id={visual.shot} label={c.shot[visual.shot]} ratio={visual.ratio} />;
+      return (
+        <Shot
+          id={visual.shot}
+          label={c.shot[visual.shot]}
+          ratio={visual.ratio}
+        />
+      );
     case "blocks":
       return (
         <div className="landing-grid landing-grid--4 landing-blocks">
           {c.blockGroups.map((grp, gi) => (
             <section key={grp.title} className="landing-blocks__group">
-              <h2 className="landing-eyebrow">{grp.title}</h2>
+              <h3 className="landing-eyebrow">{grp.title}</h3>
               {grp.items.map((it, ii) => {
                 const Icon = BLOCK_ICONS[gi]?.[ii] ?? Box;
                 return (
@@ -617,7 +569,9 @@ function Visual({
                     </span>
                     <span>
                       <span className="landing-blocks__name">{it.name}</span>
-                      <span className="landing-muted landing-blocks__body">{it.body}</span>
+                      <span className="landing-muted landing-blocks__body">
+                        {it.body}
+                      </span>
                     </span>
                   </div>
                 );
@@ -632,24 +586,28 @@ function Visual({
           {(TOUR.tries.templates ?? []).map((id) => (
             <a
               key={id}
-              href={exampleHref("templates", id)}
-              className="landing-card landing-card--flush landing-card--link"
+              href={exampleHref("organize", id)}
+              className="landing-card-link"
             >
-              <ShowcasePreview
-                className="landing-live"
-                content={getShowcase(id, lang)}
-                ratio="16 / 9"
-                pageWidth={760}
-                dark={theme === "dark"}
-                label={showcaseTitle(id, lang)}
-              />
-              <span className="landing-card__body">
-                <span className="landing-card__title">{showcaseTitle(id, lang)}</span>
-                <span className="landing-muted">{c.tryMeta[id]}</span>
-                <span className="landing-text-link">
-                  {c.templatesUse} <ArrowRight size={14} />
-                </span>
-              </span>
+              <Card className="landing-card landing-card--flush">
+                <ShowcasePreview
+                  className="landing-live"
+                  content={getShowcase(id, lang)}
+                  ratio="16 / 9"
+                  pageWidth={760}
+                  dark={theme === "dark"}
+                  label={showcaseTitle(id, lang)}
+                />
+                <CardBody className="landing-card__content">
+                  <span className="landing-card__title">
+                    {showcaseTitle(id, lang)}
+                  </span>
+                  <span className="landing-muted">{c.tryMeta[id]}</span>
+                  <span className="landing-text-link">
+                    {c.templatesUse} <ArrowRight size={14} />
+                  </span>
+                </CardBody>
+              </Card>
             </a>
           ))}
         </div>
@@ -679,7 +637,9 @@ function Visual({
         <div className="landing-steps">
           {c.offlineSteps.map((st) => (
             <div key={st.pill} className="landing-step">
-              <span className={`landing-pill landing-pill--${st.tone}`}>{st.pill}</span>
+              <span className={`landing-pill landing-pill--${st.tone}`}>
+                {st.pill}
+              </span>
               <span>{st.text}</span>
             </div>
           ))}
@@ -688,23 +648,21 @@ function Visual({
   }
 }
 
-// ── The live editor (the real one, nothing saved) ─────────────────────────
+// ── The live editor: the real one, nothing saved ──────────────────────────
 function LiveEditor({
   c,
   lang,
-  theme,
   examples,
 }: {
   c: LandingCopy;
   lang: LandingLang;
-  theme: LandingTheme;
   examples: ShowcaseId[];
 }) {
   const [current, setCurrent] = useState<ShowcaseId>(examples[0]);
   const [resetToken, setResetToken] = useState(0);
   const content = useMemo(() => getShowcase(current, lang), [current, lang]);
   return (
-    <section className={`landing-editor${theme === "dark" ? " dark" : ""}`}>
+    <section className="landing-editor">
       <div className="landing-editor__bar">
         <span className="landing-editor__badge">
           <span className="landing-editor__dot" />
@@ -713,30 +671,48 @@ function LiveEditor({
         <span className="landing-editor__hint">{c.editor.hint}</span>
         <span className="landing-editor__spacer" />
         {examples.length > 1 && (
-          <div className="landing-editor__examples" role="group" aria-label={c.editor.examples}>
+          <ButtonGroup
+            orientation="horizontal"
+            className="landing-editor__examples"
+            aria-label={c.editor.examples}
+          >
             {examples.map((e) => (
-              <button
+              <Button
                 key={e}
                 type="button"
+                variant="ghost"
+                size="small"
                 aria-pressed={current === e}
-                className={current === e ? "is-active" : undefined}
+                data-active-state={current === e ? "on" : "off"}
                 onClick={() => setCurrent(e)}
               >
-                {showcaseTitle(e, lang).split(" — ")[0]}
-              </button>
+                <span className="tiptap-button-emoji" aria-hidden>
+                  {EXAMPLE_EMOJI[e]}
+                </span>
+                <span className="tiptap-button-text">
+                  {showcaseTitle(e, lang).split(" — ")[0]}
+                </span>
+              </Button>
             ))}
-          </div>
+          </ButtonGroup>
         )}
-        <button
+        <Button
           type="button"
-          className="landing-editor__reset"
+          variant="ghost"
+          size="small"
           onClick={() => setResetToken((n) => n + 1)}
         >
-          {c.editor.reset}
-        </button>
+          <span className="tiptap-button-text">{c.editor.reset}</span>
+        </Button>
       </div>
       <div className="landing-editor__page">
-        <ShowcaseViewer content={content} editable resetToken={resetToken} />
+        <LandingEditor
+          key={`${current}/${lang}/${resetToken}`}
+          content={content}
+          labels={headLabels(c)}
+          cover={EXAMPLE_COVER[current] ?? null}
+          icon={{ name: EXAMPLE_EMOJI[current], target: "Emoji" }}
+        />
       </div>
     </section>
   );
@@ -746,28 +722,37 @@ function LiveEditor({
 function TryLinks({
   c,
   lang,
-  section,
+  page,
+  examples,
 }: {
   c: LandingCopy;
   lang: LandingLang;
-  section: SectionId;
+  page: PageId;
+  examples?: ShowcaseId[];
 }) {
-  const tries = TOUR.tries[section];
-  if (!tries?.length) return null;
+  if (!examples?.length) return null;
   return (
     <section className="landing-try" aria-label={c.tryTitle}>
-      <h2 className="landing-eyebrow">{c.tryTitle}</h2>
+      <h3 className="landing-eyebrow">{c.tryTitle}</h3>
       <div className="landing-grid landing-grid--3">
-        {tries.map((e) => (
-          <a key={e} href={exampleHref(section, e)} className="landing-try__card">
-            <span className="landing-card__icon">
-              <FileText size={18} />
-            </span>
-            <span className="landing-try__text">
-              <span className="landing-try__title">{showcaseTitle(e, lang)}</span>
-              <span className="landing-muted landing-try__meta">{c.tryMeta[e]}</span>
-            </span>
-            <ArrowRight size={16} className="landing-try__arrow" />
+        {examples.map((e) => (
+          <a key={e} href={exampleHref(page, e)} className="landing-card-link">
+            <Card className="landing-card landing-try__card">
+              <CardBody className="landing-try__body">
+                <span className="landing-try__emoji" aria-hidden>
+                  {EXAMPLE_EMOJI[e]}
+                </span>
+                <span className="landing-try__text">
+                  <span className="landing-try__title">
+                    {showcaseTitle(e, lang)}
+                  </span>
+                  <span className="landing-muted landing-try__meta">
+                    {c.tryMeta[e]}
+                  </span>
+                </span>
+                <ArrowRight size={16} className="landing-try__arrow" />
+              </CardBody>
+            </Card>
           </a>
         ))}
       </div>
@@ -775,67 +760,86 @@ function TryLinks({
   );
 }
 
-function NextLink({ c, section }: { c: LandingCopy; section: SectionId }) {
-  const order = TOUR.groups.flatMap((g) => g.sections);
-  const next = order[order.indexOf(section as Exclude<SectionId, "overview">) + 1];
+function NextLink({ c, page }: { c: LandingCopy; page: NavId }) {
+  const next = NAV_IDS[NAV_IDS.indexOf(page) + 1];
   if (!next) return null;
+  const first = TOUR.nav.find((n) => n.id === next)!.sections[0];
   return (
-    <a href={sectionHref(next)} className="landing-next">
-      <span className="landing-muted">{c.sections[next].blurb}</span>
+    <a href={pageHref(next)} className="landing-next">
+      <span className="landing-muted">{c.sections[first].blurb}</span>
       <span className="landing-next__title">
-        {c.sections[next].label} <ArrowRight size={16} />
+        {c.nav[next]} <ArrowRight size={16} />
       </span>
     </a>
   );
 }
 
-// ── An example, opened in the tour ────────────────────────────────────────
+// ── An example, opened in the real editor ─────────────────────────────────
 function ExampleView({
   c,
   lang,
   route,
-  theme,
   onGetStarted,
 }: {
   c: LandingCopy;
   lang: LandingLang;
   route: Route & { example: ShowcaseId };
-  theme: LandingTheme;
   onGetStarted: () => void;
 }) {
   const [resetToken, setResetToken] = useState(0);
-  const content = useMemo(() => getShowcase(route.example, lang), [route.example, lang]);
-  const reset = useCallback(() => setResetToken((n) => n + 1), []);
+  const content = useMemo(
+    () => getShowcase(route.example, lang),
+    [route.example, lang],
+  );
   return (
     <div className="landing-example">
       <div className="landing-example__banner" role="note">
         <span className="landing-example__badge">{c.example.badge}</span>
         <span className="landing-example__text">{c.example.banner}</span>
         <span className="landing-example__spacer" />
-        <button type="button" className="landing-link-btn" onClick={reset}>
-          {c.example.reset}
-        </button>
-        <button
+        <Button
           type="button"
-          className="landing-btn landing-btn--primary landing-btn--sm"
-          onClick={onGetStarted}
+          variant="ghost"
+          onClick={() => setResetToken((n) => n + 1)}
         >
-          {c.example.useTemplate}
-        </button>
+          <span className="tiptap-button-text">{c.example.reset}</span>
+        </Button>
+        <Button type="button" variant="primary" onClick={onGetStarted}>
+          <span className="tiptap-button-text">{c.example.useTemplate}</span>
+        </Button>
       </div>
-      <div className={`landing-example__page${theme === "dark" ? " dark" : ""}`}>
-        <ShowcaseViewer content={content} editable resetToken={resetToken} />
+      <div className="landing-example__page">
+        <LandingEditor
+          key={resetToken}
+          content={content}
+          labels={headLabels(c)}
+          cover={EXAMPLE_COVER[route.example] ?? null}
+          icon={{ name: EXAMPLE_EMOJI[route.example], target: "Emoji" }}
+        />
       </div>
-      <a href={sectionHref(route.section)} className="landing-next landing-next--back">
+      <a
+        href={pageHref(route.page)}
+        className="landing-next landing-next--back"
+      >
         <span className="landing-muted">{c.example.back}</span>
-        <span className="landing-next__title">{c.sections[route.section].label}</span>
+        <span className="landing-next__title">
+          {route.page === "overview" ? "Folio" : c.nav[route.page]}
+        </span>
       </a>
     </div>
   );
 }
 
 // ── Screenshot slot ───────────────────────────────────────────────────────
-function Shot({ id, label, ratio }: { id: ShotId; label: string; ratio: string }): ReactNode {
+function Shot({
+  id,
+  label,
+  ratio,
+}: {
+  id: ShotId;
+  label: string;
+  ratio: string;
+}): ReactNode {
   const src = LANDING_SHOTS[id];
   return (
     <div className="landing-shot landing-frame" style={{ aspectRatio: ratio }}>
