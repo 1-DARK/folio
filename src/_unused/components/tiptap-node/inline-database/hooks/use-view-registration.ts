@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { DatabaseAttrs, DataSource, ID } from "src/types";
-import type { UseDatabaseReturn } from "../../../../../components/tiptap-node/inline-database/hooks/use-database";
+import type { UseDatabaseReturn } from "../../../../../features/database/hooks/use-database";
 
 export function useViewRegistration({
   source,

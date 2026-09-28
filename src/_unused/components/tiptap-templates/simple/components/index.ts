@@ -1,2 +1,2 @@
-export { HomePageContent } from "../../../../../components/tiptap-templates/simple/components/home-page-content";
+export { HomePageContent } from "../../../../../features/home/home-page-content";
 export * from "./logo";

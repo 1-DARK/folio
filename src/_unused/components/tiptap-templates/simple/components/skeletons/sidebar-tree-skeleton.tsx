@@ -4,7 +4,7 @@ import type { PageCategory } from "src/types";
 import {
   DEFAULT_SECTION_ORDER,
   useSectionOrder,
-} from "../../../../../../components/tiptap-templates/simple/hooks/use-sidebar-order";
+} from "../../../../../../features/shell/hooks/use-sidebar-order";
 import "./sidebar-tree-skeleton.scss";
 
 /**

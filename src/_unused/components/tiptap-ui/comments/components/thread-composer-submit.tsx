@@ -8,12 +8,12 @@ import { makeComment } from "src/utils/make-comment";
 import { usePatchThread } from "src/hooks/use-patch-thread";
 import { patchThread } from "src/api/threads";
 import { useCurrentPerson } from "src/hooks/use-session";
-import { CommentMentionEditor, type CommentEditorRef } from "../../../../../components/tiptap-ui/comments/editor";
+import { CommentMentionEditor, type CommentEditorRef } from "../../../../../features/comments/editor";
 import type { JSONContent } from "@tiptap/core";
 import { newId } from "src/lib/id";
 import { extractMentionIds } from "src/utils/extract-mention-ids";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
-import { useNotificationActions } from "../../../../../components/tiptap-ui/notification/notification-context";
+import { useActivePageState } from "src/features/pages/context/active-page-context";
+import { useNotificationActions } from "../../../../../features/inbox/notification/notification-context";
 
 function SubmitBtn({
   disabled,

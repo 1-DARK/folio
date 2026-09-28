@@ -5,7 +5,7 @@ import type {
   DatabaseView,
   DataSource,
 } from "src/types";
-import { groupKeyFor, groupLabel, NONE_KEY } from "../../../../../components/tiptap-node/inline-database/utils/group-records";
+import { groupKeyFor, groupLabel, NONE_KEY } from "../../../../../features/database/utils/group-records";
 import { usePatchDataSource } from "src/hooks/use-patch-data-source";
 import { patchDataSource } from "src/api/data-sources";
 

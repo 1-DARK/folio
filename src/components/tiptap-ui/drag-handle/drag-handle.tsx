@@ -16,8 +16,8 @@ import { ColorDropdownProvider } from "../color-dropdown-menu/color-dropdown-pro
 import { Node } from "@tiptap/pm/model";
 import type { NormalizedNestedOptions } from "@tiptap/extension-drag-handle";
 import { createPortal } from "react-dom";
-import { recordSelection } from "src/components/tiptap-node/inline-database/utils/record-selection-store";
-import { RecordDragMenu } from "src/components/tiptap-node/inline-database/components/record-drag-menu";
+import { recordSelection } from "src/features/database/utils/record-selection-store";
+import { RecordDragMenu } from "src/features/database/components/record-drag-menu";
 import { GripVerticalIcon } from "src/components/tiptap-icons";
 
 const NODE_LABELS: Record<string, string> = {

@@ -10,7 +10,7 @@ import { ThreadsProvider } from "../context/threadProvider";
 
 import type { ID, MeasuredThread, PositionedThread, Thread } from "src/types";
 import { useThreadsByPage } from "src/hooks/use-threads";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageState } from "src/features/pages/context/active-page-context";
 import { mapThreads } from "../extensions/utils/mapThreads";
 import type { Transaction } from "@tiptap/pm/state";
 import { measureAllThreads } from "../extensions/utils/measureAllThreads";
@@ -18,8 +18,8 @@ import { resolveThreadCollisions } from "../extensions/utils/resolveThreadCollis
 import { resolveActiveThreadCollisions } from "../extensions/utils/resolveActiveThreadCollisions";
 import { usePatchThread } from "src/hooks/use-patch-thread";
 import { patchThread } from "src/api/threads";
-import { commentThreadPluginKey } from "../../../../../components/tiptap-ui/comments/extensions";
-import { scrollToThread } from "../../../../../components/tiptap-ui/comments/extensions/utils/scrollToThread";
+import { commentThreadPluginKey } from "../../../../../features/comments/extensions";
+import { scrollToThread } from "../../../../../features/comments/extensions/utils/scrollToThread";
 import { useCreateThread } from "src/hooks/use-create-thread";
 import { makeThread } from "src/utils/make-thread";
 import { useDeleteThread } from "src/hooks/use-delete-thread";

@@ -4,27 +4,27 @@ import { Button } from "src/components/tiptap-ui-primitive/button";
 import { Card, CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
 import { InboxIcon } from "src/components/tiptap-icons";
-import { useNotificationState } from "src/components/tiptap-ui/notification/notification-context";
+import { useNotificationState } from "src/features/inbox/notification/notification-context";
 import { useLocation, useNavigate } from "@tanstack/react-location";
 import { useTranslation } from "react-i18next";
 import { useCreatePage } from "src/hooks/use-create-page";
-import { useActivePage } from "../../../../../../components/tiptap-templates/simple/context/active-page-context";
+import { useActivePage } from "../../../../../../features/pages/context/active-page-context";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { makePage } from "src/utils/make-page";
 import { useIsMobile } from "src/hooks/use-breakpoint";
-import { useEditorLayout } from "../../../../../../components/tiptap-templates/simple/context/editor-layout-context";
+import { useEditorLayout } from "../../../../../../features/shell/context/editor-layout-context";
 import {
   Popover,
   PopoverContent,
   PopoverPortal,
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
-import { InboxPanel } from "../../../../../../components/tiptap-templates/simple/components/inbox-panel";
-import { TeamspacesPanel } from "../../../../../../components/tiptap-templates/simple/components/teamspaces-panel/teamspaces-panel";
-import { TeamspaceMembersModal } from "../../../../../../components/tiptap-templates/simple/components/teamspace-members/teamspace-members-modal";
-import { CreateTeamspaceModal } from "../../../../../../components/tiptap-templates/simple/components/create-teamspace-modal";
-import { ChatsPanel } from "../../../../../../components/tiptap-templates/simple/components/chat/chats-panel";
-import { CreateRoomModal, NewDmModal } from "../../../../../../components/tiptap-templates/simple/components/chat/chat-modals";
+import { InboxPanel } from "../../../../../../features/inbox/inbox-panel";
+import { TeamspacesPanel } from "../../../../../../features/workspace/teamspaces/teamspaces-panel/teamspaces-panel";
+import { TeamspaceMembersModal } from "../../../../../../features/workspace/teamspaces/teamspace-members/teamspace-members-modal";
+import { CreateTeamspaceModal } from "../../../../../../features/workspace/teamspaces/create-teamspace-modal";
+import { ChatsPanel } from "../../../../../../features/chat/chats-panel";
+import { CreateRoomModal, NewDmModal } from "../../../../../../features/chat/chat-modals";
 import { useUnreadCounts } from "src/hooks/use-chat";
 import { useMyInvites } from "src/hooks/use-teamspace-members";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";

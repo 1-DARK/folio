@@ -1,1 +1,1 @@
-export { DatabaseNode } from "../../../../components/tiptap-node/inline-database/nodes/database-node/database-node";
+export { DatabaseNode } from "../../../../features/database/nodes/database-node/database-node";

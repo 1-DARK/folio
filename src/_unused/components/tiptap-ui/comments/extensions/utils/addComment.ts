@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/core";
-import { commentThreadPluginKey } from "../../../../../../components/tiptap-ui/comments/extensions/comment-thread-extension";
+import { commentThreadPluginKey } from "../../../../../../features/comments/extensions/comment-thread-extension";
 
 export function addComment(editor: Editor, threadId: string, commentAuthorId: string, commentText: string) {
   // thread.comments.push({

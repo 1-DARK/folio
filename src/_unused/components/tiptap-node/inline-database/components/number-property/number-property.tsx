@@ -3,7 +3,7 @@ import {
   NumberEditDisplay,
   type NumberEditDisplayProps,
 } from "../../ui/number/number-edit-display";
-import { PropertyEditPopover } from "../../../../../../components/tiptap-node/inline-database/components/property-edit-popover";
+import { PropertyEditPopover } from "../../../../../../features/database/components/property-edit-popover";
 
 type NumberPropertyProps = NumberEditDisplayProps;
 

@@ -11,8 +11,8 @@ import { patchComment } from "src/api/comments";
 import { patchThread } from "src/api/threads";
 import { usePersonNames } from "src/hooks/use-person-names";
 import { useCurrentPerson } from "src/hooks/use-session";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
-import { CommentCard } from "../../../../../components/tiptap-ui/comments/components/comment-card";
+import { useActivePageState } from "src/features/pages/context/active-page-context";
+import { CommentCard } from "../../../../../features/comments/components/comment-card";
 import { ThreadComposer } from "./thread-composer";
 import "./thread-content.scss";
 

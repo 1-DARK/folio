@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { X, ExternalLink } from "lucide-react";
 import type { Page, PageTreeNode, PageCategory, ID } from "src/types";
 import { usePageTree } from "src/hooks/use-pages";
-import { PageItemIcon } from "src/components/tiptap-templates/simple/page-item-icon";
+import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
 import "./link-picker.scss";
 
 function useFlatPages(): Page[] {

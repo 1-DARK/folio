@@ -1,7 +1,7 @@
 import { Fragment, useState, type ReactNode } from "react";
 import "./breadcrumb.scss";
 import { usePages } from "src/hooks/use-pages";
-import { PageItemIcon } from "src/components/tiptap-templates/simple/page-item-icon";
+import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
 
 export interface BreadcrumbItem {
   id: string;

@@ -1,6 +1,6 @@
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { DatabaseAttrs } from "src/types";
-import { evaluateFormula } from "../../../../../components/tiptap-node/inline-database/components/formula-editor/formula-evaluator";
+import { evaluateFormula } from "../../../../../features/database/components/formula-editor/formula-evaluator";
 export const formulaSyncPluginKey = new PluginKey("formulaSync");
 
 export const formulaSyncPlugin = new Plugin({

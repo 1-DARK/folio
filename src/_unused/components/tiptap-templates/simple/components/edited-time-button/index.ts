@@ -1,1 +1,1 @@
-export * from "../../../../../../components/tiptap-templates/simple/components/edited-time-button/edited-time-button";
+export * from "../../../../../../features/pages/edited-time-button/edited-time-button";

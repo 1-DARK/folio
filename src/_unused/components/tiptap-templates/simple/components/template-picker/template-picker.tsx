@@ -1,6 +1,6 @@
 import type { Page } from "src/types";
 import { FileText, Plus } from "lucide-react";
-import { PageItemIcon } from "../../../../../../components/tiptap-templates/simple/page-item-icon";
+import { PageItemIcon } from "../../../../../../features/pages/page-item/page-item-icon";
 
 interface TemplatePickerProps {
   templates: Page[];

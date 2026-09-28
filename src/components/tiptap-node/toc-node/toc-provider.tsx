@@ -12,7 +12,7 @@ import {
   TocUIStateContext,
 } from "./toc-context";
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageState } from "src/features/pages/context/active-page-context";
 
 function normalizeDepths(items: TocItem[]): number[] {
   if (!items.length) return [];

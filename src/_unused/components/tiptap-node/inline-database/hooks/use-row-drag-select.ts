@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { recordSelection } from "../../../../../components/tiptap-node/inline-database/utils/record-selection-store";
+import { recordSelection } from "../../../../../features/database/utils/record-selection-store";
 
 type RowRect = { id: string; top: number; bottom: number };
 

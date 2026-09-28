@@ -3,7 +3,7 @@ import { Paperclip, AtSign, ArrowUp } from "lucide-react";
 import { useCreateComment } from "src/hooks/use-create-comment";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { makeComment } from "src/utils/make-comment";
-import { CommentMentionEditor, type CommentEditorRef } from "../../../../../components/tiptap-ui/comments/editor";
+import { CommentMentionEditor, type CommentEditorRef } from "../../../../../features/comments/editor";
 import type { JSONContent } from "@tiptap/core";
 import "./thread-composer.scss";
 

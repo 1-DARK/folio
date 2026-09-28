@@ -14,16 +14,16 @@ import {
 } from "lucide-react";
 import { Avatar } from "src/components/tiptap-ui-primitive/avatar";
 import { Button } from "src/components/tiptap-ui-primitive/button";
-import { useDataSource } from "src/components/tiptap-node/inline-database/hooks/use-data-source";
-import { BoardCardCover } from "src/components/tiptap-node/inline-database/primitives/board-card-cover";
-import { getColor } from "src/components/tiptap-node/inline-database/ui/status/status-edit-display/config";
+import { useDataSource } from "src/features/database/hooks/use-data-source";
+import { BoardCardCover } from "src/features/database/primitives/board-card-cover";
+import { getColor } from "src/features/database/ui/status/status-edit-display/config";
 import { usePatchPage } from "src/hooks/use-patch-page";
 import { patchPage } from "src/api/pages";
 import { useJoinChatRoom, useLeaveChatRoom } from "src/hooks/use-chat";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { showcaseAccess } from "src/_unused/hooks/use-create-showcase-source";
 import { spaceHomePath, useCurrentSpace } from "src/hooks/use-current-space";
-import { useActivePageActions } from "../../../../../../components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageActions } from "../../../../../../features/pages/context/active-page-context";
 import type { RoomShowcase } from "src/_unused/api/chat-showcase";
 import type {
   ChatRoom,
@@ -33,7 +33,7 @@ import type {
   StatusItem,
 } from "src/types";
 import { SHOWCASE_STATUS } from "src/_unused/utils/make-showcase-source";
-import { ChatModal, InviteToRoomModal } from "../../../../../../components/tiptap-templates/simple/components/chat/chat-modals";
+import { ChatModal, InviteToRoomModal } from "../../../../../../features/chat/chat-modals";
 import "./showcase-room.scss";
 
 type ViewKind = "gallery" | "board" | "feed";

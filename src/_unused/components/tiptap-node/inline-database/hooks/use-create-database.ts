@@ -5,7 +5,7 @@ import type { DatabaseProperty } from "src/types";
 import type { Page } from "src/types";
 import { useCreatePage } from "src/hooks/use-create-page";
 import { useCreateDataSource } from "src/hooks/use-create-data-source";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageState } from "src/features/pages/context/active-page-context";
 import { makePage } from "src/utils/make-page";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";

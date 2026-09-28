@@ -19,7 +19,7 @@ import type {
   Page,
 } from "src/types";
 import { applyManualOrder } from "../../utils/apply-manual-order";
-import { columnKeyFor } from "../../../../../../components/tiptap-node/inline-database/nodes/database-board-node-view/utils";
+import { columnKeyFor } from "../../../../../../features/database/nodes/database-board-node-view/utils";
 
 const NONE_COLUMN_ID = "__none__";
 

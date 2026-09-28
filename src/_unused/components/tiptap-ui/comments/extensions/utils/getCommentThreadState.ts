@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/core";
-import { commentThreadPluginKey, type CommentThreadState } from "../../../../../../components/tiptap-ui/comments/extensions/comment-thread-extension";
+import { commentThreadPluginKey, type CommentThreadState } from "../../../../../../features/comments/extensions/comment-thread-extension";
 
 export function getCommentThreadState(editor: Editor): CommentThreadState {
   const state = editor.state

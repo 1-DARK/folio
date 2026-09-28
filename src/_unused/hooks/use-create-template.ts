@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useCreatePage } from "src/hooks/use-create-page";
-import { useActivePageActions } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageActions } from "src/features/pages/context/active-page-context";
 import { makePage } from "src/utils/make-page";
 import { makePageFromTemplate } from "src/utils/make-page";
 import type { Page, PageCategory, ID } from "src/types";

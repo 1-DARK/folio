@@ -14,8 +14,8 @@ import { Card, CardGroupLabel } from "src/components/tiptap-ui-primitive/card";
 import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
 import { Badge } from "src/components/tiptap-ui-primitive/badge";
 import CalendarView from "./calendar-view/calendar-view";
-import { useMentionNotification } from "../notification";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useMentionNotification } from "../../../features/inbox/notification";
+import { useActivePageState } from "src/features/pages/context/active-page-context";
 import { usePeople } from "src/hooks/use-people";
 import type { Person } from "src/types";
 

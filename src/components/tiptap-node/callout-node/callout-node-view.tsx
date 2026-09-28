@@ -15,8 +15,8 @@ import {
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
 import { Button } from "src/components/tiptap-ui-primitive/button";
-import { DynamicIcon } from "src/components/tiptap-ui/cover/dynamic-icon";
-import { IconPickerPopover } from "src/components/tiptap-ui/cover";
+import { DynamicIcon } from "src/features/pages/cover/dynamic-icon";
+import { IconPickerPopover } from "src/features/pages/cover";
 
 const DEFAULT_EMOJI = "🔔";
 

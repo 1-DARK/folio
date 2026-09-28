@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNotificationActions } from "../../../../components/tiptap-ui/notification/notification-context";
+import { useNotificationActions } from "../../../../features/inbox/notification/notification-context";
 
 export function useBacklinkNotification({
   pageId,

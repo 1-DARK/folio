@@ -1,7 +1,7 @@
 import {
   PADDING_LEFT,
   type LayoutMode,
-} from "src/components/tiptap-templates/simple/context/editor-layout-context";
+} from "src/features/shell/context/editor-layout-context";
 
 export const SIDEBAR_COLLAPSED_WIDTH = 0;
 export const SIDEBAR_DEFAULT_WIDTH = 290;

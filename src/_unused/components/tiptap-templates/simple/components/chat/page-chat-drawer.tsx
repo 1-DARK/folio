@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { MessagesSquare, X } from "lucide-react";
-import { useActivePageState } from "../../../../../../components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageState } from "../../../../../../features/pages/context/active-page-context";
 import { useChatRoom } from "src/hooks/use-chat";
 import { usePageChat } from "src/_unused/hooks/use-page-chat";
 import { setPageChatOpen, usePageChatOpen } from "./page-chat-store";
-import { RoomContent } from "../../../../../../components/tiptap-templates/simple/components/chat/chat-room-view";
+import { RoomContent } from "../../../../../../features/chat/chat-room-view";
 import "./page-chat-drawer.scss";
 
 // Right-side drawer with the discussion of the page you're on. Rendered from

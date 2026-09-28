@@ -2,8 +2,8 @@ import { Card } from "src/components/tiptap-ui-primitive/card";
 import {
   StatusEditDisplay,
   type StatusPropertyProps,
-} from "../../../../../../components/tiptap-node/inline-database/ui/status/status-edit-display";
-import { PropertyEditPopover } from "../../../../../../components/tiptap-node/inline-database/components/property-edit-popover";
+} from "../../../../../../features/database/ui/status/status-edit-display";
+import { PropertyEditPopover } from "../../../../../../features/database/components/property-edit-popover";
 
 export function StatusProperty(props: StatusPropertyProps) {
   return (

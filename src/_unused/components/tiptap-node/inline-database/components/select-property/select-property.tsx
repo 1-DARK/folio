@@ -2,8 +2,8 @@ import { Card } from "src/components/tiptap-ui-primitive/card";
 import {
   SelectOptionsEditor,
   type SelectOptionsEditorProps,
-} from "../../../../../../components/tiptap-node/inline-database/ui/select/select-options-editor/select-options-editor";
-import { PropertyEditPopover } from "../../../../../../components/tiptap-node/inline-database/components/property-edit-popover";
+} from "../../../../../../features/database/ui/select/select-options-editor/select-options-editor";
+import { PropertyEditPopover } from "../../../../../../features/database/components/property-edit-popover";
 
 export type SelectPropertyProps = SelectOptionsEditorProps & {
   hideWhenUnavailable?: boolean;

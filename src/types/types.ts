@@ -1,6 +1,6 @@
 import type { FilterOperator, FilterGroup } from "./filter-types";
 import type { JSONContent } from "@tiptap/core";
-import type { Target } from "src/components/tiptap-ui/cover/types";
+import type { Target } from "src/features/pages/cover/types";
 
 export type ID = string;
 

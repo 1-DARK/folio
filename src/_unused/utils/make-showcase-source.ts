@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import type { DatabaseProperty, DatabaseView, ID } from "src/types";
 import { DEFAULT_CONFIGS } from "src/types";
 import { newId } from "src/lib/id";
-import { makeDefaultView } from "src/components/tiptap-node/inline-database/utils";
+import { makeDefaultView } from "src/features/database/utils";
 
 // A showcase is a plain Folio database with a fixed starting schema.
 // Entries are row pages (sourceId + values); the cover is the row page's own

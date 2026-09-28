@@ -1,7 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { useEffect, useState } from "react";
 import { getCommentThreadState } from "../extensions/utils/getCommentThreadState";
-import type { CommentThreadState } from "../../../../../components/tiptap-ui/comments/extensions/comment-thread-extension";
+import type { CommentThreadState } from "../../../../../features/comments/extensions/comment-thread-extension";
 
 export function useCommentThreadState(editor: Editor | null) {
   const [threadState, setThreadState] = useState<CommentThreadState | null>(null)

@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/core";
-import { commentThreadPluginKey } from "../../../../../../components/tiptap-ui/comments/extensions/comment-thread-extension";
+import { commentThreadPluginKey } from "../../../../../../features/comments/extensions/comment-thread-extension";
 import type { ID } from "src/types";
 
 // Mark a thread as submitted

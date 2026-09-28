@@ -1,5 +1,5 @@
 import { List } from "lucide-react";
-import { MenuRow } from "../../../../../../components/tiptap-node/inline-database/components/menu-row";
+import { MenuRow } from "../../../../../../features/database/components/menu-row";
 
 // Edit property — navigates to the property list (submenu).
 export function EditPropertyItem({ onOpen }: { onOpen: () => void }) {

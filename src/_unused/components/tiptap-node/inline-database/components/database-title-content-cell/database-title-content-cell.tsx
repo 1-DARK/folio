@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { PanelRightOpen } from "lucide-react";
 import { NodeViewContent } from "@tiptap/react";
 import { Button } from "src/components/tiptap-ui-primitive/button";
-import { PageItemIcon } from "src/components/tiptap-templates/simple/page-item-icon";
+import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
 import { usePage } from "src/hooks/use-pages";
-import { usePageViewActions } from "src/components/tiptap-templates/simple/context/page-view-context";
-import { useActivePageActions } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { usePageViewActions } from "src/features/pages/context/page-view-context";
+import { useActivePageActions } from "src/features/pages/context/active-page-context";
 import type { DatabaseView, ID } from "src/types";
 import "./database-title-content-cell.scss";
 

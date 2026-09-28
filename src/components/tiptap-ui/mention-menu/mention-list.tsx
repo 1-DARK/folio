@@ -9,7 +9,7 @@ import "./mention-list.scss";
 import { AlarmClock, Clock, File, Users } from "lucide-react";
 import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
 import { Badge } from "src/components/tiptap-ui-primitive/badge";
-import { PageItemIcon } from "src/components/tiptap-templates/simple/page-item-icon";
+import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
 import { useCurrentEditor } from "@tiptap/react";
 import { usePeople } from "src/hooks/use-people";
 import { usePages } from "src/hooks/use-pages";

@@ -1,7 +1,7 @@
-import { usePageViewActions } from "src/components/tiptap-templates/simple/context/page-view-context";
-import { Cell } from "../../../../../components/tiptap-node/inline-database/components/cells/cell";
-import { BoardCardCover } from "../../../../../components/tiptap-node/inline-database/primitives/board-card-cover";
-import { BoardCardContent } from "../../../../../components/tiptap-node/inline-database/primitives/board-card-content";
+import { usePageViewActions } from "src/features/pages/context/page-view-context";
+import { Cell } from "../../../../../features/database/components/cells/cell";
+import { BoardCardCover } from "../../../../../features/database/primitives/board-card-cover";
+import { BoardCardContent } from "../../../../../features/database/primitives/board-card-content";
 import type {
   Page,
   DatabaseProperty,
@@ -10,9 +10,9 @@ import type {
 } from "src/types";
 import "./board-card.scss";
 import { useDraggable } from "@dnd-kit/core";
-import { BoardCardControls } from "../../../../../components/tiptap-node/inline-database/components/board-card-controls/board-card-controls";
+import { BoardCardControls } from "../../../../../features/database/components/board-card-controls/board-card-controls";
 import { useCallback, useState } from "react";
-import { useActivePageActions } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageActions } from "src/features/pages/context/active-page-context";
 import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
 
 // A card hides properties that have no value (Notion behavior), so cards size

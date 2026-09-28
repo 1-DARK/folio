@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useThreadState } from "../context/useThreadState.js";
-import { CommentCard } from "../../../../../components/tiptap-ui/comments/components/comment-card.js";
+import { CommentCard } from "../../../../../features/comments/components/comment-card.js";
 import { ThreadCard } from "./thread-card.js";
 import { ThreadComposer } from "./thread-composer.js";
 import type { PositionedThread, Thread } from "src/types";
@@ -9,7 +9,7 @@ import type { Editor } from "@tiptap/core";
 import Button, {
   ButtonGroup,
 } from "src/components/tiptap-ui-primitive/button/button.js";
-import { scrollToThread } from "../../../../../components/tiptap-ui/comments/extensions/utils/scrollToThread.js";
+import { scrollToThread } from "../../../../../features/comments/extensions/utils/scrollToThread.js";
 
 import "./thread-list-item.scss";
 import { Check, RotateCw, Trash } from "lucide-react";
@@ -19,7 +19,7 @@ import { useDeleteComment } from "src/hooks/use-delete-comment.js";
 import { usePatchComment } from "src/hooks/use-patch-comment.js";
 import { patchComment } from "src/api/comments.js";
 import { usePersonNames } from "src/hooks/use-person-names.js";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context.js";
+import { useActivePageState } from "src/features/pages/context/active-page-context.js";
 
 interface ThreadListItemProps {
   thread: Thread;

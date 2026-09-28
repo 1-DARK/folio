@@ -1,1 +1,1 @@
-export * from "../../../../../../components/tiptap-templates/simple/components/teamspaces-panel/teamspaces-panel";
+export * from "../../../../../../features/workspace/teamspaces/teamspaces-panel/teamspaces-panel";

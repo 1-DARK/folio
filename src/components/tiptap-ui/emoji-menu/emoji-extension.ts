@@ -102,7 +102,7 @@ function ensureEmojiData(): Promise<void> {
   if (emojiDataLoaded) return Promise.resolve();
   if (!emojiDataPromise) {
     emojiDataPromise =
-      import("src/components/tiptap-ui/cover/data/emoji-data").then((mod) => {
+      import("src/features/pages/cover/data/emoji-data").then((mod) => {
         // Flatten every category's emojis into the extension's entry shape.
         emojiList = mod.EMOJI_CATEGORIES.flatMap((cat) =>
           cat.emojis.map((e) => ({

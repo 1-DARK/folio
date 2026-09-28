@@ -1,4 +1,4 @@
-import { Cell } from "../../../../../../components/tiptap-node/inline-database/components/cells/cell";
+import { Cell } from "../../../../../../features/database/components/cells/cell";
 import type {
   DatabaseProperty,
   CellValue,
@@ -7,15 +7,15 @@ import type {
   ID,
   PropertyType,
 } from "src/types";
-import "../../../../../../components/tiptap-node/inline-database/nodes/database-list-node-view/database-list-node-view.scss";
+import "../../../../../../features/database/nodes/database-list-node-view/database-list-node-view.scss";
 import { memo, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   recordSelection,
   useRecordRowState,
-} from "../../../../../../components/tiptap-node/inline-database/utils/record-selection-store";
-import { useRowAnchor } from "../../../../../../components/tiptap-node/inline-database/hooks/use-row-anchor";
-import { beginRowDragSelect } from "../../../../../../components/tiptap-node/inline-database/utils/row-drag-select";
+} from "../../../../../../features/database/utils/record-selection-store";
+import { useRowAnchor } from "../../../../../../features/database/hooks/use-row-anchor";
+import { beginRowDragSelect } from "../../../../../../features/database/utils/row-drag-select";
 
 function ListRowImpl({
   record,

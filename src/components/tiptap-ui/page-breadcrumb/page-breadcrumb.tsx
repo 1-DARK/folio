@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { PageCategory, PageTreeNode, ID, Page } from "src/types";
 import { usePageTree } from "src/hooks/use-pages";
-import { useActivePage } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePage } from "src/features/pages/context/active-page-context";
 import {
   Breadcrumb,
   type BreadcrumbItem,

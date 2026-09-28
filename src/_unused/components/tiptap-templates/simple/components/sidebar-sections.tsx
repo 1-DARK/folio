@@ -31,8 +31,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import type { ID, Page, PageCategory } from "src/types";
-import { PageItem } from "../../../../../components/tiptap-templates/simple/page-item";
-import "../../../../../components/tiptap-templates/simple/components/sidebar-sections.scss";
+import { PageItem } from "../../../../../features/pages/page-item/page-item";
+import "../../../../../features/shell/sidebar/sidebar-sections.scss";
 
 // Categories rendered as sections (Page + Template handled elsewhere).
 const SECTION_CATEGORIES: PageCategory[] = [

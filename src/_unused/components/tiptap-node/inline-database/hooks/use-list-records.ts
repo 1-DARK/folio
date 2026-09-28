@@ -6,9 +6,9 @@ import type {
   ListView,
   Page,
 } from "src/types";
-import { recordMatchesFilters } from "../../../../../components/tiptap-node/inline-database/utils/apply-filters";
-import { sortRecords } from "../../../../../components/tiptap-node/inline-database/utils/apply-sorts";
-import { groupRecords } from "../../../../../components/tiptap-node/inline-database/utils/group-records";
+import { recordMatchesFilters } from "../../../../../features/database/utils/apply-filters";
+import { sortRecords } from "../../../../../features/database/utils/apply-sorts";
+import { groupRecords } from "../../../../../features/database/utils/group-records";
 
 export function useListRecords(
   resolvedRecords: Page[],

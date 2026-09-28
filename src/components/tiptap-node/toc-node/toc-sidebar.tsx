@@ -1,6 +1,6 @@
 import { TocProgress } from "./toc-progress-bar";
 import { TocContent } from "./toc-content";
-import { useEditorRefs } from "src/components/tiptap-templates/simple/context/editor-refs-context";
+import { useEditorRefs } from "src/features/editor/context/editor-refs-context";
 import { useEffect } from "react";
 import { useTocActions } from "./toc-context";
 import { useIsMobile } from "src/hooks/use-breakpoint";
