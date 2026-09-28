@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { useToast } from "src/components/tiptap-templates/simple/components/toast";
+import { useToast } from "src/features/shell/toast";
 import { trashPage, restorePage } from "src/api/pages-trash";
 import { queryKeys } from "src/lib/queryKeys";
 import type { ID } from "src/types";

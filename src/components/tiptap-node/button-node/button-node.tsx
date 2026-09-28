@@ -14,7 +14,7 @@ import {
 } from "src/components/tiptap-ui-primitive/popover";
 import { LinkPicker } from "src/components/tiptap-ui/link-picker/link-picker"; // adjust path
 import { useEditorEditable } from "./use-editor-editable";
-import { useActivePageActions } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageActions } from "src/features/pages/context/active-page-context";
 import { ResizableNodeProvider } from "../figure-node";
 import { ResizableNodeContext } from "../figure-node/resize-node-context";
 import "./button-node.scss";

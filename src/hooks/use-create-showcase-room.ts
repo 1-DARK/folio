@@ -12,7 +12,7 @@ import { useCurrentPerson } from "src/hooks/use-session";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useCurrentSpace } from "src/hooks/use-current-space";
 import { setRoomShowcase } from "src/api/chat-rows";
-import { useClonePage } from "src/components/tiptap-node/inline-database/hooks/use-clone-page";
+import { useClonePage } from "src/features/database/hooks/use-clone-page";
 import { showcaseKeys } from "./use-chat-rows";
 
 // A database template = a Template page whose content holds a database node.

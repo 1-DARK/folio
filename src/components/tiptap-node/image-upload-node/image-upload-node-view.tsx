@@ -4,9 +4,9 @@ import { useRef, useState } from "react";
 import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import { focusNextNode, isValidPosition } from "src/lib/tiptap-utils";
-import { UrlTab } from "src/components/tiptap-ui/cover/url-tab";
-import { UploadTab } from "src/components/tiptap-ui/cover/upload-tab";
-import { UnsplashTab } from "src/components/tiptap-ui/cover/unsplash-tab";
+import { UrlTab } from "src/features/pages/cover/url-tab";
+import { UploadTab } from "src/features/pages/cover/upload-tab";
+import { UnsplashTab } from "src/features/pages/cover/unsplash-tab";
 import { useFileUpload } from "./use-file-upload";
 import type { UploadOptions } from "./image-upload-node";
 

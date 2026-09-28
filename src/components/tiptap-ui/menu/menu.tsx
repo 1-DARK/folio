@@ -19,12 +19,12 @@ import { DeleteNodeButton } from "src/components/tiptap-ui/delete-node-button";
 import "./menu.scss";
 import { DropdownMenuItem } from "src/components/tiptap-ui-primitive/dropdown-menu";
 import { Button } from "src/components/tiptap-ui-primitive/button";
-import { CommentButton } from "../comment-button";
+import { CommentButton } from "../../../features/comments/comment-button";
 import { useTranslation } from "react-i18next";
-//import { RecordDragMenu } from "src/components/tiptap-node/inline-database/components/record-drag-menu";
-import { useActivePageState } from "src/components/tiptap-templates/simple/context/active-page-context";
-import { requestDiscussBlock } from "src/components/tiptap-templates/simple/components/chat/block-share-store";
-import { SuggestButton } from "../suggest-button";
+//import { RecordDragMenu } from "src/features/database/components/record-drag-menu";
+import { useActivePageState } from "src/features/pages/context/active-page-context";
+import { requestDiscussBlock } from "src/features/chat/block-share-store";
+import { SuggestButton } from "../../../features/comments/suggest-button";
 
 const SNAPSHOT_MAX = 600;
 

@@ -2,13 +2,13 @@
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import "./page-link-node.scss";
-import { PageItemIcon } from "src/components/tiptap-templates/simple/page-item-icon";
+import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
 import { useRef, useState } from "react";
 import type { Page } from "src/types";
 import { createPortal } from "react-dom";
-import { useActivePageActions } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePageActions } from "src/features/pages/context/active-page-context";
 import { usePage } from "src/hooks/use-pages";
-import { Breadcrumbs } from "src/components/tiptap-templates/simple/breadcrumbs";
+import { Breadcrumbs } from "src/features/shell/breadcrumbs";
 
 function getContentExcerpt(page: Page): string {
   try {

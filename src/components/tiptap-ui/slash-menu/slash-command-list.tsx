@@ -8,7 +8,7 @@ import { Button, ButtonGroup } from "src/components/tiptap-ui-primitive/button";
 import "./slash-command-list.scss";
 import { useMenuNavigation } from "src/hooks/use-menu-navigation";
 import type { SlashCommand as SlashItem } from "./slash-commands";
-import { useActivePage } from "src/components/tiptap-templates/simple/context/active-page-context";
+import { useActivePage } from "src/features/pages/context/active-page-context";
 import { useCreatePage } from "src/hooks/use-create-page";
 import { makeChildPage } from "src/utils/make-page";
 import { Badge } from "src/components/tiptap-ui-primitive/badge";

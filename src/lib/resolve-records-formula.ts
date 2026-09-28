@@ -5,7 +5,7 @@ import type {
   Page,
   ID,
 } from "src/types";
-import { evaluateFormula } from "../components/tiptap-node/inline-database/components/formula-editor/formula-evaluator";
+import { evaluateFormula } from "../features/database/components/formula-editor/formula-evaluator";
 
 /**
  * Returns a copy of `records` with every formula property's value computed

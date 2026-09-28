@@ -7,7 +7,7 @@ import "./i18n/config.ts";
 import "material-symbols/rounded.css";
 
 // import './styles/main.scss'
-import App from "./App.tsx";
+import App from "./app/App.tsx";
 
 // const originalError = console.error;
 // console.error = (...args) => {

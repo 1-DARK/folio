@@ -30,8 +30,8 @@ import {
 } from "src/components/tiptap-ui-primitive/button";
 import { useEffect, useRef, useState } from "react";
 import { NodeSelection } from "@tiptap/pm/state";
-import { CommentButton } from "src/components/tiptap-ui/comment-button";
-import { SuggestButton } from "../suggest-button";
+import { CommentButton } from "src/features/comments/comment-button";
+import { SuggestButton } from "../../../features/comments/suggest-button";
 
 interface MoreOptionsPopoverProps
   extends Omit<ButtonProps, "type">, UseMarkConfig {}
