@@ -8,6 +8,28 @@
     --tiptap-image-handle-bg: var(--tt-brand-color-400)
 }
 
+// The caption under an image: a borderless text field.
+.image-caption {
+  display: block;
+  width: 100%;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--tt-text-color);
+
+  &::placeholder {
+    color: var(--tt-theme-muted, rgba(0, 0, 0, 0.4));
+  }
+}
+
 .node-image{
   &.ProseMirror-selectednode{
     background: transparent !important;

@@ -1,7 +1,13 @@
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import type { ImageOptions } from "./image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { ImageNodeSkeleton } from "./image-node-skeleton";
 import { ImageLightbox, OPEN_LIGHTBOX_EVENT } from "./image-lightbox";
 import "./image-node.scss";
@@ -100,16 +106,44 @@ function ImageViewInner(props: NodeViewProps) {
     document.addEventListener("mouseup", onUp);
   };
 
-  const captionRef = useRef<HTMLDivElement>(null);
+  const captionRef = useRef<HTMLTextAreaElement>(null);
+  const caption: string = props.node.attrs.caption ?? "";
 
-  // Sync initial value only on mount / when caption attr changes externally
+  // The Caption button turns the caption on; focus it once it has rendered
+  // (the command runs before React mounts it). Only for the person who has
+  // the image selected, so a collaborator's caption doesn't steal focus.
+  const captionWasShown = useRef(showCaption);
   useEffect(() => {
-    if (!captionRef.current) return;
-    // Only update DOM if it differs — avoids cursor reset during typing
-    if (captionRef.current.textContent !== (props.node.attrs.caption ?? "")) {
-      captionRef.current.textContent = props.node.attrs.caption ?? "";
+    if (showCaption && !captionWasShown.current && props.selected) {
+      requestAnimationFrame(() => captionRef.current?.focus());
     }
-  }, [props.node.attrs.caption]);
+    captionWasShown.current = showCaption;
+  }, [showCaption, props.selected]);
+
+  // The caption grows with its text.
+  useLayoutEffect(() => {
+    const el = captionRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [caption, showCaption]);
+
+  // Enter or Esc in the caption: back to the page, just after the image.
+  const leaveCaption = (toNextLine: boolean) => {
+    const pos = props.getPos();
+    if (typeof pos !== "number") return;
+    if (toNextLine) {
+      const after = pos + props.node.nodeSize;
+      props.editor
+        .chain()
+        .focus()
+        .insertContentAt(after, { type: "paragraph" })
+        .setTextSelection(after + 1)
+        .run();
+    } else {
+      props.editor.chain().focus().setNodeSelection(pos).run();
+    }
+  };
 
   const STRIP: React.CSSProperties = {
     position: "absolute",
@@ -219,35 +253,40 @@ function ImageViewInner(props: NodeViewProps) {
           }}
         />
 
-        {showCaption && (
-          <div
+        {/* A real text field, not a contentEditable div: ProseMirror reads a
+            selection inside a contentEditable as a cursor in the image node
+            and takes focus back, so the caption couldn't be typed in. */}
+        {showCaption && (props.editor.isEditable || caption) && (
+          <textarea
             ref={captionRef}
-            contentEditable
-            suppressContentEditableWarning
             data-image-caption
-            data-placeholder="Add a caption…"
-            onInput={(e) =>
-              props.updateAttributes({ caption: e.currentTarget.textContent })
+            className="image-caption"
+            rows={1}
+            placeholder="Add a caption…"
+            value={caption}
+            readOnly={!props.editor.isEditable}
+            onChange={(e) =>
+              props.updateAttributes({ caption: e.target.value })
             }
-            style={{
-              fontSize: 13,
-              color: "var(--tt-text-color)",
-              textAlign: "center",
-              marginTop: 6,
-              outline: "none",
-              minHeight: "1em",
-              width: "100%",
-            }}
-            onFocus={() =>
-              props.editor.commands.setNodeSelection(props.getPos()!)
-            }
-            // An empty caption goes away when you leave it.
-            onBlur={(e) => {
-              if (!e.currentTarget.textContent?.trim()) {
-                props.updateAttributes({ showCaption: false, caption: "" });
+            onFocus={() => {
+              if (!props.selected) {
+                props.editor.commands.setNodeSelection(props.getPos()!);
               }
             }}
-            // no children here — DOM is managed via ref
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                leaveCaption(true);
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                leaveCaption(false);
+              } else if (e.key === "Backspace" && caption === "") {
+                e.preventDefault();
+                props.updateAttributes({ showCaption: false });
+                leaveCaption(false);
+              }
+            }}
           />
         )}
       </div>

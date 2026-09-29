@@ -157,6 +157,23 @@ export const ImageUploadNode = Node.create<ImageUploadNodeOptions>({
    */
   addKeyboardShortcuts() {
     return {
+      // Replacing an image: Esc puts the old one back (the card handles Esc
+      // itself when it has focus; this covers focus still in the editor).
+      Escape: ({ editor }) => {
+        const { selection } = editor.state;
+        const pos = selection.from;
+        const node = editor.state.doc.nodeAt(pos);
+        const previous = node?.attrs._replaceAttrs;
+        if (node?.type.name !== this.name || !previous) return false;
+        return editor
+          .chain()
+          .insertContentAt(
+            { from: pos, to: pos + node.nodeSize },
+            { type: "image", attrs: previous },
+          )
+          .setNodeSelection(pos)
+          .run();
+      },
       Enter: ({ editor }) => {
         const { selection } = editor.state;
         const { nodeAfter } = selection.$from;

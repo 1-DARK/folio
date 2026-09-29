@@ -217,7 +217,8 @@ export const Image = Node.create<ImageOptions>({
                 accept: "image/*",
                 limit: 1,
                 maxSize: 0,
-                _replaceAttrs: node.attrs,
+                // A plain copy: node.attrs has no prototype, which Yjs can't store.
+                _replaceAttrs: { ...node.attrs },
               },
             },
           );

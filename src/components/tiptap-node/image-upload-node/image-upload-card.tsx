@@ -87,8 +87,13 @@ export function ImageUploadCard({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus the card so Ctrl+V works right after the block is added.
+  // A frame later: the editor takes focus back right after inserting the
+  // block (e.g. from the Replace button).
   useEffect(() => {
-    rootRef.current?.focus({ preventScroll: true });
+    const id = requestAnimationFrame(() =>
+      rootRef.current?.focus({ preventScroll: true }),
+    );
+    return () => cancelAnimationFrame(id);
   }, []);
 
   const uploadAll = useCallback(
