@@ -144,8 +144,14 @@ function ImageViewInner(props: NodeViewProps) {
       data-image-wrapper
       style={{
         display: "block",
-        width:
-          widthPreset ?? (currentWidth ? `${currentWidth}px` : "fit-content"),
+        // Phones: the full column. "fit-content" around an <img> at 100%
+        // makes each wait on the other's width, which WebKit (every iPhone
+        // browser) can resolve to zero, so the image never shows.
+        width: isMobile
+          ? (widthPreset ?? "100%")
+          : (widthPreset ??
+            (currentWidth ? `${currentWidth}px` : "fit-content")),
+        maxWidth: "100%",
         height: "fit-content",
         pointerEvents: "auto",
         borderRadius: 4,
