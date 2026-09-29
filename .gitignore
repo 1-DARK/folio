@@ -38,9 +38,10 @@ server/uploads
 # if your authored styles are all .scss and bundler-handled:
 src/**/*.css
 db.json
-hocuspocus-server/folio-hocuspocus.sqlite
-hocuspocus-server/folio-hocuspocus.sqlite
-hocuspocus-server/folio-hocuspocus.sqlite
+# Hocuspocus's local database (and SQLite's journal files next to it)
+hocuspocus-server/*.sqlite
+hocuspocus-server/*.sqlite-wal
+hocuspocus-server/*.sqlite-shm
+hocuspocus-server/*.sqlite-journal
 hocuspocus-server/migration.md
 src/components/tiptap-ui-primitive/board/notes.md
-hocuspocus-server/folio-hocuspocus.sqlite
