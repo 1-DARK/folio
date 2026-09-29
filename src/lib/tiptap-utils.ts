@@ -16,7 +16,8 @@ import {
 
 import { useState, useCallback } from "react";
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// Same as the Storage bucket's limit (hocuspocus-server/035_uploads_bucket.sql).
+export const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 export const MAC_SYMBOLS: Record<string, string> = {
   mod: "⌘",
