@@ -15,8 +15,8 @@ import {
 import { LinkPicker } from "src/components/tiptap-ui/link-picker/link-picker";
 import { useEditorEditable } from "./use-editor-editable";
 import { useOptionalActivePage } from "src/features/pages/context/active-page-context";
-import { ResizableNodeProvider } from "../figure-node";
-import { ResizableNodeContext } from "../figure-node/resize-node-context";
+import { ResizableNodeProvider } from "src/components/tiptap-node/resizable-node";
+import { ResizableNodeContext } from "src/components/tiptap-node/resizable-node";
 import "./button-node.scss";
 
 declare module "@tiptap/core" {

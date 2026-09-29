@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { PropertyHeader } from "../../components/property-header";
-import { ResizableNodeProvider } from "../../../../components/tiptap-node/figure-node";
+import { ResizableNodeProvider } from "src/components/tiptap-node/resizable-node";
 import {
   type DatabaseProperty,
   type DatabaseView,

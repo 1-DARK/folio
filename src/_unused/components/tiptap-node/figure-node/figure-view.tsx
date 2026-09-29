@@ -4,10 +4,10 @@ import {
   NodeViewContent,
   type ReactNodeViewProps,
 } from "@tiptap/react";
-import { useResizableNode } from "./resize-node-context";
-import type { FigureNodeViewOptions } from "./types";
-import { ResizableNodeHandle } from "./resize-node-handle";
-import { ResizableNodeProvider } from "./resize-node-provider";
+import { useResizableNode } from "src/components/tiptap-node/resizable-node/resize-node-context";
+import type { FigureNodeViewOptions } from "src/components/tiptap-node/resizable-node/types";
+import { ResizableNodeHandle } from "src/components/tiptap-node/resizable-node/resize-node-handle";
+import { ResizableNodeProvider } from "src/components/tiptap-node/resizable-node/resize-node-provider";
 import { NodeSelection } from "@tiptap/pm/state";
 
 import "./figure-view.scss";

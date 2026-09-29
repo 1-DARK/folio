@@ -3,7 +3,7 @@ import { Button } from "src/components/tiptap-ui-primitive/button";
 import { DynamicIcon } from "src/features/pages/cover/dynamic-icon";
 import type { CellValue, DatabaseView, ID, Page } from "src/types";
 import "./timeline-card-body.scss";
-import { useResizableNode } from "../../../../components/tiptap-node/figure-node";
+import { useResizableNode } from "src/components/tiptap-node/resizable-node";
 import { recordSelection } from "../../utils/record-selection-store";
 import { ROW_HEIGHT } from "../../hooks/use-timeline-layout";
 

@@ -7,8 +7,8 @@ import {
 } from "@tiptap/react";
 import { useContext, type CSSProperties, type Ref } from "react";
 import { useEditorEditable } from "../button-node/use-editor-editable";
-import { ResizableNodeProvider } from "../figure-node";
-import { ResizableNodeContext } from "../figure-node/resize-node-context";
+import { ResizableNodeProvider } from "src/components/tiptap-node/resizable-node";
+import { ResizableNodeContext } from "src/components/tiptap-node/resizable-node";
 import "./container-node.scss";
 
 declare module "@tiptap/core" {

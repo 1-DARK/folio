@@ -1,7 +1,7 @@
 // extensions/figure.ts
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import type { FigureNodeViewOptions } from "./types";
+import type { FigureNodeViewOptions } from "src/components/tiptap-node/resizable-node/types";
 import FigureView from "./figure-view";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import { MAX_FILE_SIZE } from "src/lib/tiptap-utils";
