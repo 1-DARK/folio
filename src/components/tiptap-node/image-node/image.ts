@@ -139,6 +139,16 @@ export const Image = Node.create<ImageOptions>({
       caption: {
         default: "",
       },
+      // The image's real size, saved on its first load so later loads can
+      // reserve the right box before the bytes arrive. Not written to HTML.
+      naturalWidth: {
+        default: null,
+        rendered: false,
+      },
+      naturalHeight: {
+        default: null,
+        rendered: false,
+      },
     };
   },
 

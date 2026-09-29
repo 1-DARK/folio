@@ -38,6 +38,8 @@ export interface ImageUploadCardProps {
   onError?: (error: Error) => void;
   /** Replace the card with these images. */
   onInsert: (images: InsertedImage[]) => void;
+  /** Shown as a close button (and on Escape) when set, e.g. while replacing. */
+  onCancel?: () => void;
 }
 
 interface UploadItem {
@@ -75,6 +77,7 @@ export function ImageUploadCard({
   upload,
   onError,
   onInsert,
+  onCancel,
 }: ImageUploadCardProps) {
   const [tab, setTab] = useState<Tab>("upload");
   const [items, setItems] = useState<UploadItem[]>([]);
@@ -193,36 +196,57 @@ export function ImageUploadCard({
       className="image-upload-card"
       tabIndex={-1}
       onPaste={onPaste}
-      onKeyDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === "Escape" && onCancel) {
+          e.preventDefault();
+          onCancel();
+        }
+      }}
     >
-      <ButtonGroup
-        orientation="horizontal"
-        className="image-upload-card__tabs"
-        role="tablist"
-        aria-label="Add an image"
-      >
-        {(
-          [
-            ["upload", "Upload", Upload],
-            ["link", "Link", Link2],
-            ["photos", "Photos", ImageIcon],
-          ] as const
-        ).map(([id, label, Icon]) => (
+      <div className="image-upload-card__head">
+        <ButtonGroup
+          orientation="horizontal"
+          className="image-upload-card__tabs"
+          role="tablist"
+          aria-label="Add an image"
+        >
+          {(
+            [
+              ["upload", "Upload", Upload],
+              ["link", "Link", Link2],
+              ["photos", "Photos", ImageIcon],
+            ] as const
+          ).map(([id, label, Icon]) => (
+            <Button
+              key={id}
+              type="button"
+              role="tab"
+              variant="ghost"
+              aria-selected={tab === id}
+              data-active-state={tab === id ? "on" : "off"}
+              className="image-upload-card__tab"
+              onClick={() => setTab(id)}
+            >
+              <Icon className="tiptap-button-icon" />
+              <span className="tiptap-button-text">{label}</span>
+            </Button>
+          ))}
+        </ButtonGroup>
+        {onCancel && (
           <Button
-            key={id}
             type="button"
-            role="tab"
             variant="ghost"
-            aria-selected={tab === id}
-            data-active-state={tab === id ? "on" : "off"}
-            className="image-upload-card__tab"
-            onClick={() => setTab(id)}
+            className="image-upload-card__cancel"
+            tooltip="Keep the current image"
+            showTooltip
+            aria-label="Cancel"
+            onClick={onCancel}
           >
-            <Icon className="tiptap-button-icon" />
-            <span className="tiptap-button-text">{label}</span>
+            <X className="tiptap-button-icon" />
           </Button>
-        ))}
-      </ButtonGroup>
+        )}
+      </div>
 
       {tab === "upload" && (
         <div className="image-upload-card__body">

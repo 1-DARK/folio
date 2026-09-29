@@ -1,8 +1,9 @@
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import type { ImageOptions } from "./image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImageNodeSkeleton } from "./image-node-skeleton";
+import { ImageLightbox, OPEN_LIGHTBOX_EVENT } from "./image-lightbox";
 import "./image-node.scss";
 import { useIsMobile } from "src/hooks/use-breakpoint";
 
@@ -12,6 +13,18 @@ type WidthPreset = "25%" | "50%" | "75%" | "100%";
 function ImageViewInner(props: NodeViewProps) {
   const [hovered, setHovered] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const closeLightbox = useCallback(() => setLightboxOpen(false), []);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // The bubble menu's "View full size" fires this event on our wrapper.
+  useEffect(() => {
+    const wrapper = imgRef.current?.closest("[data-image-wrapper]");
+    if (!wrapper) return;
+    const open = () => setLightboxOpen(true);
+    wrapper.addEventListener(OPEN_LIGHTBOX_EVENT, open);
+    return () => wrapper.removeEventListener(OPEN_LIGHTBOX_EVENT, open);
+  }, []);
 
   const src: string | null = props.node.attrs.src ?? null;
 
@@ -163,7 +176,18 @@ function ImageViewInner(props: NodeViewProps) {
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => !isResizing && setHovered(false)}
-      onClick={() => props.editor.commands.setNodeSelection(props.getPos()!)}
+      onClick={() => {
+        // Read-only pages: a click opens the image. While editing, a click
+        // selects it (for the bubble menu) and a double-click opens it.
+        if (!props.editor.isEditable) {
+          if (src && loaded) setLightboxOpen(true);
+          return;
+        }
+        props.editor.commands.setNodeSelection(props.getPos()!);
+      }}
+      onDoubleClick={() => {
+        if (src && loaded) setLightboxOpen(true);
+      }}
     >
       {/* Left resize strip */}
       <div
@@ -180,6 +204,7 @@ function ImageViewInner(props: NodeViewProps) {
         {!loaded && src && <ImageNodeSkeleton aspectRatio={aspectRatio} />}
 
         <img
+          ref={imgRef}
           src={props.node.attrs.src}
           alt={props.node.attrs.alt ?? ""}
           title={props.node.attrs.title ?? undefined}
@@ -188,6 +213,7 @@ function ImageViewInner(props: NodeViewProps) {
           style={{
             display: loaded ? "block" : "none",
             width: "100%",
+            cursor: props.editor.isEditable ? undefined : "zoom-in",
             height: "auto",
             borderRadius: 4,
           }}
@@ -215,10 +241,25 @@ function ImageViewInner(props: NodeViewProps) {
             onFocus={() =>
               props.editor.commands.setNodeSelection(props.getPos()!)
             }
+            // An empty caption goes away when you leave it.
+            onBlur={(e) => {
+              if (!e.currentTarget.textContent?.trim()) {
+                props.updateAttributes({ showCaption: false, caption: "" });
+              }
+            }}
             // no children here — DOM is managed via ref
           />
         )}
       </div>
+
+      {lightboxOpen && src && (
+        <ImageLightbox
+          src={src}
+          alt={props.node.attrs.alt}
+          caption={showCaption ? props.node.attrs.caption : null}
+          onClose={closeLightbox}
+        />
+      )}
 
       {/* Right resize strip */}
       <div

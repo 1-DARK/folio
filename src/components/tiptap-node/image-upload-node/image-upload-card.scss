@@ -34,7 +34,18 @@
   outline: none;
 
   // ── Tabs: a segmented control ─────────────────────────────────────────
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__cancel.tiptap-button {
+    flex: none;
+  }
+
   &__tabs {
+    flex: 1;
     display: flex;
     gap: 2px;
     padding: 3px;

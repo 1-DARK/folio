@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 //import { ImageUploadNode as ImageUploadNodeComponent } from "src/components/tiptap-node/image-upload-node/image-upload-node";
 import type { NodeType } from "@tiptap/pm/model";
 import { ImageUploadNodeView } from "./image-upload-node-view";
+import { imagePasteDropPlugin } from "./image-paste-drop";
 
 export type UploadFunction = (
   file: File,
@@ -99,6 +100,13 @@ export const ImageUploadNode = Node.create<ImageUploadNodeOptions>({
       maxSize: {
         default: this.options.maxSize,
       },
+      // Set by the image's "Replace" command: the attributes of the image
+      // being replaced, so width, alignment and caption carry over and
+      // closing the card puts the old image back.
+      _replaceAttrs: {
+        default: null,
+        rendered: false,
+      },
     };
   },
 
@@ -128,6 +136,20 @@ export const ImageUploadNode = Node.create<ImageUploadNodeOptions>({
           });
         },
     };
+  },
+
+  addProseMirrorPlugins() {
+    const { upload, maxSize, limit, onError } = this.options;
+    if (!upload) return [];
+    return [
+      imagePasteDropPlugin({
+        editor: this.editor,
+        upload,
+        maxSize: maxSize ?? 0,
+        limit: limit ?? 1,
+        onError,
+      }),
+    ];
   },
 
   /**

@@ -19,12 +19,16 @@ export const ImageUploadNodeView: React.FC<NodeViewProps> = (props) => {
 
       const replaceAttrs = node.attrs._replaceAttrs ?? {};
 
+      // A replacement keeps the old image's width, alignment and caption, but
+      // not its alt text or measured size: those describe the old picture.
       const imageNodes = images.map((image) => ({
         type: "image",
         attrs: {
           ...replaceAttrs,
           src: image.src,
-          alt: replaceAttrs.alt ?? image.alt ?? "",
+          alt: image.alt ?? "",
+          naturalWidth: null,
+          naturalHeight: null,
           ...(image.caption
             ? { caption: image.caption, showCaption: true }
             : {}),
@@ -43,6 +47,22 @@ export const ImageUploadNodeView: React.FC<NodeViewProps> = (props) => {
     [editor, getPos, node],
   );
 
+  // Replacing an image: closing the card puts the old one back.
+  const replaceAttrs = node.attrs._replaceAttrs;
+  const cancelReplace = useCallback(() => {
+    const pos = getPos();
+    if (!isValidPosition(pos) || !replaceAttrs) return;
+    editor
+      .chain()
+      .focus()
+      .insertContentAt(
+        { from: pos, to: pos + node.nodeSize },
+        { type: "image", attrs: replaceAttrs },
+      )
+      .setNodeSelection(pos)
+      .run();
+  }, [editor, getPos, node, replaceAttrs]);
+
   return (
     <NodeViewWrapper>
       <ImageUploadCard
@@ -52,6 +72,7 @@ export const ImageUploadNodeView: React.FC<NodeViewProps> = (props) => {
         upload={extension.options.upload}
         onError={extension.options.onError}
         onInsert={insertImages}
+        onCancel={replaceAttrs ? cancelReplace : undefined}
       />
     </NodeViewWrapper>
   );
