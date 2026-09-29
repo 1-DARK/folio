@@ -14,6 +14,7 @@ import { queryKeys } from "src/lib/queryKeys";
 import { patchPerson } from "src/api/people";
 import { deleteWorkspace } from "src/api/workspaces";
 import { supabase } from "src/api/supabase-client";
+import { uploadFile } from "src/api/uploads";
 import { useFileUpload } from "src/components/tiptap-node/image-upload-node/use-file-upload";
 import { ConfirmDialog } from "../../shell/confirm-dialog";
 import "./workspace-settings-content.scss";
@@ -45,36 +46,7 @@ async function uploadFn(
   onProgress: (e: { progress: number }) => void,
   signal: AbortSignal,
 ): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await new Promise<{ url: string }>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://localhost:3000/upload");
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        onProgress({
-          progress: Math.round((event.loaded / event.total) * 100),
-        });
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(JSON.parse(xhr.responseText));
-      } else {
-        reject(new Error(`Upload failed: ${xhr.status}`));
-      }
-    };
-    xhr.onerror = () => reject(new Error("Upload failed"));
-
-    signal.addEventListener("abort", () => xhr.abort());
-
-    xhr.send(formData);
-  });
-
-  return response.url;
+  return uploadFile(file, "avatar", { onProgress, signal });
 }
 
 function AvatarUploadButton({
