@@ -2,6 +2,18 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { VideoNodeView } from "./video-node-view";
 
+export interface VideoOptions {
+  /** Stores an uploaded video and returns its URL. No upload tab without it. */
+  upload?: (
+    file: File,
+    onProgress?: (event: { progress: number }) => void,
+    signal?: AbortSignal,
+  ) => Promise<string>;
+  /** Largest upload in bytes (0 = no limit). */
+  maxSize: number;
+  onError?: (error: Error) => void;
+}
+
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     video: {
@@ -15,12 +27,22 @@ declare module "@tiptap/core" {
   }
 }
 
-export const VideoExtension = Node.create({
+// One block for every video: an uploaded file, a direct link to one, or a
+// YouTube, Vimeo or Loom link (played in their embed). See video-embed.ts.
+export const VideoExtension = Node.create<VideoOptions>({
   name: "video",
   group: "block",
-//  atom: true,
+  atom: true,
+  selectable: true,
   draggable: true,
-  content: "block*",
+
+  addOptions() {
+    return {
+      upload: undefined,
+      maxSize: 25 * 1024 * 1024,
+      onError: undefined,
+    };
+  },
 
   addAttributes() {
     return {

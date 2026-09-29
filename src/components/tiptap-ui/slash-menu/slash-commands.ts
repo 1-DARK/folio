@@ -312,17 +312,14 @@ export function getSlashCommands(t: TFunction): SlashCommand[] {
       run: (e) => e.chain().focus().insertContent({ type: "file" }).run(),
     },
     {
-      id: "Youtube",
+      // Upload a video or embed YouTube, Vimeo or Loom. Old YouTube blocks
+      // keep working; new ones use the video block.
+      id: "video",
       type: "command",
-      title: t("slash.items.youtube.title"),
-      description: t("slash.items.youtube.description"),
+      title: t("slash.items.video.title"),
+      description: t("slash.items.video.description"),
       icon: Video,
-      run: (e) =>
-        e
-          .chain()
-          .focus()
-          .insertContent({ type: "youtube", attrs: { src: null } })
-          .run(),
+      run: (e) => e.chain().focus().insertVideo().run(),
     },
     {
       id: "bookmark",

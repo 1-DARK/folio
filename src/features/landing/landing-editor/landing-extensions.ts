@@ -38,7 +38,10 @@ import { TitleNode } from "src/components/tiptap-node/title-node";
 import { CodeBlockNode } from "src/components/tiptap-node/code-block-node";
 import { CalloutExtension } from "src/components/tiptap-node/callout-node";
 import { AudioExtension } from "src/components/tiptap-node/audio-node";
-import { YoutubeExtension } from "src/components/tiptap-node/video-node";
+import {
+  VideoExtension,
+  YoutubeExtension,
+} from "src/components/tiptap-node/video-node";
 import { BookmarkNode } from "src/components/tiptap-node/bookmark-node/bookmark-node-extension";
 import { MathInlineNode } from "src/components/tiptap-node/math-inline-node";
 import { MathBlockNode } from "src/components/tiptap-node/math-block-node";
@@ -201,6 +204,7 @@ export function makeLandingExtensions({
     }),
     AudioExtension,
     YoutubeExtension,
+    VideoExtension.configure({ upload: localUpload, maxSize: MAX_FILE_SIZE }),
     BookmarkNode,
     MathInlineNode,
     MathBlockNode,
