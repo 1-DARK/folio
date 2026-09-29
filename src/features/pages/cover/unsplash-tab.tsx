@@ -2,17 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { useDebounce } from "use-debounce";
-
-const PEXELS_API_KEY = import.meta.env.VITE_PEXELS_API_KEY ?? "";
-
-async function searchPhotos(query: string) {
-  const res = await fetch(
-    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=18&orientation=landscape`,
-    { headers: { Authorization: PEXELS_API_KEY } },
-  );
-  const data = await res.json();
-  return data.photos ?? [];
-}
+import { searchPhotos } from "src/api/photos";
 
 interface PexelsTabProps {
   onSelect: (url: string) => void;
@@ -23,11 +13,15 @@ export function UnsplashTab({ onSelect }: PexelsTabProps) {
   const [query, setQuery] = useState("nature");
   const [debouncedQuery] = useDebounce(query, 400);
 
-  const { data: photos = [], isFetching } = useQuery({
+  const {
+    data: photos = [],
+    isFetching,
+    isError,
+  } = useQuery({
     queryKey: ["pexels", debouncedQuery],
     queryFn: () => searchPhotos(debouncedQuery),
     placeholderData: keepPreviousData,
-    enabled: !!PEXELS_API_KEY,
+    enabled: debouncedQuery.trim().length > 0,
   });
 
   useEffect(() => {
@@ -61,7 +55,7 @@ export function UnsplashTab({ onSelect }: PexelsTabProps) {
         }}
       />
 
-      {!PEXELS_API_KEY ? (
+      {isError ? (
         <p
           style={{
             fontSize: 12,
@@ -70,7 +64,7 @@ export function UnsplashTab({ onSelect }: PexelsTabProps) {
             padding: "12px 0",
           }}
         >
-          Add <code>VITE_PEXELS_API_KEY</code> to enable photo search.
+          Photos couldn't load. Try again in a moment.
         </p>
       ) : (
         <>
@@ -84,8 +78,7 @@ export function UnsplashTab({ onSelect }: PexelsTabProps) {
               overflowY: "scroll",
             }}
           >
-            {/*eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {photos.map((photo: any) => (
+            {photos.map((photo) => (
               <button
                 key={photo.id}
                 onClick={() => onSelect(photo.src.large2x)}

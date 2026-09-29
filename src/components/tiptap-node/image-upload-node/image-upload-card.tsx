@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button, ButtonGroup } from "src/components/tiptap-ui-primitive/button";
 import { listUploads } from "src/api/uploads";
+import { searchPhotos } from "src/api/photos";
 import "./image-upload-card.scss";
 
 // The card an empty image block shows: upload (click, drop or paste), pick a
@@ -534,25 +535,6 @@ function LinkPanel({ onAdd }: { onAdd: (src: string) => void }) {
 
 // ── Photos (Pexels) ─────────────────────────────────────────────────────────
 
-const PEXELS_API_KEY = import.meta.env.VITE_PEXELS_API_KEY ?? "";
-
-interface PexelsPhoto {
-  id: number;
-  alt: string | null;
-  photographer: string;
-  src: { medium: string; large2x: string };
-}
-
-async function searchPhotos(query: string): Promise<PexelsPhoto[]> {
-  const res = await fetch(
-    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=18&orientation=landscape`,
-    { headers: { Authorization: PEXELS_API_KEY } },
-  );
-  if (!res.ok) throw new Error(`Pexels ${res.status}`);
-  const data = (await res.json()) as { photos?: PexelsPhoto[] };
-  return data.photos ?? [];
-}
-
 function PhotosPanel({ onPick }: { onPick: (image: InsertedImage) => void }) {
   const [query, setQuery] = useState("nature");
   const [debounced] = useDebounce(query.trim(), 400);
@@ -565,7 +547,7 @@ function PhotosPanel({ onPick }: { onPick: (image: InsertedImage) => void }) {
     queryKey: ["pexels", debounced],
     queryFn: () => searchPhotos(debounced),
     placeholderData: keepPreviousData,
-    enabled: !!PEXELS_API_KEY && debounced.length > 0,
+    enabled: debounced.length > 0,
   });
 
   return (
@@ -581,11 +563,7 @@ function PhotosPanel({ onPick }: { onPick: (image: InsertedImage) => void }) {
         />
       </label>
 
-      {!PEXELS_API_KEY ? (
-        <p className="image-upload-card__hint">
-          Photo search isn't set up yet (VITE_PEXELS_API_KEY).
-        </p>
-      ) : isError ? (
+      {isError ? (
         <p className="image-upload-card__hint">
           Photos couldn't load. Try again in a moment.
         </p>
