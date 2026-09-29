@@ -26,7 +26,6 @@ import { Column, ColumnBlock } from "src/components/tiptap-node/column-node";
 import { TableKit } from "@tiptap/extension-table";
 import { TableContextExtension } from "src/components/tiptap-node/table-node";
 import { TableWrapperNode } from "src/components/tiptap-node/table-node/extensions/table-context";
-import { Figure, FigureCaption } from "src/components/tiptap-node/figure-node";
 import { ImageUploadNode } from "src/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import { PageLinkNode } from "src/components/tiptap-node/page-link-node";
 import { SlashCommand } from "src/components/tiptap-ui/slash-menu";
@@ -79,13 +78,6 @@ export function usePeekEditorExtensions(onNavigate?: (pageId: ID) => void) {
       ParagraphNode,
       TitleNode,
       HorizontalRule,
-      FigureCaption,
-      Figure.configure({
-        directions: ["left", "right"],
-        preserveAspectRatio: true,
-        min: { width: 10, height: 10 },
-        max: { width: 2000, height: 2000 },
-      }),
       Image.configure({
         resize: {
           enabled: true,

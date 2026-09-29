@@ -21,7 +21,7 @@ import {
 } from "../../hooks/use-timeline-layout";
 import { TimelineCardBody } from "../database-timeline-node-view/timeline-card-body";
 import { CalendarEventBar } from "../database-calendar-node-view/calendar-event-bar";
-import { ResizableNodeProvider, useResizableNode } from "../../../../components/tiptap-node/figure-node";
+import { ResizableNodeProvider, useResizableNode } from "src/components/tiptap-node/resizable-node";
 
 // Sits inside ResizableNodeProvider so it can consume the ref the provider
 // creates internally — that ref has to be attached to the actual DOM box

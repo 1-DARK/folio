@@ -4,7 +4,7 @@ import {
   type ReactNodeViewProps,
 } from "@tiptap/react";
 import { useEffect, useState, type Ref } from "react";
-import { ResizableNodeProvider, useResizableNode } from "../figure-node";
+import { ResizableNodeProvider, useResizableNode } from "src/components/tiptap-node/resizable-node";
 import "./column-view.scss";
 
 function ColumnInner(props: ReactNodeViewProps) {

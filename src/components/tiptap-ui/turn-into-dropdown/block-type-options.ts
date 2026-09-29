@@ -80,13 +80,8 @@ export const DEFAULT_BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     icon: Image,
   },
   {
-    type: "figure",
-    label: "Figure",
-    isActive: (editor) => editor.isActive("figure"),
-  },
-  {
     type: "table",
-    label: "Figure",
+    label: "Table",
     isActive: (editor) => editor.isActive("table"),
   },
   {

@@ -14,7 +14,7 @@ import type { DragStorage } from "../../extensions";
 import {
   ResizableNodeProvider,
   useResizableNode,
-} from "src/components/tiptap-node/figure-node";
+} from "src/components/tiptap-node/resizable-node";
 import "./calendar-event-bar.scss";
 
 interface CalendarEventBarProps {

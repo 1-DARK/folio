@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { ResizableNodeProvider } from "../figure-node";
+import { ResizableNodeProvider } from "src/components/tiptap-node/resizable-node";
 import ColumnView from "./column-view";
 import type {
   ReactNodeViewProps,

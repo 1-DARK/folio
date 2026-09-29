@@ -1,4 +1,4 @@
-import type { ResizeNodeDimensions, ResizeNodeDirection } from "../../../../components/tiptap-node/figure-node/types";
+import type { ResizableNodeDimensions as ResizeNodeDimensions, ResizableNodeDirection as ResizeNodeDirection } from "src/components/tiptap-node/resizable-node/types";
 
 /**
    * Calculates new dimensions based on mouse delta and resize direction.

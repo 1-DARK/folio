@@ -32,7 +32,7 @@ import { DuplicatePropertyButton } from "../duplicate-property-button";
 import { FreezePropertyButton } from "../freeze-property-button";
 import { UnwrapPropertyButton } from "../unwrap-property-button";
 import { HidePropertyButton } from "../hide-property-button";
-import { useResizableNode } from "src/components/tiptap-node/figure-node";
+import { useResizableNode } from "src/components/tiptap-node/resizable-node";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDataSource } from "../../hooks/use-data-source";

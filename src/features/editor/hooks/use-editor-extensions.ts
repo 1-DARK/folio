@@ -35,7 +35,6 @@ import {
 import { ImageUploadNode } from "src/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "src/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 import { ParagraphNode } from "src/components/tiptap-node/paragraph-node";
-//import { Figure, FigureCaption } from "src/components/tiptap-node/figure-node";
 import { TableContextExtension } from "src/components/tiptap-node/table-node";
 import { TableWrapperNode } from "src/components/tiptap-node/table-node/extensions/table-context";
 import { Column, ColumnBlock } from "src/components/tiptap-node/column-node";
