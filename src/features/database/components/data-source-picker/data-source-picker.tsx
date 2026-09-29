@@ -25,6 +25,7 @@ import { useCreatePage } from "src/hooks/use-create-page";
 import { usePages } from "src/hooks/use-pages";
 import { newId } from "src/lib/id";
 import { useCurrentPerson } from "src/hooks/use-session";
+import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 
 const VIEW_ICON: Record<DatabaseView["type"], LucideIcon> = {
   table: Table,
@@ -55,6 +56,7 @@ export function DataSourcePicker({
   const [creating, setCreating] = useState(false);
   const { data: pages } = usePages();
   const { person } = useCurrentPerson();
+  const { workspaceId } = useCurrentWorkspace();
 
   const filtered = ((sources as DataSource[]) ?? []).filter((s) =>
     s.name?.toLowerCase().includes(query.trim().toLowerCase()),
@@ -64,7 +66,7 @@ export function DataSourcePicker({
     try {
       const sourceId = newId();
       const name = query.trim() || "New Database";
-      if (!person) return;
+      if (!person || !workspaceId) return;
 
       const dbPage = makeDatabasePage({
         sourceId,
@@ -72,6 +74,8 @@ export function DataSourcePicker({
         parentId: activePageId,
         category: activePage?.category,
         ownerId: person.id,
+        workspaceId,
+        teamspaceId: activePage?.teamspaceId ?? null,
       });
       const source = makeDataSource({ name, pageId: dbPage.id, sourceId });
 

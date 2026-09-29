@@ -32,5 +32,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["@", "src", "server", "hocuspocus-server/seed-schema.ts"]
+  "include": ["@", "src", "server", "hocuspocus-server/seed-schema.ts"],
+  // Parked code (see docs/MOVES.md): kept for reference, not built or checked.
+  "exclude": ["src/_unused"]
 }

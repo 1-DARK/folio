@@ -36,6 +36,8 @@ import {
   type ID,
 } from "src/types";
 import { useWorkspaceSettings } from "src/hooks/use-workspace-settings";
+import { useCurrentPerson } from "src/hooks/use-session";
+import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import "./people-settings-content.scss";
 
 type Tab = "members" | "guests" | "groups";
@@ -354,6 +356,8 @@ export function PeopleSettingsContent() {
   const createRecord = useCreateTeamspace();
   const createPageMut = useCreatePage();
   const deleteRecord = useDeleteTeamspace();
+  const { person: me } = useCurrentPerson();
+  const { workspaceId } = useCurrentWorkspace();
 
   // Derived role buckets. isMember = owner|member; isGuest = guest.
   const members = useMemo(
@@ -393,12 +397,15 @@ export function PeopleSettingsContent() {
   // name lives on the PAGE (title); the record carries groupIds. Record first,
   // then page, rolling the record back if the page write fails.
   const createFromGroupAsync = async (name: string, groupId: ID) => {
+    if (!me || !workspaceId) return;
     const { page, record } = buildTeamspacePair({
       name,
       iconName: null,
       iconColor: null,
       description: null,
       access: "open",
+      ownerId: me.id,
+      workspaceId,
     });
     const seeded: Teamspace = { ...record, groupIds: [groupId] };
     await createRecord.mutateAsync(seeded);

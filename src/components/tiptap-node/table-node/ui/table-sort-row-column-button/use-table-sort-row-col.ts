@@ -1,7 +1,4 @@
-import { useEditorState } from "@tiptap/react";
-import { TableMap } from "@tiptap/pm/tables";
 import { useTableOverlays } from "../table-overlays";
-import { tableContextPluginKey } from "../../extensions/table-context";
 import { useIsRowColEmpty } from "../../hooks";
 
 interface UseTableSortRowColProps {
