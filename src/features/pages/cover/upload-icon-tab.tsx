@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { listUploads, uploadFile } from "src/api/uploads";
 
 interface UploadIconTabProps {
   onSelect: (url: string) => void;
@@ -12,9 +13,8 @@ export function UploadIconTab({ onSelect }: UploadIconTabProps) {
   const [previous, setPrevious] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/uploads")
-      .then((r) => r.json())
-      .then((files) => setPrevious(files.map((f: { url: string }) => f.url)))
+    listUploads("icons")
+      .then(setPrevious)
       .catch(() => {});
   }, []);
 
@@ -29,17 +29,7 @@ export function UploadIconTab({ onSelect }: UploadIconTabProps) {
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("http://localhost:3000/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Upload failed");
-
-      const { url } = await response.json();
+      const url = await uploadFile(file, "icons");
       setPrevious((prev) => [url, ...prev]);
       onSelect(url);
     } catch {

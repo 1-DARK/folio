@@ -1,4 +1,5 @@
 import { Slice, type Node as PMNode } from "@tiptap/pm/model";
+import { uploadFile } from "src/api/uploads";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import {
   AllSelection,
@@ -505,24 +506,17 @@ export function useFileUpload(options: UploadOptions) {
   };
 }
 
+/**
+ * Upload handler for the editor's image, file and audio nodes: stores the
+ * file in the current workspace's Supabase Storage folder and returns its
+ * public URL (src/api/uploads.ts).
+ */
 export async function handleImageUpload(
   file: File,
   onProgress?: (event: { progress: number }) => void,
   signal?: AbortSignal,
 ): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await fetch("http://localhost:3000/api/upload", {
-    method: "POST",
-    body: formData,
-    signal,
-  });
-
-  if (!response.ok) throw new Error("Upload failed");
-
-  const { url } = await response.json();
-  return url;
+  return uploadFile(file, "content", { onProgress, signal });
 }
 
 type ProtocolOptions = {
