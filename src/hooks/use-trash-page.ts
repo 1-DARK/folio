@@ -25,7 +25,7 @@ export function useTrashPage() {
       show("Page moved to Trash", "success", {
         label: "Undo",
         onClick: () => {
-          restorePage(pageId, workspaceId).then(() => {
+          restorePage(pageId).then(() => {
             qc.invalidateQueries({ queryKey: ["pages"] });
             qc.invalidateQueries({ queryKey: ["trashed-pages"] });
           });

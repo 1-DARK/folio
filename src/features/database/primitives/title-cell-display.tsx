@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Pencil, PanelRight } from "lucide-react";
 import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
 import type { PageCover } from "src/types";
 import { CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { CellEditorPopover } from "./cell-editor-popover";
 import "./title-cell-display.scss";
 import { Input } from "src/components/tiptap-ui-primitive/input";
-import { Button } from "src/components/tiptap-ui-primitive/button";
 
 export interface TitleCellDisplayProps {
   value: string;
@@ -32,7 +30,6 @@ export function TitleCellDisplay({
   readonly,
   showPageIcon = true,
   variant = "popover",
-  onOpen,
   autoEdit,
   onEditingChange,
 }: TitleCellDisplayProps) {
@@ -52,7 +49,7 @@ export function TitleCellDisplay({
 
   // ── Inline variant (list/board/gallery) ──────────────────────────────────
   const editRef = useRef<HTMLDivElement | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [, setEditing] = useState(false);
 
   useEffect(() => {
     if (autoEdit && editRef.current) {

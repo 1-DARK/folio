@@ -7,7 +7,7 @@ import type { Paragraph, TextRun, Table } from "docx";
 // then restore it after the dialog closes.
 // ---------------------------------------------------------------------------
 
-export function exportToPdf(editor: Editor, title = "document"): void {
+export function exportToPdf(_editor: Editor, title = "document"): void {
   const editorEl = document.querySelector<HTMLElement>(".tiptap.ProseMirror");
   if (!editorEl) {
     console.error("exportToPdf: could not find editor element");

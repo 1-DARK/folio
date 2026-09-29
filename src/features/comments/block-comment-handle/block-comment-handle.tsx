@@ -2,6 +2,10 @@ import type { Editor } from "@tiptap/core";
 import { useCallback, useRef, useState } from "react";
 import { MessageSquarePlus } from "lucide-react";
 import { DragHandle as TiptapDragHandle } from "../../../components/tiptap-ui/drag-handle/drag-handle-extension-react";
+import { normalizeNestedOptions } from "@tiptap/extension-drag-handle";
+
+// Top-level blocks only (what the plugin does when given nothing).
+const NO_NESTED = normalizeNestedOptions(false);
 import { Button } from "src/components/tiptap-ui-primitive/button";
 import { useCreateThread } from "src/hooks/use-create-thread";
 import { useActivePageState } from "src/features/pages/context/active-page-context";
@@ -31,6 +35,7 @@ export function BlockCommentHandle({ editor }: { editor: Editor | null }) {
       className="block-comment-handle"
       editor={editor}
       pluginKey="blockCommentHandle"
+      nestedOptions={NO_NESTED}
       computePositionConfig={{ placement: "right-start" }}
       onNodeChange={({ pos: newPos }) => {
         posRef.current = newPos;

@@ -779,7 +779,8 @@ export function clearNodesContent(
 
   if (selection instanceof CellSelection) {
     selection.replace(tr, Slice.empty);
-    return;
+    if (dispatch) dispatch(tr);
+    return true;
   }
   const nodes = getSelectedNodesOfType(selection, allowed);
 

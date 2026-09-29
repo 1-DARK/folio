@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Page } from "src/components/tiptap-templates/simple/types";
+import type { Page } from "src/types";
 
 export function getPageExcerpt(page: Page): string {
   try {

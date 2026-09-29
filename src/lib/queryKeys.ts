@@ -3,8 +3,12 @@ import type { ID } from "../types";
 export const queryKeys = {
   pages: {
     all: ["pages"] as const,
-    lists: (workspaceId: ID) =>
-      [...queryKeys.pages.all, "list", workspaceId] as const,
+    // No workspace: every workspace's list (a prefix key, for invalidating
+    // or patching all of them at once).
+    lists: (workspaceId?: ID) =>
+      workspaceId
+        ? ([...queryKeys.pages.all, "list", workspaceId] as const)
+        : ([...queryKeys.pages.all, "list"] as const),
     detail: (id: ID) => [...queryKeys.pages.all, "detail", id] as const,
   },
   threads: {
@@ -29,22 +33,34 @@ export const queryKeys = {
   },
   people: {
     all: ["people"] as const,
-    lists: (workspaceId: ID) =>
-      [...queryKeys.people.all, "list", workspaceId] as const,
+    // No workspace: every workspace's list (a prefix key, for invalidating
+    // or patching all of them at once).
+    lists: (workspaceId?: ID) =>
+      workspaceId
+        ? ([...queryKeys.people.all, "list", workspaceId] as const)
+        : ([...queryKeys.people.all, "list"] as const),
     detail: (id: ID) => [...queryKeys.people.all, "detail", id] as const,
   },
 
   groups: {
     all: ["groups"] as const,
-    lists: (workspaceId: ID) =>
-      [...queryKeys.groups.all, "list", workspaceId] as const,
+    // No workspace: every workspace's list (a prefix key, for invalidating
+    // or patching all of them at once).
+    lists: (workspaceId?: ID) =>
+      workspaceId
+        ? ([...queryKeys.groups.all, "list", workspaceId] as const)
+        : ([...queryKeys.groups.all, "list"] as const),
     detail: (id: ID) => [...queryKeys.groups.all, "detail", id] as const,
   },
 
   teamspaces: {
     all: ["teamspaces"] as const,
-    lists: (workspaceId: ID) =>
-      [...queryKeys.teamspaces.all, "list", workspaceId] as const,
+    // No workspace: every workspace's list (a prefix key, for invalidating
+    // or patching all of them at once).
+    lists: (workspaceId?: ID) =>
+      workspaceId
+        ? ([...queryKeys.teamspaces.all, "list", workspaceId] as const)
+        : ([...queryKeys.teamspaces.all, "list"] as const),
     detail: (id: ID) => [...queryKeys.teamspaces.all, "detail", id] as const,
   },
   workspaces: {
