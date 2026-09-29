@@ -13,6 +13,7 @@ import {
 
 import type { AudioAttrs } from "./types";
 import { useAudioPlayer } from "./use-audio-player";
+import { uploadFile } from "src/api/uploads";
 import "./audio-node-view.scss";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -289,9 +290,17 @@ export function AudioNodeView({ node, updateAttributes }: NodeViewProps) {
 
   const handleFile = useCallback(
     (file: File) => {
-      // Create a local object URL — in production you'd upload and get a real URL
-      const url = URL.createObjectURL(file);
-      updateAttributes({ src: url, fileName: file.name });
+      // Play the local file at once, then swap in the stored file's URL so
+      // it works for everyone and after a reload. If the upload fails (or
+      // there's no account, as on the landing), the local file stays.
+      const localUrl = URL.createObjectURL(file);
+      updateAttributes({ src: localUrl, fileName: file.name });
+      uploadFile(file, "content")
+        .then((url) => {
+          updateAttributes({ src: url });
+          URL.revokeObjectURL(localUrl);
+        })
+        .catch((error) => console.error("Audio upload failed:", error));
     },
     [updateAttributes],
   );

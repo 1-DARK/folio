@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { listUploads, uploadFile } from "src/api/uploads";
 
 // Largest edge we keep on upload. Notion stores the full image and crops at
 // display time, so we only shrink oversized files to keep uploads lean.
@@ -66,9 +67,8 @@ export function UploadCoverTab({ onSelect }: UploadCoverTabProps) {
   const [previous, setPrevious] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/uploads")
-      .then((r) => r.json())
-      .then((files) => setPrevious(files.map((f: { url: string }) => f.url)))
+    listUploads("covers")
+      .then(setPrevious)
       .catch(() => {});
   }, []);
 
@@ -89,17 +89,7 @@ export function UploadCoverTab({ onSelect }: UploadCoverTabProps) {
       // Update preview to show the processed result
       setPreview(URL.createObjectURL(processedFile));
 
-      const formData = new FormData();
-      formData.append("file", processedFile);
-
-      const response = await fetch("http://localhost:3000/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Upload failed");
-
-      const { url } = await response.json();
+      const url = await uploadFile(processedFile, "covers");
       setPrevious((prev) => [url, ...prev]);
       onSelect(url);
     } catch {
