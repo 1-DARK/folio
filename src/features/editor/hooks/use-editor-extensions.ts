@@ -54,7 +54,10 @@ import type { EditorExtensionRefs } from "../context/editor-extension-refs";
 import { CodeBlockNode } from "src/components/tiptap-node/code-block-node";
 import { CalloutExtension } from "src/components/tiptap-node/callout-node";
 import { AudioExtension } from "src/components/tiptap-node/audio-node";
-import { YoutubeExtension } from "src/components/tiptap-node/video-node";
+import {
+  VideoExtension,
+  YoutubeExtension,
+} from "src/components/tiptap-node/video-node";
 import { BookmarkNode } from "src/components/tiptap-node/bookmark-node/bookmark-node-extension";
 import { RecordPropertyPanelNode } from "../../database/record-property-panel/record-property-panel-node";
 import { MathInlineNode } from "src/components/tiptap-node/math-inline-node";
@@ -232,6 +235,11 @@ export function useEditorExtensions(
       BoardDrag,
       AudioExtension,
       YoutubeExtension,
+      VideoExtension.configure({
+        upload: handleImageUpload,
+        maxSize: MAX_FILE_SIZE,
+        onError: (error) => console.error("Upload failed:", error),
+      }),
       BookmarkNode,
       RecordPropertyPanelNode,
       MathInlineNode,

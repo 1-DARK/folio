@@ -799,6 +799,10 @@
         "title": "Youtube",
         "description": "Embed a YouTube video."
       },
+      "video": {
+        "title": "Video",
+        "description": "Upload a video, or embed YouTube, Vimeo or Loom."
+      },
       "bookmark": {
         "title": "Web bookmark",
         "description": "Save a link as a visual card."

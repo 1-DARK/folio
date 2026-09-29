@@ -1,5 +1,27 @@
 import { useState } from "react";
-import type { UploadOptions, FileItem } from "./image-upload-node";
+// These lived in image-upload-node.tsx, which was removed; the avatar
+// uploader (my-account-content.tsx) is the one user left.
+export interface FileItem {
+  id: string;
+  file: File;
+  progress: number;
+  status: "uploading" | "success" | "error";
+  url?: string;
+  abortController?: AbortController;
+}
+
+export interface UploadOptions {
+  maxSize: number;
+  limit: number;
+  accept: string;
+  upload: (
+    file: File,
+    onProgress: (event: { progress: number }) => void,
+    signal: AbortSignal,
+  ) => Promise<string>;
+  onSuccess?: (url: string) => void;
+  onError?: (error: Error) => void;
+}
 
 /**
  * Custom hook for managing multiple file uploads with progress tracking and cancellation

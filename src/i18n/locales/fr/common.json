@@ -792,6 +792,10 @@
         "title": "Youtube",
         "description": "Intégrer une vidéo YouTube."
       },
+      "video": {
+        "title": "Vidéo",
+        "description": "Importer une vidéo, ou intégrer YouTube, Vimeo ou Loom."
+      },
       "bookmark": {
         "title": "Marque-page web",
         "description": "Enregistrer un lien sous forme de carte."
