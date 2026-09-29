@@ -202,7 +202,7 @@ export function makeLandingExtensions({
       maxSize: 10 * 1024 * 1024,
       limit: 10,
     }),
-    AudioExtension,
+    AudioExtension.configure({ upload: localUpload, maxSize: MAX_FILE_SIZE }),
     YoutubeExtension,
     VideoExtension.configure({ upload: localUpload, maxSize: MAX_FILE_SIZE }),
     BookmarkNode,

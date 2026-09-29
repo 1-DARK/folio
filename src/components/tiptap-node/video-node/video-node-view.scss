@@ -5,19 +5,6 @@
   margin: 4px 0;
 }
 
-.video-card__thumb {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--tt-theme-muted, rgba(0, 0, 0, 0.45));
-}
-
-.video-card__invalid {
-  position: static;
-  display: block;
-  font-size: 12px;
-}
-
 .video-frame {
   position: relative;
   border-radius: 8px;

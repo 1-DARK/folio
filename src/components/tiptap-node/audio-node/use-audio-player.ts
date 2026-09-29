@@ -10,6 +10,9 @@ export interface UseAudioPlayerReturn {
   isLoading: boolean;
   hasError: boolean;
   progress: number; // 0–1
+  playbackRate: number;
+  /** 1× → 1.25× → 1.5× → 2× → 0.75× → 1× */
+  cycleRate: () => void;
   formattedCurrent: string;
   formattedDuration: string;
   play: () => void;
@@ -19,6 +22,8 @@ export interface UseAudioPlayerReturn {
   setVolume: (v: number) => void;
   toggleMute: () => void;
 }
+
+export const PLAYBACK_RATES = [1, 1.25, 1.5, 2, 0.75];
 
 function formatTime(seconds: number): string {
   if (!isFinite(seconds) || isNaN(seconds)) return "0:00";
@@ -38,6 +43,7 @@ export function useAudioPlayer(
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -107,6 +113,18 @@ export function useAudioPlayer(
     setIsMuted(audio.muted);
   }, []);
 
+  // A new file starts at the speed you picked.
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = playbackRate;
+  }, [src, playbackRate]);
+
+  const cycleRate = useCallback(() => {
+    setPlaybackRate((r) => {
+      const i = PLAYBACK_RATES.indexOf(r);
+      return PLAYBACK_RATES[(i + 1) % PLAYBACK_RATES.length];
+    });
+  }, []);
+
   const progress = duration > 0 ? currentTime / duration : 0;
 
   return {
@@ -118,6 +136,8 @@ export function useAudioPlayer(
     isLoading,
     hasError,
     progress,
+    playbackRate,
+    cycleRate,
     formattedCurrent: formatTime(currentTime),
     formattedDuration: formatTime(duration),
     play,

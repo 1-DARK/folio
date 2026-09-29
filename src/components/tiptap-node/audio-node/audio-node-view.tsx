@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import {
   Play,
@@ -6,15 +6,31 @@ import {
   Volume2,
   VolumeX,
   Music,
-  Link,
   Loader2,
   AlertCircle,
 } from "lucide-react";
 
 import type { AudioAttrs } from "./types";
+import type { AudioOptions } from "./audio-node";
 import { useAudioPlayer } from "./use-audio-player";
-import { uploadFile } from "src/api/uploads";
+import { MediaUploadCard } from "src/components/tiptap-node/media-upload-card";
 import "./audio-node-view.scss";
+
+const FORMATS = "MP3, WAV, M4A or OGG";
+const AUDIO_EXT = /\.(mp3|wav|m4a|aac|ogg|oga|opus|flac|webm)(?:$|[?#])/i;
+
+// Any web link can be tried; a known audio extension gets a clearer label.
+function checkAudioLink(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    return AUDIO_EXT.test(u.pathname)
+      ? "Audio file"
+      : "Link: we'll try to play it";
+  } catch {
+    return null;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Progress bar
@@ -123,17 +139,13 @@ function VolumeControl({
 interface AudioPlayerProps {
   src: string;
   fileName: string | null;
+  /** Clears the audio so the block shows the upload card again. */
+  onReplace?: () => void;
 }
 
-function AudioPlayer({ src, fileName }: AudioPlayerProps) {
+function AudioPlayer({ src, fileName, onReplace }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const player = useAudioPlayer(src, audioRef);
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return; // guard against edge cases (StrictMode double-invoke, unmount race, etc.)
-
-    // safe to use audio here
-  }, [src]);
 
   return (
     <div className="audio-player">
@@ -176,107 +188,26 @@ function AudioPlayer({ src, fileName }: AudioPlayerProps) {
         </div>
       </div>
 
-      {/* Right — volume */}
+      {/* Right — speed, volume, replace */}
+      <button
+        className="audio-rate-btn"
+        onClick={player.cycleRate}
+        aria-label={`Playback speed ${player.playbackRate}×, change`}
+        title="Playback speed"
+      >
+        {player.playbackRate}×
+      </button>
       <VolumeControl
         volume={player.volume}
         isMuted={player.isMuted}
         onVolumeChange={player.setVolume}
         onToggleMute={player.toggleMute}
       />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty state — upload or URL
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface AudioEmptyProps {
-  onFile: (file: File) => void;
-  onUrl: (url: string) => void;
-}
-
-function AudioEmpty({ onFile, onUrl }: AudioEmptyProps) {
-  const [mode, setMode] = useState<"pick" | "url">("pick");
-  const [urlDraft, setUrlDraft] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) onFile(file);
-  };
-
-  const handleUrlSubmit = () => {
-    const url = urlDraft.trim();
-    if (url) onUrl(url);
-  };
-
-  if (mode === "url") {
-    return (
-      <div className="audio-empty">
-        <div className="audio-url-row">
-          <input
-            className="audio-url-input"
-            placeholder="Paste audio URL..."
-            value={urlDraft}
-            onChange={(e) => setUrlDraft(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Enter") handleUrlSubmit();
-              if (e.key === "Escape") setMode("pick");
-            }}
-            autoFocus
-          />
-          <button
-            className="audio-url-submit"
-            onClick={handleUrlSubmit}
-            disabled={!urlDraft.trim()}
-          >
-            Embed
-          </button>
-          <button className="audio-url-cancel" onClick={() => setMode("pick")}>
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="audio-empty"
-      onClick={() => fileRef.current?.click()}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (file?.type.startsWith("audio/")) onFile(file);
-      }}
-    >
-      <input
-        ref={fileRef}
-        type="file"
-        accept="audio/*"
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
-
-      <Music style={{ width: 22, height: 22 }} className="audio-empty-icon" />
-      <span className="audio-empty-label">Add audio</span>
-      <span className="audio-empty-sub">
-        Drag & drop or <span className="audio-empty-link">choose a file</span>
-      </span>
-
-      <button
-        className="audio-embed-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          setMode("url");
-        }}
-      >
-        <Link style={{ width: 12, height: 12 }} />
-        Embed URL
-      </button>
+      {onReplace && (
+        <button className="audio-replace-btn" onClick={onReplace}>
+          Replace
+        </button>
+      )}
     </div>
   );
 }
@@ -285,30 +216,21 @@ function AudioEmpty({ onFile, onUrl }: AudioEmptyProps) {
 // AudioNodeView
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function AudioNodeView({ node, updateAttributes }: NodeViewProps) {
+export function AudioNodeView({
+  node,
+  updateAttributes,
+  extension,
+  editor,
+}: NodeViewProps) {
   const attrs = node.attrs as AudioAttrs;
+  const editable = editor.isEditable;
+  const options = extension.options as AudioOptions;
 
-  const handleFile = useCallback(
-    (file: File) => {
-      // Play the local file at once, then swap in the stored file's URL so
-      // it works for everyone and after a reload. If the upload fails (or
-      // there's no account, as on the landing), the local file stays.
-      const localUrl = URL.createObjectURL(file);
-      updateAttributes({ src: localUrl, fileName: file.name });
-      uploadFile(file, "content")
-        .then((url) => {
-          updateAttributes({ src: url });
-          URL.revokeObjectURL(localUrl);
-        })
-        .catch((error) => console.error("Audio upload failed:", error));
-    },
-    [updateAttributes],
-  );
-
-  const handleUrl = useCallback(
-    (url: string) => {
-      updateAttributes({ src: url, fileName: null });
-    },
+  // Uploads finish before the file goes into the page, so the page never
+  // holds a link that only works in this browser.
+  const handleDone = useCallback(
+    ({ src, fileName }: { src: string; fileName?: string | null }) =>
+      updateAttributes({ src, fileName: fileName ?? null }),
     [updateAttributes],
   );
 
@@ -323,19 +245,43 @@ export function AudioNodeView({ node, updateAttributes }: NodeViewProps) {
     <NodeViewWrapper>
       <div className="audio-root" contentEditable={false}>
         {attrs.src ? (
-          <AudioPlayer src={attrs.src} fileName={attrs.fileName} />
-        ) : (
-          <AudioEmpty onFile={handleFile} onUrl={handleUrl} />
-        )}
+          <AudioPlayer
+            src={attrs.src}
+            fileName={attrs.fileName}
+            onReplace={
+              editable
+                ? () => updateAttributes({ src: null, fileName: null })
+                : undefined
+            }
+          />
+        ) : editable ? (
+          <MediaUploadCard
+            options={options}
+            noun="audio"
+            icon={Music}
+            mimePrefix="audio/"
+            formats={FORMATS}
+            alternative="paste a link to it"
+            linkLabel="Audio link"
+            linkPlaceholder="https://example.com/episode.mp3"
+            linkHint={`A link to an ${FORMATS} file`}
+            linkInvalid="Paste a full web link, starting with https://"
+            checkLink={checkAudioLink}
+            onDone={handleDone}
+          />
+        ) : null}
 
         {/* Caption */}
-        <input
-          className="audio-caption"
-          placeholder="Add a caption..."
-          value={attrs.caption}
-          onChange={handleCaptionChange}
-          onKeyDown={(e) => e.stopPropagation()}
-        />
+        {attrs.src && (editable || attrs.caption) && (
+          <input
+            className="audio-caption"
+            placeholder="Add a caption..."
+            value={attrs.caption}
+            readOnly={!editable}
+            onChange={handleCaptionChange}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        )}
       </div>
     </NodeViewWrapper>
   );

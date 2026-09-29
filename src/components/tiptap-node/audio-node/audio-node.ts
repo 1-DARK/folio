@@ -1,6 +1,10 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { AudioNodeView } from "./audio-node-view";
+import type { MediaUploadOptions } from "src/components/tiptap-node/media-upload-card";
+
+/** Upload function, size limit and error callback (same as the video block). */
+export type AudioOptions = MediaUploadOptions;
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -14,11 +18,20 @@ declare module "@tiptap/core" {
   }
 }
 
-export const AudioExtension = Node.create({
+export const AudioExtension = Node.create<AudioOptions>({
   name: "audio",
   group: "block",
   atom: true,
   draggable: true,
+  selectable: true,
+
+  addOptions() {
+    return {
+      upload: undefined,
+      maxSize: 25 * 1024 * 1024,
+      onError: undefined,
+    };
+  },
 
   addAttributes() {
     return {
