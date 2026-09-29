@@ -20,7 +20,7 @@ import {
 } from "./utils";
 import { FilePreview } from "./file-preview";
 
-function FileIcon({
+export function FileIcon({
   mimeType,
   className,
 }: {
@@ -41,9 +41,12 @@ function FileIcon({
 export function FileItem({
   attachment,
   onRemove,
+  editable = true,
 }: {
   attachment: FileAttachment;
   onRemove: () => void;
+  /** Read-only pages can download a file but not remove it. */
+  editable?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const previewable = canPreview(attachment);
@@ -130,6 +133,9 @@ export function FileItem({
           <Button
             variant="ghost"
             className="file-node__action-btn"
+            tooltip="Download"
+            showTooltip
+            aria-label={`Download ${attachment.name}`}
             onClick={(e) => {
               e.stopPropagation();
               downloadFile(attachment.url, attachment.name);
@@ -137,16 +143,21 @@ export function FileItem({
           >
             <Download size={13} />
           </Button>
-          <Button
-            variant="ghost"
-            className="file-node__action-btn file-node__action-btn--danger"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-          >
-            <Trash2 size={13} />
-          </Button>
+          {editable && (
+            <Button
+              variant="ghost"
+              className="file-node__action-btn file-node__action-btn--danger"
+              tooltip="Remove"
+              showTooltip
+              aria-label={`Remove ${attachment.name}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            >
+              <Trash2 size={13} />
+            </Button>
+          )}
         </div>
       </div>
 

@@ -6,6 +6,47 @@
   flex-direction: column;
   gap: 4px;
 
+  // Empty: the upload card brings its own border and padding.
+  &--empty {
+    border: none;
+    padding: 0;
+  }
+
+  &__filled {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-radius: var(--tt-radius-sm);
+    outline: 1.5px dashed transparent;
+    outline-offset: 4px;
+    transition: outline-color 0.15s;
+
+    &.is-dragging {
+      outline-color: var(--tt-brand-color-500);
+    }
+  }
+
+  &__uploads {
+    gap: 6px;
+
+    .image-upload-card__row {
+      padding: 8px 10px;
+    }
+  }
+
+  // File-type icon in place of the image card's thumbnail.
+  &__thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tt-theme-muted, rgba(0, 0, 0, 0.45));
+  }
+
+  &__thumb-icon {
+    width: 22px;
+    height: 22px;
+  }
+
   &__list {
     display: flex;
     flex-direction: column;
