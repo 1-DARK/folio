@@ -1,0 +1,14 @@
+// Additions to the shared upload card for video and audio blocks.
+
+.media-upload-card__thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tt-theme-muted, rgba(0, 0, 0, 0.45));
+}
+
+.media-upload-card__invalid {
+  display: block;
+  font-size: 12px;
+  color: var(--iuc-danger);
+}

@@ -1,18 +1,10 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { VideoNodeView } from "./video-node-view";
+import type { MediaUploadOptions } from "src/components/tiptap-node/media-upload-card";
 
-export interface VideoOptions {
-  /** Stores an uploaded video and returns its URL. No upload tab without it. */
-  upload?: (
-    file: File,
-    onProgress?: (event: { progress: number }) => void,
-    signal?: AbortSignal,
-  ) => Promise<string>;
-  /** Largest upload in bytes (0 = no limit). */
-  maxSize: number;
-  onError?: (error: Error) => void;
-}
+// Upload function, size limit and error callback, shared with the audio block.
+export type VideoOptions = MediaUploadOptions;
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {

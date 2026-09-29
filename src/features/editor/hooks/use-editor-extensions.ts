@@ -233,7 +233,11 @@ export function useEditorExtensions(
       DatabaseRecordNode,
       DatabaseNode,
       BoardDrag,
-      AudioExtension,
+      AudioExtension.configure({
+        upload: handleImageUpload,
+        maxSize: MAX_FILE_SIZE,
+        onError: (error) => console.error("Upload failed:", error),
+      }),
       YoutubeExtension,
       VideoExtension.configure({
         upload: handleImageUpload,
