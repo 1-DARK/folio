@@ -9,6 +9,8 @@ export interface BookmarkAttrs {
   image: string | null;
   favicon: string | null;
   caption: string;
+  /** "card": title, description and image; "compact": one line. */
+  layout: "card" | "compact";
 }
 
 declare module "@tiptap/core" {
@@ -22,6 +24,7 @@ declare module "@tiptap/core" {
 export const BookmarkNode = Node.create({
   name: "bookmark",
   group: "block",
+  atom: true,
   draggable: true,
   selectable: true,
 
@@ -33,6 +36,7 @@ export const BookmarkNode = Node.create({
       image: { default: null },
       favicon: { default: null },
       caption: { default: "" },
+      layout: { default: "card" },
     };
   },
 
@@ -54,7 +58,9 @@ export const BookmarkNode = Node.create({
   addPasteRules() {
     return [
       {
-        find: /https?:\/\/[^\s]+/g,
+        // Only a pasted link on its own: a link inside pasted text stays a
+        // link in the text instead of splitting it with a bookmark.
+        find: /^https?:\/\/[^\s]+$/g,
         handler: ({ match, chain }) => {
           chain().insertBookmark(match[0]).run();
         },
