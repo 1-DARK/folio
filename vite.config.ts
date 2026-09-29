@@ -6,6 +6,25 @@ import { visualizer } from "rollup-plugin-visualizer";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), visualizer({ open: true, gzipSize: true })],
+  build: {
+    rollupOptions: {
+      output: {
+        // Big libraries get their own chunks, so a page that doesn't need
+        // one doesn't download it, and they stay cached across deploys.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (
+            id.includes("/mathjs/") ||
+            id.includes("/decimal.js/") ||
+            id.includes("/complex.js/") ||
+            id.includes("/fraction.js/")
+          )
+            return "vendor-mathjs";
+          if (id.includes("/lodash")) return "vendor-lodash";
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),

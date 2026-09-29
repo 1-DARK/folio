@@ -1,8 +1,15 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useCurrentPerson } from "src/hooks/use-session";
-import { SignIn } from "../sign-in";
-import { Landing } from "../../landing";
 import "./auth-gate.scss";
+
+// Signed-out screens, each its own chunk: a signed-in person never downloads
+// the landing page, and a visitor only gets the one they're looking at.
+const Landing = lazy(() =>
+  import("../../landing").then((m) => ({ default: m.Landing })),
+);
+const SignIn = lazy(() =>
+  import("../sign-in").then((m) => ({ default: m.SignIn })),
+);
 
 const SIGN_IN_PATH = "/signin";
 
@@ -45,20 +52,28 @@ export function AuthGate({ children }: { children: ReactNode }) {
     setPath(SIGN_IN_PATH);
   };
 
-  if (isLoading || signedInOnSignInPage) {
+  if (isLoading || signedInOnSignInPage) return <GateLoading />;
+
+  if (!isAuthenticated) {
     return (
-      <div className="auth-gate-loading">
-        <div className="auth-gate-loading__ring" />
-      </div>
+      <Suspense fallback={<GateLoading />}>
+        {isLandingPath(path) ? (
+          <Landing onGetStarted={goToSignIn} onSignIn={goToSignIn} />
+        ) : (
+          <SignIn />
+        )}
+      </Suspense>
     );
   }
 
-  if (!isAuthenticated) {
-    if (isLandingPath(path)) {
-      return <Landing onGetStarted={goToSignIn} onSignIn={goToSignIn} />;
-    }
-    return <SignIn />;
-  }
-
   return <>{children}</>;
+}
+
+/** The ring shown while the session resolves or a screen's code loads. */
+export function GateLoading() {
+  return (
+    <div className="auth-gate-loading">
+      <div className="auth-gate-loading__ring" />
+    </div>
+  );
 }
