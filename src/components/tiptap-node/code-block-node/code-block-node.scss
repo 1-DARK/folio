@@ -77,15 +77,18 @@
 }
 
 .code-block-filename {
-  display: inline-block;
+  display: block;
+  width: calc(100% - 32px);
+  margin: 0;
+  padding: 8px 16px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
   font-size: 14px;
   color: var(--tt-gray-light-a-400);
-  padding: 6px 16px 0;
-  font-family: inherit;
-  outline: none;
 
-  &:empty::before {
-    content: attr(data-placeholder);
+  &::placeholder {
     opacity: 0.4;
   }
 }
@@ -180,4 +183,122 @@ pre {
 
 .tiptap.ProseMirror blockquote{
   border: none !important;
+}
+// ── Language picker ────────────────────────────────────────────────────────
+
+.code-block-lang-card {
+  width: 240px;
+}
+
+.code-block-lang-body.tiptap-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+
+.code-block-lang-search {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--tt-border-color);
+  border-radius: 6px;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--tt-text-color);
+
+  &:focus {
+    border-color: var(--tt-brand-color-500);
+  }
+}
+
+.code-block-lang-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.code-block-lang-option.tiptap-button {
+  width: 100%;
+  justify-content: space-between;
+  flex-shrink: 0;
+
+  &.is-active {
+    background: var(--tt-gray-light-a-100);
+
+    .dark & {
+      background: var(--tt-gray-dark-a-100);
+    }
+  }
+}
+
+.code-block-lang-empty {
+  padding: 8px;
+  font-size: 13px;
+  color: var(--tt-theme-muted, rgba(0, 0, 0, 0.45));
+}
+
+// ── Toolbar toggles ────────────────────────────────────────────────────────
+
+.code-block-icon-pill {
+  width: 26px;
+  justify-content: center;
+  padding: 0;
+
+  &[data-active="on"] {
+    color: var(--tt-brand-color-500);
+    border-color: var(--tt-brand-color-300, var(--tt-brand-color-500));
+  }
+}
+
+.code-block-pill.is-static {
+  cursor: default;
+}
+
+// ── Line numbers and wrap ──────────────────────────────────────────────────
+// Under .tiptap to outrank the editor's own `.tiptap.ProseMirror pre` rule.
+
+.tiptap .code-block-wrapper {
+  pre {
+    position: relative;
+  }
+
+  // Lines stay on one line and the block scrolls sideways... (!important:
+  // Tiptap puts an inline white-space: pre-wrap on the code element.)
+  pre code {
+    white-space: pre !important;
+  }
+
+  // ...unless wrapping is on.
+  &.is-wrapped pre {
+    overflow-x: hidden;
+
+    code {
+      white-space: pre-wrap !important;
+      word-break: break-word;
+    }
+  }
+
+  &.has-line-numbers pre {
+    padding-left: calc(var(--code-gutter, 3ch) + 28px);
+  }
+}
+
+// Sits at the start of its line (see line-numbers-plugin.ts); absolute, so
+// it lands in the gutter at that line's height, wrapped or not.
+.code-line-number {
+  position: absolute;
+  left: 12px;
+  width: var(--code-gutter, 3ch);
+  text-align: right;
+  color: var(--tt-gray-light-a-400);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  pointer-events: none;
+
+  .dark & {
+    color: var(--tt-gray-dark-a-400);
+  }
 }

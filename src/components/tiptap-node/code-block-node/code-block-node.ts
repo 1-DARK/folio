@@ -2,6 +2,7 @@ import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { CodeBlockView } from "./code-block-view";
 import { createLowlight } from "lowlight";
+import { codeLineNumbersPlugin } from "./line-numbers-plugin";
 
 import javascript from "highlight.js/lib/languages/javascript";
 import typescript from "highlight.js/lib/languages/typescript";
@@ -56,7 +57,23 @@ export const CodeBlockNode = CodeBlockLowlight.extend({
         renderHTML: (attrs) =>
           attrs.filename ? { "data-filename": attrs.filename } : {},
       },
+      lineNumbers: {
+        default: false,
+        parseHTML: (el) => el.hasAttribute("data-line-numbers"),
+        renderHTML: (attrs) =>
+          attrs.lineNumbers ? { "data-line-numbers": "" } : {},
+      },
+      wrap: {
+        default: false,
+        parseHTML: (el) => el.hasAttribute("data-wrap"),
+        renderHTML: (attrs) => (attrs.wrap ? { "data-wrap": "" } : {}),
+      },
     };
+  },
+
+  // Keep lowlight's highlighting plugin; add the line numbers.
+  addProseMirrorPlugins() {
+    return [...(this.parent?.() ?? []), codeLineNumbersPlugin(this.name)];
   },
 
   addNodeView() {
