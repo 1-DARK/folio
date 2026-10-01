@@ -1,29 +1,48 @@
 import { useEffect, useState } from "react";
-import { Card, CardItemGroup } from "src/components/tiptap-ui-primitive/card";
-import type { Editor } from "@tiptap/core";
+import { useEditorState } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
+
+import { Card, CardItemGroup } from "src/components/tiptap-ui-primitive/card";
+
+import type { Editor } from "@tiptap/core";
+
 import { ImageAlignButton } from "src/components/tiptap-ui/image-align-button/image-align-button";
+
 import { Separator } from "src/components/tiptap-ui-primitive/separator";
+
 import { DeleteNodeButton } from "src/components/tiptap-ui/delete-node-button";
+
 import CaptionButton from "src/components/tiptap-ui/caption-button";
+
 import { NodeSelection } from "@tiptap/pm/state";
+
 import ReplaceImageButton from "src/components/tiptap-ui/replace-image-button";
+
 import { ImageDownloadButton } from "../image-download-button";
+
 import { Button } from "src/components/tiptap-ui-primitive/button";
+
 import { Input, InputGroup } from "src/components/tiptap-ui-primitive/input";
+
 import { CornerDownLeftIcon } from "src/components/tiptap-icons/corner-down-left-icon";
+
 import { Maximize2 } from "lucide-react";
+
 import { OPEN_LIGHTBOX_EVENT } from "src/components/tiptap-node/image-node/image-lightbox";
 
 // Opens the selected image's lightbox by firing an event on its wrapper;
 // the image's own node view listens for it.
 function openSelectedImage(editor: Editor) {
   const { selection } = editor.state;
+
   if (!(selection instanceof NodeSelection)) return;
+
   const dom = editor.view.nodeDOM(selection.from) as HTMLElement | null;
+
   const wrapper = dom?.matches("[data-image-wrapper]")
     ? dom
     : dom?.querySelector("[data-image-wrapper]");
+
   wrapper?.dispatchEvent(new Event(OPEN_LIGHTBOX_EVENT));
 }
 
@@ -46,6 +65,7 @@ function AltTextRow({
       .updateAttributes("image", { alt: value.trim() || null })
       .focus()
       .run();
+
     onDone();
   };
 
@@ -72,6 +92,7 @@ function AltTextRow({
           style={{ minWidth: 260 }}
         />
       </InputGroup>
+
       <Button
         type="button"
         variant="ghost"
@@ -88,38 +109,46 @@ function AltTextRow({
 export function ImageBubble({ editor }: { editor: Editor | null }) {
   const [mode, setMode] = useState<"tools" | "alt">("tools");
 
-  const [, setTick] = useState(0);
+  const editorState = useEditorState({
+    editor,
+    selector: ({ editor }) => {
+      if (!editor) {
+        return {
+          hasAlt: false,
+          selectionKey: "",
+        };
+      }
 
-  // Selecting another node brings the regular tools back; any change
-  // re-renders so the Alt button shows whether alt text is set.
+      const { selection } = editor.state;
+
+      return {
+        hasAlt: !!editor.getAttributes("image").alt,
+        selectionKey: `${selection.from}:${selection.to}:${selection.constructor.name}`,
+      };
+    },
+  });
+
+  const hasAlt = editorState?.hasAlt ?? false;
+  const selectionKey = editorState?.selectionKey ?? "";
+
+  // Selecting another node brings the regular tools back.
   useEffect(() => {
-    if (!editor) return;
-    const reset = () => setMode("tools");
-    const tick = () => setTick((n) => n + 1);
-    editor.on("selectionUpdate", reset);
-    editor.on("transaction", tick);
-    return () => {
-      editor.off("selectionUpdate", reset);
-      editor.off("transaction", tick);
-    };
-  }, [editor]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMode("tools");
+  }, [selectionKey]);
 
   if (!editor) return null;
 
-  const hasAlt = !!editor.getAttributes("image").alt;
-
   return (
     <BubbleMenu
-      pluginKey={"imageAlignBubblePlugin"}
+      pluginKey="imageAlignBubblePlugin"
       editor={editor}
       shouldShow={({ editor, state }) => {
         const selection = state.selection;
+
         if (!(selection instanceof NodeSelection)) return false;
 
-        if (editor.isActive("image") || editor.isActive("figure")) {
-          return true;
-        }
-        return false;
+        return editor.isActive("image") || editor.isActive("figure");
       }}
     >
       <Card className="bubble-menu-content">
@@ -131,34 +160,40 @@ export function ImageBubble({ editor }: { editor: Editor | null }) {
               hideWhenUnavailable={true}
               editor={editor}
               align="left"
-              tooltip={"Align left"}
+              tooltip="Align left"
               showTooltip={true}
             />
+
             <ImageAlignButton
               hideWhenUnavailable={true}
               editor={editor}
               align="center"
-              tooltip={"Align center"}
+              tooltip="Align center"
               showTooltip={true}
             />
+
             <ImageAlignButton
               hideWhenUnavailable={true}
               editor={editor}
               align="right"
-              tooltip={"Align right"}
+              tooltip="Align right"
               showTooltip={true}
             />
+
             <Separator orientation="vertical" />
+
             <ReplaceImageButton
               hideWhenUnavailable={true}
               editor={editor}
               showTooltip={true}
             />
+
             <CaptionButton
               hideWhenUnavailable={true}
               editor={editor}
               showTooltip={true}
             />
+
             <Button
               type="button"
               variant="ghost"
@@ -169,7 +204,9 @@ export function ImageBubble({ editor }: { editor: Editor | null }) {
             >
               <span className="tiptap-button-text">Alt</span>
             </Button>
+
             <Separator orientation="vertical" />
+
             <Button
               type="button"
               variant="ghost"
@@ -179,11 +216,13 @@ export function ImageBubble({ editor }: { editor: Editor | null }) {
             >
               <Maximize2 className="tiptap-button-icon" />
             </Button>
+
             <ImageDownloadButton
               hideWhenUnavailable={true}
               editor={editor}
               showTooltip={true}
             />
+
             <DeleteNodeButton editor={editor} showTooltip={true} />
           </CardItemGroup>
         )}

@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEditorState } from "@tiptap/react";
+
 import { NodeSelection } from "@tiptap/pm/state";
+
 import type { Editor } from "@tiptap/core";
 
 interface UseReplaceImageProps {
@@ -15,28 +17,23 @@ export function useReplaceImage({
   editor,
   hideWhenUnavailable = false,
 }: UseReplaceImageProps): UseReplaceImageReturn {
-  const [, setSelectionKey] = useState(0);
+  const isImageSelected = useEditorState({
+    editor,
+    selector: ({ editor }) => {
+      if (!editor) return false;
 
-  useEffect(() => {
-    if (!editor) return;
-    const handleUpdate = () => setSelectionKey((prev) => prev + 1);
-    editor.on("selectionUpdate", handleUpdate);
-    editor.on("transaction", handleUpdate);
-    return () => {
-      editor.off("selectionUpdate", handleUpdate);
-      editor.off("transaction", handleUpdate);
-    };
-  }, [editor]);
+      const { selection } = editor.state;
 
-  const isImageSelected = (() => {
-    if (!editor) return false;
-    const { selection } = editor.state;
-    return (
-      selection instanceof NodeSelection && selection.node.type.name === "image"
-    );
-  })();
+      return (
+        selection instanceof NodeSelection &&
+        selection.node.type.name === "image"
+      );
+    },
+  });
 
-  const isVisible = hideWhenUnavailable ? isImageSelected : true;
+  const isVisible = hideWhenUnavailable ? (isImageSelected ?? false) : true;
 
-  return { isVisible };
+  return {
+    isVisible,
+  };
 }
