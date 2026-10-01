@@ -25,7 +25,10 @@ export const SidebarHeader = memo(() => {
   const { collapsed } = useEditorLayoutState();
 
   return (
-    <CardHeader className="sidebar-header-content" style={{ border: "none" }}>
+    <CardHeader
+      className="sidebar-header-content"
+      style={{ border: "none", padding: 0 }}
+    >
       <CardItemGroup
         style={{
           width: "100%",
@@ -38,7 +41,9 @@ export const SidebarHeader = memo(() => {
           <CardItemGroup
             orientation="horizontal"
             className="workspace-switcher sb-top__switcher"
-            style={{ padding: "5px 0px" }}
+            style={{
+              padding: "2px 0px",
+            }}
           >
             <User />
             <Spacer orientation="horizontal" />

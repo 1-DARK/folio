@@ -52,6 +52,21 @@
 }
 
 // ── Content ───────────────────────────────────────────────────────────────────
+.callout-root:has(.callout-icon-btn) {
+  .callout-content {
+   /* Target the empty paragraph's placeholder */
+    p.is-empty::before {
+      /* 1. Shift it using margin-left */
+      margin-left: 36px !important; 
+      
+      /* 2. Alternatively, use transform for better performance/reliability */
+      /* transform: translateX(20px) !important; */
+      
+      /* 3. Ensure it doesn't wrap or get clipped */
+      white-space: nowrap !important;
+    }
+  }
+}
 
 .callout-content {
   flex: 1;
