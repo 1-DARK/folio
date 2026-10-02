@@ -25,6 +25,7 @@ import { useTranslation } from "react-i18next";
 import { useOptionalActivePage } from "src/features/pages/context/active-page-context";
 import { requestDiscussBlock } from "src/features/chat/block-share-store";
 import { SuggestButton } from "../../../features/comments/suggest-button";
+import { MoveToDropdown } from "src/components/tiptap-ui/move-to-dropdown";
 
 const SNAPSHOT_MAX = 600;
 
@@ -128,6 +129,11 @@ export function Menu({
                 {t("blockMenu.unwrapColumns", "Unwrap columns")}
               </span>
             </Button>
+          </DropdownMenuItem>
+        )}
+        {activePageId && (
+          <DropdownMenuItem asChild>
+            <MoveToDropdown editor={editor} onAction={onAction} />
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>

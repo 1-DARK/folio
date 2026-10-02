@@ -892,5 +892,13 @@
   "dragHandle": {
     "add": "Ajouter un bloc",
     "addHint": "Cliquer pour ajouter en dessous · Alt+clic pour ajouter au-dessus"
+  },
+  "moveTo": {
+    "label": "Déplacer vers",
+    "search": "Déplacer vers une page…",
+    "none": "Aucune page trouvée",
+    "done": "Déplacé vers {{title}}",
+    "open": "Ouvrir",
+    "failed": "Impossible de déplacer vers {{title}}. Les blocs sont toujours ici."
   }
 }

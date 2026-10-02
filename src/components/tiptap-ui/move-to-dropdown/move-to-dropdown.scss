@@ -1,0 +1,53 @@
+.move-to-card {
+  width: 260px;
+  padding: 6px;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.move-to-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 2px 4px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--tt-border-color);
+  color: var(--tt-color-text-gray);
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: var(--tt-text-color, inherit);
+  }
+}
+
+.move-to-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.move-to-item {
+  justify-content: flex-start !important;
+  width: 100%;
+  gap: 8px;
+
+  .tiptap-button-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.move-to-empty {
+  padding: 8px;
+  font-size: 13px;
+  color: var(--tt-color-text-gray);
+}

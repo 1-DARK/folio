@@ -899,5 +899,13 @@
   "dragHandle": {
     "add": "Add a block",
     "addHint": "Click to add below · Alt-click to add above"
+  },
+  "moveTo": {
+    "label": "Move to",
+    "search": "Move to a page…",
+    "none": "No page found",
+    "done": "Moved to {{title}}",
+    "open": "Open",
+    "failed": "Couldn't move to {{title}}. The blocks are still here."
   }
 }
