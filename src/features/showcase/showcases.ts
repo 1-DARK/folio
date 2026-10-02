@@ -7,6 +7,8 @@ import { teamWiki } from "./content/team-wiki";
 import { projectTracker } from "./content/project-tracker";
 import { meetingNotes } from "./content/meeting-notes";
 import { course } from "./content/course";
+import { buttons } from "./content/buttons";
+import { containers } from "./content/containers";
 
 // Showcase pages: Folio documents that ship with the app, shown read-only.
 // The home page's Learn cards open the guides; the landing page shows the
@@ -22,7 +24,9 @@ export type ShowcaseId =
   | "team-wiki"
   | "project-tracker"
   | "meeting-notes"
-  | "course";
+  | "course"
+  | "buttons"
+  | "containers";
 
 export const SHOWCASES: Record<ShowcaseId, Record<ShowcaseLang, JSONContent>> = {
   "getting-started": gettingStarted,
@@ -33,6 +37,8 @@ export const SHOWCASES: Record<ShowcaseId, Record<ShowcaseLang, JSONContent>> = 
   "project-tracker": projectTracker,
   "meeting-notes": meetingNotes,
   course,
+  buttons,
+  containers,
 };
 
 /** i18next language → showcase language (French unless English). */

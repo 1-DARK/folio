@@ -151,8 +151,9 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
               onAction={onAction}
               target={target}
               editor={editor!}
-              side="left"
-              sideOffset={0}
+              side="bottom"
+              align="start"
+              sideOffset={4}
             />,
             document.body,
           )
@@ -386,47 +387,50 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
 
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
           <ColorDropdownProvider>
-            {/* Hidden anchor — only used to anchor the dropdown menu position,
-                the actual trigger is the grip button below */}
-            <DropdownMenuTrigger asChild>
-              <span
-                style={{
-                  width: 0,
-                  height: 0,
-                  overflow: "hidden",
-                  display: "block",
-                }}
-              />
-            </DropdownMenuTrigger>
+            {/* The grip and, laid over it, the menu's anchor: the menu
+                opens right under the grip (flipping above it near the
+                bottom of the screen) instead of at the page edge. */}
+            <span style={{ position: "relative", display: "inline-flex" }}>
+              <DropdownMenuTrigger asChild>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    pointerEvents: "none",
+                  }}
+                />
+              </DropdownMenuTrigger>
 
-            {/* Grip button — selecting the node on pointer down ensures it's
-                selected before the drag starts, giving ProseMirror the right
-                context for the drag operation */}
-            <Button
-              type="button"
-              variant="ghost"
-              role="button"
-              size="large"
-              ref={gripRef}
-              className="grip-button"
-              tabIndex={-1}
-              onPointerDown={() => {
-                editor.commands.setNodeSelection(posRef.current);
-              }}
-              onClick={() => {
-                if (isDraggingRef.current) return;
-                editor.commands.lockDragHandle();
-                setOpen((v) => !v);
-              }}
-              style={{
-                cursor: "grab",
-                // Disable pointer events while the menu is open so the grip
-                // button doesn't interfere with menu item clicks
-                pointerEvents: open ? "none" : "auto",
-              }}
-            >
-              <GripVerticalIcon className="tiptap-button-icon" />
-            </Button>
+              {/* Grip button — selecting the node on pointer down ensures
+                  it's selected before the drag starts, giving ProseMirror
+                  the right context for the drag operation */}
+              <Button
+                type="button"
+                variant="ghost"
+                role="button"
+                size="large"
+                ref={gripRef}
+                className="grip-button"
+                tabIndex={-1}
+                onPointerDown={() => {
+                  editor.commands.setNodeSelection(posRef.current);
+                }}
+                onClick={() => {
+                  if (isDraggingRef.current) return;
+                  editor.commands.lockDragHandle();
+                  setOpen((v) => !v);
+                }}
+                style={{
+                  cursor: "grab",
+                  // Disable pointer events while the menu is open so the
+                  // grip doesn't interfere with menu item clicks
+                  pointerEvents: open ? "none" : "auto",
+                }}
+              >
+                <GripVerticalIcon className="tiptap-button-icon" />
+              </Button>
+            </span>
 
             {menu}
           </ColorDropdownProvider>

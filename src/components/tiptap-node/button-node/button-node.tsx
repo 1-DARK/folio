@@ -152,9 +152,9 @@ function ButtonView({ node, editor, updateAttributes }: NodeViewProps) {
           width={width}
           editable={false}
           onActivate={navigate}
-          backgroundColor={node.attrs.backgroundColor}
-          justifyContent={node.attrs.nodeAlign}
-          color={node.attrs.color}
+          backgroundColor={node.attrs.backgroundColor ?? undefined}
+          justifyContent={node.attrs.nodeAlign ?? undefined}
+          color={node.attrs.color ?? undefined}
         />
       </NodeViewWrapper>
     );
@@ -187,9 +187,9 @@ function ButtonView({ node, editor, updateAttributes }: NodeViewProps) {
           width={width}
           editable
           onActivate={handleClick}
-          backgroundColor={node.attrs.backgroundColor}
-          justifyContent={node.attrs.nodeAlign}
-          color={node.attrs.color}
+          backgroundColor={node.attrs.backgroundColor ?? undefined}
+          justifyContent={node.attrs.nodeAlign ?? undefined}
+          color={node.attrs.color ?? undefined}
         />
       </ResizableNodeProvider>
 

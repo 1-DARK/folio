@@ -15,6 +15,8 @@ import {
   Rocket,
   SquareStack,
   Users,
+  MousePointerClick,
+  Box,
 } from "lucide-react";
 import { useTemplates } from "src/hooks/use-templates";
 import { useClonePage } from "src/features/database/hooks/use-clone-page";
@@ -325,6 +327,8 @@ const GUIDE_ICONS: Record<GuideIcon, typeof BookOpen> = {
   blocks: SquareStack,
   databases: Database,
   collaborate: Users,
+  button: MousePointerClick,
+  container: Box,
 };
 
 // A "Learn" card: a guide page. Without a page yet it reads "Coming soon"

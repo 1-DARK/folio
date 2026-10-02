@@ -8,6 +8,11 @@
       background-color: transparent;
     }
 
+    &.mention-date{
+      color: var(--tt-color-text-gray);
+      font-weight: 500;
+    }
+
     &.mention-past{
        color: var(--tt-color-red-dec-2) !important;
     }

@@ -14,6 +14,13 @@ import { useCurrentEditor } from "@tiptap/react";
 import { usePeople } from "src/hooks/use-people";
 import { usePages } from "src/hooks/use-pages";
 import type { Page, Person } from "src/types";
+import { useTranslation } from "react-i18next";
+
+const SECTION_KEYS = {
+  Date: "mention.sections.dates",
+  Pages: "mention.sections.pages",
+  People: "mention.sections.people",
+} as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isSelectable = (item: any) => !item.title && item.type !== "divider";
@@ -24,6 +31,15 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
       items.findIndex(isSelectable),
     );
     const [menuVisible, setMenuVisible] = useState(false);
+    const { t } = useTranslation();
+
+    // New results → back to the first selectable one (adjusted during
+    // render, the React way to reset state when a prop changes).
+    const [prevItems, setPrevItems] = useState(items);
+    if (items !== prevItems) {
+      setPrevItems(items);
+      setSelectedIndex(items.findIndex(isSelectable));
+    }
 
     const selectItem = (index: number) => {
       const item = items[index];
@@ -92,7 +108,9 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
 
     return (
       <Card className="mention-menu" data-mention-menu-open={menuVisible}>
-        {items.length === 0 && <CardGroupLabel>No results</CardGroupLabel>}
+        {items.length === 0 && (
+          <CardGroupLabel>{t("mention.noResults")}</CardGroupLabel>
+        )}
 
         {items.map((item, index) => (
           <div key={index} style={{ display: "contents" }}>
@@ -107,7 +125,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
                   ) : (
                     <Users />
                   )}
-                  <span>{item.title}</span>
+                  <span>{item.title ? t(SECTION_KEYS[item.title]) : ""}</span>
                 </CardGroupLabel>
               </>
             )}
@@ -119,7 +137,10 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
                 onClick={() => selectItem(index)}
               >
                 <Clock className="tiptap-button-icon" />
-                <span>{item.date}</span>
+                <span>{item.label}</span>
+                {item.hint && (
+                  <span className="mention-item__hint">{item.hint}</span>
+                )}
               </Button>
             )}
             {!item.title &&

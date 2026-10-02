@@ -566,6 +566,10 @@
     }
   },
   "home": {
+    "guides": {
+      "buttons": "Boutons",
+      "containers": "Conteneurs"
+    },
     "recentlyVisited": "Récemment consultés",
     "earlier": "Plus tôt",
     "edited": "Modifié {{time}}",
@@ -679,7 +683,8 @@
     "sections": {
       "style": "Style",
       "insert": "Insérer",
-      "upload": "Importer"
+      "upload": "Importer",
+      "recent": "Utilisés récemment"
     },
     "items": {
       "text": {
@@ -850,5 +855,26 @@
     "filter": "Filtrer...",
     "commandsAria": "Commandes slash",
     "closeAria": "Fermer (Échap)"
+  },
+  "mention": {
+    "dates": {
+      "today": "Aujourd’hui",
+      "tomorrow": "Demain",
+      "yesterday": "Hier",
+      "nextWeek": "La semaine prochaine",
+      "remindMe": "Me le rappeler"
+    },
+    "sections": {
+      "dates": "Dates",
+      "pages": "Pages",
+      "people": "Personnes"
+    },
+    "noResults": "Aucun résultat"
+  },
+  "pageLink": {
+    "deleted": "Page supprimée",
+    "unavailable": "Supprimée ou sans accès",
+    "remove": "Retirer le lien",
+    "inTrash": "Dans la corbeille"
   }
 }

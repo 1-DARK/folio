@@ -21,7 +21,7 @@ import {
   shift,
   type VirtualElement,
 } from "@floating-ui/dom";
-import { users } from "./users";
+import { getDateSuggestions } from "./date-suggestions";
 
 import "./mention-extension.scss";
 import { MentionView } from "./mention-view";
@@ -140,9 +140,18 @@ export const MentionExtension = MentionWithView.configure({
           cover: p.cover,
         }));
 
-      const matchedDates = users
-        .filter((u) => u.date)
-        .filter((u) => u.label.toLowerCase().includes(q));
+      const matchedDates: MentionItem[] = getDateSuggestions(query).map(
+        (d) => ({
+          id: `date:${d.id}`,
+          label: d.label,
+          date: d.label,
+          type: "date" as const,
+          iso: d.iso,
+          hint: d.hint,
+          remind: d.remind,
+          includeTime: d.includeTime,
+        }),
+      );
 
       const result: MentionItem[] = [];
 
@@ -163,9 +172,7 @@ export const MentionExtension = MentionWithView.configure({
           title: "Date",
           type: "divider",
         });
-        result.push(
-          ...matchedDates.map((u) => ({ ...u, type: "date" as const })),
-        );
+        result.push(...matchedDates);
       }
       if (matchedUsers.length) {
         result.push({
@@ -204,6 +211,28 @@ export const MentionExtension = MentionWithView.configure({
             nodeId: `pageLink-${Date.now()}`,
           },
         });
+      } else if (props.type === "date") {
+        // A date chip: the date itself is stored, so "Today" written on
+        // Monday still reads Monday's date on Tuesday ("Yesterday").
+        editor
+          .chain()
+          .focus()
+          .insertContentAt(range, [
+            {
+              type: "mention",
+              attrs: {
+                id: "date",
+                label: props.label,
+                mentionSuggestionChar: "@",
+                nodeId: `mention-${Date.now()}`,
+                date: props.iso,
+                remind: props.remind ?? null,
+                includeTime: !!props.includeTime,
+              },
+            },
+            { type: "text", text: " " },
+          ])
+          .run();
       } else {
         editor
           .chain()

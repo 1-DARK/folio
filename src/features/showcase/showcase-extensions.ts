@@ -40,6 +40,8 @@ import {
   NodeColor,
 } from "src/components/tiptap-extension";
 import { Placeholder } from "@tiptap/extensions";
+import { ButtonNode } from "src/components/tiptap-node/button-node";
+import { Container } from "src/components/tiptap-node/container-node";
 import { SlashCommand } from "src/components/tiptap-ui/slash-menu";
 import { getSlashCommands } from "src/components/tiptap-ui/slash-menu/slash-commands";
 import i18n from "src/i18n/config";
@@ -94,6 +96,8 @@ export const SHOWCASE_EXTENSIONS = [
   Appendix,
   AppendixSummary,
   AppendixContent,
+  ButtonNode,
+  Container,
   NodeBackground.configure({ useStyle: false }),
   NodeAlignment.configure({ useStyle: false }),
   NodeColor.configure({ useStyle: false }),

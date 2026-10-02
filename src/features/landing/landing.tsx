@@ -121,6 +121,8 @@ const EXAMPLE_EMOJI: Record<ShowcaseId, string> = {
   "project-tracker": "✅",
   "meeting-notes": "🗓️",
   course: "🎓",
+  buttons: "🔘",
+  containers: "📦",
 };
 
 /** A cover per example, so every page opens looking like a real one. */

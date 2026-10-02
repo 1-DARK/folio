@@ -5,7 +5,10 @@ import type { EmojiListRef, EmojiListProps } from "./types";
 import { Card } from "src/components/tiptap-ui-primitive/card";
 import { Button } from "src/components/tiptap-ui-primitive/button";
 
+import { useTranslation } from "react-i18next";
 import "./emoji-list.scss";
+
+const isRecent = (item: unknown) => !!(item as { recent?: boolean })?.recent;
 
 // onClose is injected by the extension's render() so the footer button and the
 // in-component Escape handler both route through the same teardown as the
@@ -17,6 +20,15 @@ export const EmojiList = forwardRef<EmojiListRef, Props>(
   ({ items, command, onClose }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [menuVisible, setMenuVisible] = useState(false);
+    const { t } = useTranslation();
+
+    // New results → back to the first one (adjusted during render, the
+    // React way to reset state when a prop changes).
+    const [prevItems, setPrevItems] = useState(items);
+    if (items !== prevItems) {
+      setPrevItems(items);
+      setSelectedIndex(0);
+    }
 
     const selectItem = (index: number) => {
       const item = items[index];
@@ -80,23 +92,32 @@ export const EmojiList = forwardRef<EmojiListRef, Props>(
       <Card className="emoji-menu" data-emoji-menu-open={menuVisible}>
         <div className="emoji-menu__list">
           {items.map((item, index) => (
-            <Button
-              className="emoji-item"
-              variant="ghost"
-              data-highlighted={index === selectedIndex}
-              key={index}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                selectItem(index);
-              }}
-            >
-              <span>{item.emoji}</span>
-              <span
-              //className='slash-item border-none'
+            <div key={index} style={{ display: "contents" }}>
+              {index === 0 && isRecent(item) && (
+                <div className="emoji-menu__label">
+                  {t("slash.sections.recent")}
+                </div>
+              )}
+              {index > 0 && isRecent(items[index - 1]) && !isRecent(item) && (
+                <div className="emoji-menu__divider" role="separator" />
+              )}
+              <Button
+                className="emoji-item"
+                variant="ghost"
+                data-highlighted={index === selectedIndex}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  selectItem(index);
+                }}
               >
-                {item.name}
-              </span>
-            </Button>
+                <span>{item.emoji}</span>
+                <span
+                //className='slash-item border-none'
+                >
+                  {item.name}
+                </span>
+              </Button>
+            </div>
           ))}
         </div>
 

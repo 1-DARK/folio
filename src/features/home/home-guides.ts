@@ -9,7 +9,8 @@ import type { ShowcaseId } from "src/features/showcase/showcases";
 // Kept as plain config so guides can be added, reordered or pointed at a
 // future documentation engine without touching the home page component.
 
-export type GuideIcon = "start" | "blocks" | "databases" | "collaborate";
+export type GuideIcon =
+  "start" | "blocks" | "databases" | "collaborate" | "button" | "container";
 
 export interface HomeGuide {
   id: string;
@@ -57,6 +58,24 @@ export const HOME_GUIDES: HomeGuide[] = [
     titleKey: "home.guides.collaborate",
     title: "Work together: comments, suggestions and rooms",
     readMinutes: 6,
+    pageId: null,
+  },
+  {
+    id: "buttons",
+    showcaseId: "buttons",
+    icon: "button",
+    titleKey: "home.guides.buttons",
+    title: "Buttons",
+    readMinutes: 2,
+    pageId: null,
+  },
+  {
+    id: "containers",
+    showcaseId: "containers",
+    icon: "container",
+    titleKey: "home.guides.containers",
+    title: "Containers",
+    readMinutes: 2,
     pageId: null,
   },
 ];
