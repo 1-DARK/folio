@@ -6,6 +6,7 @@ import { EditorContent, useCurrentEditor } from "@tiptap/react";
 
 import { BubbleMenu } from "src/components/tiptap-ui/bubble-menu/bubble-menu";
 import { DragHandle } from "src/components/tiptap-ui/drag-handle/drag-handle";
+import { BlockMarquee } from "src/components/tiptap-ui/block-marquee";
 import { ImageBubble } from "src/components/tiptap-ui/image-bubble";
 import { CoverHeader } from "src/features/pages/cover";
 import { FloatingMenu } from "@tiptap/react/menus";
@@ -255,6 +256,8 @@ export function SimpleEditorContent() {
     <>
       <StableShell />
       {editor && <DragHandle editor={editor} />}
+
+      {editor && <BlockMarquee editor={editor} />}
 
       {editor && <BlockCommentHandle editor={editor} />}
 

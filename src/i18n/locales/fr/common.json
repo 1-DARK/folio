@@ -888,5 +888,9 @@
     "title": "Raccourcis clavier",
     "search": "Rechercher un raccourci…",
     "none": "Aucun raccourci ne correspond."
+  },
+  "dragHandle": {
+    "add": "Ajouter un bloc",
+    "addHint": "Cliquer pour ajouter en dessous · Alt+clic pour ajouter au-dessus"
   }
 }

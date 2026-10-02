@@ -1,0 +1,39 @@
+// The drag-box itself.
+.block-marquee {
+  position: fixed;
+  z-index: 9000;
+  pointer-events: none;
+  border-radius: 3px;
+  background: var(--tt-brand-color-500-a, rgba(35, 131, 226, 0.12));
+  border: 1px solid rgba(35, 131, 226, 0.45);
+}
+
+// No text gets selected while the box is drawn.
+body.is-marquee-selecting {
+  user-select: none;
+  cursor: default;
+}
+
+// Blocks selected as whole blocks: a light-blue box, no text highlight.
+.tiptap.ProseMirror {
+  .is-block-selected {
+    position: relative;
+    border-radius: 4px;
+    background-color: rgba(35, 131, 226, 0.14);
+    box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.14);
+
+    .dark & {
+      background-color: rgba(35, 131, 226, 0.22);
+      box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.22);
+    }
+  }
+
+  &.has-block-selection {
+    caret-color: transparent;
+
+    ::selection,
+    *::selection {
+      background: transparent;
+    }
+  }
+}

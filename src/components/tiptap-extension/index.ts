@@ -6,3 +6,4 @@ export * from "./node-fit-extension";
 export * from "./tall-cursor";
 export * from "./top-level-class-extension";
 export * from "./markdown-paste-extension";
+export * from "./block-selection-extension";

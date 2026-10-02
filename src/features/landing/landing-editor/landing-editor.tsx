@@ -30,6 +30,7 @@ import "src/components/tiptap-node/heading-node/heading-node.scss";
 import "src/components/tiptap-node/paragraph-node/paragraph-node.scss";
 import "src/features/shell/simple-editor.scss";
 import "./landing-editor.scss";
+import { BlockMarquee } from "src/components/tiptap-ui/block-marquee";
 
 export interface PageCover {
   kind: "gradient" | "image";
@@ -119,6 +120,7 @@ export function LandingPageSurface({
         />
         <BubbleMenu editor={editor} comments={false} />
         <DragHandle editor={editor} />
+        <BlockMarquee editor={editor} />
       </div>
     </EditorContext.Provider>
   );

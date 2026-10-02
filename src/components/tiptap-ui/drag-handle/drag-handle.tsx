@@ -19,6 +19,8 @@ import { createPortal } from "react-dom";
 import { recordSelection } from "src/features/database/utils/record-selection-store";
 import { RecordDragMenu } from "src/features/database/components/record-drag-menu";
 import { GripVerticalIcon } from "src/components/tiptap-icons";
+import { useTranslation } from "react-i18next";
+import { insertBlockWithMenu } from "./insert-block";
 import {
   extendSelectionToBlock,
   rangeContains,
@@ -97,6 +99,7 @@ const nestedOptions = {
 };
 
 export function DragHandle({ editor }: { editor: Editor | null }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState("paragraph");
   const [hideHandle, setHideHandle] = useState(false);
@@ -404,6 +407,13 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
           role="button"
           tabIndex={-1}
           draggable={false}
+          aria-label={t("dragHandle.add")}
+          title={t("dragHandle.addHint")}
+          // Keep the hovered block (and the editor's focus) on press.
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => {
+            insertBlockWithMenu(editor, posRef.current, e.altKey);
+          }}
         >
           <Plus className="tiptap-button-icon" />
         </Button>

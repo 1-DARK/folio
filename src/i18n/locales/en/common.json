@@ -895,5 +895,9 @@
     "title": "Keyboard shortcuts",
     "search": "Search shortcuts…",
     "none": "No shortcut matches."
+  },
+  "dragHandle": {
+    "add": "Add a block",
+    "addHint": "Click to add below · Alt-click to add above"
   }
 }

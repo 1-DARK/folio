@@ -31,6 +31,7 @@ import {
   NodeFit,
   TopLevelClassExtension,
   MarkdownPaste,
+  BlockSelection,
 } from "src/components/tiptap-extension";
 
 import { ImageUploadNode } from "src/components/tiptap-node/image-upload-node/image-upload-node-extension";
@@ -191,6 +192,7 @@ export function useEditorExtensions(
 
       // --- Node attributes ---
       MarkdownPaste,
+      BlockSelection,
       NodeBackground.configure({ useStyle: false }),
       NodeAlignment.configure({ useStyle: false }),
       NodeColor.configure({ useStyle: false }),

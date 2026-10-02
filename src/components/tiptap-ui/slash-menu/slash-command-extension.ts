@@ -5,7 +5,7 @@ import Suggestion, {
   type SuggestionProps,
 } from "@tiptap/suggestion";
 import { ReactRenderer } from "@tiptap/react";
-import type { Plugin } from "@tiptap/pm/state";
+import { Plugin } from "@tiptap/pm/state";
 import SlashList from "./slash-command-list";
 import {
   computePosition,
@@ -108,8 +108,26 @@ export const SlashCommand = Extension.create<
     const keep = this.options.filter ?? (() => true);
     let reactRenderer: ReactRenderer<any> | null = null;
     let selectedIndex = 0;
-    let destroyed = false;
     let resizeObserver: ResizeObserver | null = null;
+    // Where the open menu's "/" is, and where the user last closed one
+    // (Escape, the Close button). A closed menu stays closed for that "/"
+    // only: typing another "/" anywhere — or the + button adding one —
+    // opens a new menu. (A plain "closed" flag used to swallow the next
+    // menu, wherever it was.)
+    let openFrom = -1;
+    let closedFrom = -1;
+
+    const closeMenu = () => {
+      closedFrom = openFrom;
+      resizeObserver?.disconnect();
+      resizeObserver = null;
+      if (reactRenderer) {
+        reactRenderer.element?.remove();
+        reactRenderer.destroy();
+        reactRenderer = null;
+      }
+      exitSuggestion(editor.view);
+    };
 
     const updatePosition = (element: HTMLElement) => {
       const virtualElement: VirtualElement = {
@@ -134,9 +152,7 @@ export const SlashCommand = Extension.create<
 
     function createRenderer(props: SuggestionProps<SlashItem>) {
       selectedIndex = 0;
-      if (destroyed) {
-        return;
-      }
+      openFrom = props.range.from;
 
       reactRenderer = new ReactRenderer(SlashList, {
         editor,
@@ -147,11 +163,7 @@ export const SlashCommand = Extension.create<
             props.command(item);
             exitSuggestion(editor.view);
           },
-          onClose: () => {
-            reactRenderer?.destroy();
-            destroyed = true;
-            exitSuggestion(editor.view);
-          },
+          onClose: closeMenu,
         },
       });
 
@@ -168,9 +180,10 @@ export const SlashCommand = Extension.create<
     }
 
     function updateRenderer(props: SuggestionProps<SlashItem>) {
-      if (!reactRenderer || destroyed) {
+      if (!reactRenderer) {
         return;
       }
+      openFrom = props.range.from;
 
       reactRenderer.updateProps({
         ...props,
@@ -179,11 +192,7 @@ export const SlashCommand = Extension.create<
           props.command(item);
           exitSuggestion(editor.view);
         },
-        onClose: () => {
-          reactRenderer?.destroy();
-          destroyed = true;
-          exitSuggestion(editor.view);
-        },
+        onClose: closeMenu,
       });
     }
 
@@ -246,7 +255,7 @@ export const SlashCommand = Extension.create<
       allowedPrefixes: null,
 
       items: ({ query, editor }) => {
-        if (destroyed || isInForbiddenBlock(editor)) {
+        if (isInForbiddenBlock(editor)) {
           return [];
         }
 
@@ -313,10 +322,12 @@ export const SlashCommand = Extension.create<
             return;
           }
 
-          if (destroyed) {
-            destroyed = !destroyed;
+          // The menu the user just closed, for the same "/": keep it closed.
+          if (props.range.from === closedFrom) {
+            exitSuggestion(editor.view);
             return;
           }
+          closedFrom = -1;
           createRenderer(props);
           requestAnimationFrame(() => {
             const el = editor.view.dom.querySelector(".slash-suggestion");
@@ -325,7 +336,7 @@ export const SlashCommand = Extension.create<
         },
         onUpdate: (props) => {
           if (props.items.length === 0) return;
-          if (destroyed || !reactRenderer) return;
+          if (!reactRenderer) return;
 
           updateRenderer(props);
 
@@ -338,10 +349,10 @@ export const SlashCommand = Extension.create<
             }
           });
         },
-        onKeyDown({ view, event }) {
+        onKeyDown({ event }) {
           if (event.key === "Escape") {
-            reactRenderer?.destroy();
-            exitSuggestion(view);
+            closeMenu();
+            return true;
           }
 
           return false;
@@ -350,7 +361,24 @@ export const SlashCommand = Extension.create<
       }),
     });
 
-    return [suggestion as unknown as Plugin];
+    // Forget a closed menu once its "/" is gone (deleted or replaced), so a
+    // "/" typed again in the same spot opens the menu.
+    const forgetClosed = new Plugin({
+      view: () => ({
+        update(view) {
+          if (closedFrom < 0) return;
+          const { doc } = view.state;
+          if (
+            closedFrom >= doc.content.size ||
+            doc.textBetween(closedFrom, closedFrom + 1, "\0", "\0") !== "/"
+          ) {
+            closedFrom = -1;
+          }
+        },
+      }),
+    });
+
+    return [suggestion as unknown as Plugin, forgetClosed];
   },
   addCommands() {
     return {
