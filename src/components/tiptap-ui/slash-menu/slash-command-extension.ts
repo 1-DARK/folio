@@ -21,9 +21,14 @@ import {
   type SlashCommand as SlashItem,
 } from "./slash-commands";
 import i18n from "src/i18n/config";
+import {
+  getRecentSlashIds,
+  normalize,
+  recordSlashUse,
+  RECENT_PREFIX,
+  scoreSlashItem,
+} from "./slash-search";
 import type { ID, Page } from "src/types";
-
-const COLOR_TRIGGER_KEYWORDS = ["color", "highlight", "colour"];
 
 const isColorItem = (cmd: SlashItem) => cmd.id.startsWith("color-");
 const isColorStructural = (cmd: SlashItem) =>
@@ -245,43 +250,58 @@ export const SlashCommand = Extension.create<
           return [];
         }
 
-        // Rebuild fresh each query so a language switch re-localizes the menu
-        // (and so filtering matches the translated titles).
+        // Rebuild fresh each query so a language switch re-localizes the menu.
         const commands = getSlashCommands(i18n.t).filter(keep);
+        const q = normalize(query || "");
 
-        const q = (query || "").toLowerCase();
+        // No query: recently used first, then every block (colors hidden).
+        if (!q) {
+          const blocks = commands.filter(
+            (cmd) => !isColorItem(cmd) && !isColorStructural(cmd),
+          );
+          const byId = new Map(blocks.map((cmd) => [cmd.id, cmd]));
+          const recents = getRecentSlashIds()
+            .map((id) => byId.get(id))
+            .filter((cmd): cmd is SlashItem => cmd?.type === "command");
+          if (recents.length === 0) return blocks;
+          return [
+            {
+              id: "recent",
+              type: "title",
+              title: i18n.t("slash.sections.recent"),
+            },
+            // Copies with their own id, so the list keys and keyboard
+            // navigation don't confuse them with the item further down.
+            ...recents.map((cmd) => ({ ...cmd, id: RECENT_PREFIX + cmd.id })),
+            { id: "recentDivider", type: "separator", title: "separator" },
+            ...blocks,
+          ];
+        }
 
-        const showColorSection =
-          q.length > 0 &&
-          commands
-            .filter(isColorItem)
-            .some(
-              (cmd) =>
-                cmd.title.toLowerCase().includes(q) ||
-                COLOR_TRIGGER_KEYWORDS.some(
-                  (kw) => kw.includes(q) || q.includes(kw),
-                ),
-            );
-
-        return commands.filter((cmd) => {
-          if (isColorStructural(cmd)) return showColorSection;
-
-          if (isColorItem(cmd)) {
-            return (
-              q.length > 0 &&
-              (cmd.title.toLowerCase().includes(q) ||
-                COLOR_TRIGGER_KEYWORDS.some(
-                  (kw) => kw.includes(q) || q.includes(kw),
-                ))
-            );
-          }
-
-          return cmd.title.toLowerCase().includes(q);
-        });
+        // A query: a flat list, best matches first (English and French
+        // titles and keywords). Colors come last, from two letters on.
+        return commands
+          .map((cmd, index) => ({
+            cmd,
+            index,
+            score:
+              cmd.type !== "command" || (isColorItem(cmd) && q.length < 2)
+                ? 0
+                : scoreSlashItem(cmd, q),
+          }))
+          .filter((r) => r.score > 0)
+          .sort(
+            (a, b) =>
+              Number(isColorItem(a.cmd)) - Number(isColorItem(b.cmd)) ||
+              b.score - a.score ||
+              a.index - b.index,
+          )
+          .map((r) => r.cmd);
       },
 
       command: ({ editor: ed, range, props }) => {
         ed.chain().focus().deleteRange(range).run();
+        if (props?.id) recordSlashUse(props.id);
         props?.run?.(ed);
         props?.runAsync?.(ed, this.storage);
       },

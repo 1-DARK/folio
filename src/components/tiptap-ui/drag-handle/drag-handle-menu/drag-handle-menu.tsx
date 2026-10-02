@@ -9,18 +9,20 @@ interface DragHandleMenuProps {
   target: string;
   onAction?: () => void;
   side?: "right" | "top" | "bottom" | "left";
+  align?: "start" | "center" | "end";
   sideOffset?: number;
 }
 
 export function DragHandleMenu(props: DragHandleMenuProps) {
-  const { target, editor, onAction, side, sideOffset } = props;
+  const { target, editor, onAction, side, align, sideOffset } = props;
 
   return (
     <DropdownMenuContent
       className="drag-handle-menu-content"
-      align="center"
+      align={align ?? "center"}
       side={side}
       sideOffset={sideOffset}
+      collisionPadding={8}
       //side={side ?? "left"}
     >
       {/* `target` is both the human label (title) AND the branch key: Menu shows

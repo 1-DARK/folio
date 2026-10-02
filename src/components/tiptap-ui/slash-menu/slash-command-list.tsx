@@ -12,6 +12,7 @@ import { useOptionalActivePage } from "src/features/pages/context/active-page-co
 import { useCreatePage } from "src/hooks/use-create-page";
 import { makeChildPage } from "src/utils/make-page";
 import { Badge } from "src/components/tiptap-ui-primitive/badge";
+import { baseSlashId } from "./slash-search";
 
 type Props = SuggestionProps<SlashItem> & {
   selectedIndex?: number;
@@ -44,7 +45,7 @@ export default function SlashList(props: Props) {
     autoSelectFirstItem: true,
     onSelect: (item) => {
       onClickItem?.(item);
-      if (item.id === "page-1") {
+      if (baseSlashId(item.id) === "page-1") {
         const parentId = activePageId;
         if (parentId === null || !activePage) return;
         const page = makeChildPage(activePage, t("page.newPage"));

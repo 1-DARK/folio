@@ -13,6 +13,11 @@ export type MentionItem = {
   date?: string;
   type?: "user" | "page" | "date" | "divider";
   cover?: Page["cover"];
+  /** Date items: the ISO date the chip starts with, and how it reads. */
+  iso?: string;
+  hint?: string;
+  remind?: string;
+  includeTime?: boolean;
 };
 
 export type MentionSuggestion = Omit<SuggestionOptions<MentionItem>, "editor">;

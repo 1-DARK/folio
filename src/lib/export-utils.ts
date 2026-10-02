@@ -2,84 +2,167 @@ import type { Editor } from "@tiptap/react";
 import type { Paragraph, TextRun, Table } from "docx";
 
 // ---------------------------------------------------------------------------
-// PDF export — uses the browser's built-in print dialog.
-// We inject a minimal <style> that hides everything except the editor content,
-// then restore it after the dialog closes.
+// PDF export — the browser's print dialog ("Save as PDF").
+// The page's content is copied into a hidden frame with the app's styles,
+// minus the editing UI (handles, toolbars, resizers, placeholders), and
+// that frame is printed. No pop-up window, so no pop-up blocker.
 // ---------------------------------------------------------------------------
 
-export function exportToPdf(_editor: Editor, title = "document"): void {
-  const editorEl = document.querySelector<HTMLElement>(".tiptap.ProseMirror");
+/** Editing UI that has no place on paper. */
+const PRINT_HIDDEN = [
+  ".drag-handle",
+  ".column-drag-handle",
+  ".column-resizer",
+  ".column-drop-zone",
+  ".code-block-toolbar",
+  ".folio-button__settings",
+  ".folio-button__resize",
+  ".folio-container__resize",
+  ".tiptap-toolbar",
+  ".thread-sidebar",
+  ".toc-sidebar",
+  ".ProseMirror-gapcursor",
+  "[data-print-hidden]",
+].join(",\n    ");
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"]/g, (c) =>
+    c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&quot;",
+  );
+
+export function exportToPdf(editor: Editor, title = "document"): void {
+  const editorEl =
+    (editor.view?.dom as HTMLElement | undefined) ??
+    document.querySelector<HTMLElement>(".tiptap.ProseMirror");
   if (!editorEl) {
     console.error("exportToPdf: could not find editor element");
     return;
   }
 
-  // Clone editor HTML so we can render it isolated.
-  const html = editorEl.innerHTML;
-
-  // Collect all <link rel="stylesheet"> and <style> hrefs from the current page
-  // so the print window inherits editor styles.
-  const styleLinks = Array.from(
-    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'),
+  // The app's styles, so the copy looks like the page.
+  const styles = Array.from(
+    document.querySelectorAll<HTMLElement>('link[rel="stylesheet"], style'),
   )
-    .map((l) => `<link rel="stylesheet" href="${l.href}" />`)
+    .map((el) => el.outerHTML)
     .join("\n");
 
-  const inlineStyles = Array.from(
-    document.querySelectorAll<HTMLStyleElement>("style"),
-  )
-    .map((s) => `<style>${s.textContent}</style>`)
-    .join("\n");
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  Object.assign(frame.style, {
+    position: "fixed",
+    right: "0",
+    bottom: "0",
+    width: "0",
+    height: "0",
+    border: "0",
+    visibility: "hidden",
+  });
+  document.body.appendChild(frame);
 
-  const printWindow = window.open("", "_blank", "width=900,height=700");
-  if (!printWindow) {
-    alert("Pop-up blocked. Please allow pop-ups and try again.");
+  const win = frame.contentWindow;
+  const doc = frame.contentDocument;
+  if (!win || !doc) {
+    frame.remove();
     return;
   }
 
-  printWindow.document.write(`<!DOCTYPE html>
+  doc.open();
+  doc.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>${title}</title>
-  ${styleLinks}
-  ${inlineStyles}
+  <title>${escapeHtml(title)}</title>
+  ${styles}
   <style>
-    @media print {
-      @page { margin: 1in; }
-      body { margin: 0; }
-    }
+    @page { margin: 18mm 16mm; }
+    html, body { background: #fff !important; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 16px;
-      line-height: 1.6;
+      margin: 0;
       color: #111;
-      background: #fff;
-      padding: 40px;
-      max-width: 850px;
-      margin: 0 auto;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    /* Hide anything that isn't content */
-    .tiptap-toolbar,
-    .thread-sidebar,
-    .toc-sidebar,
-    .drag-handle { display: none !important; }
+    .print-page { max-width: 760px; margin: 0 auto; }
+    ${PRINT_HIDDEN} { display: none !important; }
+    /* Empty-line placeholders ("Type / for blocks") */
+    .is-empty::before, [data-placeholder]::before { content: none !important; }
+    img, pre, table, blockquote, .folio-container { break-inside: avoid; }
+    h1, h2, h3, h4 { break-after: avoid; }
   </style>
 </head>
 <body>
-  <div class="tiptap ProseMirror">${html}</div>
-  <script>
-    window.onload = function () {
-      setTimeout(function () {
-        window.print();
-        window.close();
-      }, 300);
-    };
-  </script>
+  <div class="print-page">
+    <div class="tiptap ProseMirror">${editorEl.innerHTML}</div>
+  </div>
 </body>
 </html>`);
+  doc.close();
 
-  printWindow.document.close();
+  const cleanup = () => setTimeout(() => frame.remove(), 500);
+
+  const print = async () => {
+    // Wait for fonts and images, or the PDF has holes.
+    try {
+      await doc.fonts?.ready;
+    } catch {
+      // ignore
+    }
+    await Promise.all(
+      Array.from(doc.images).map((img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              img.onload = img.onerror = () => resolve();
+              setTimeout(resolve, 4000);
+            }),
+      ),
+    );
+    win.addEventListener("afterprint", cleanup, { once: true });
+    win.focus();
+    win.print();
+    // Some browsers never fire afterprint for a frame.
+    setTimeout(() => frame.isConnected && frame.remove(), 60_000);
+  };
+
+  if (doc.readyState === "complete") void print();
+  else win.addEventListener("load", () => void print(), { once: true });
+}
+
+// ---------------------------------------------------------------------------
+// Markdown export — the page as a .md file.
+// ---------------------------------------------------------------------------
+
+/** "My page: notes" → "My page notes" (safe on Windows too). */
+export function safeFileName(name: string, fallback = "document"): string {
+  const cleaned = name
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+  return cleaned || fallback;
+}
+
+export function downloadFile(content: BlobPart, fileName: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function exportToMarkdown(
+  editor: Editor,
+  title = "document",
+): Promise<void> {
+  // Loaded on demand: only people who export pay for the serializer.
+  const { contentToMarkdown } = await import(
+    "src/lib/markdown/content-to-markdown"
+  );
+  const markdown = contentToMarkdown(editor.getJSON());
+  downloadFile(markdown, `${safeFileName(title)}.md`, "text/markdown;charset=utf-8");
 }
 
 // ---------------------------------------------------------------------------
@@ -561,7 +644,7 @@ export async function exportToWord(
   const url = URL.createObjectURL(buffer);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${filename}.docx`;
+  a.download = `${safeFileName(filename)}.docx`;
   a.click();
   URL.revokeObjectURL(url);
 }

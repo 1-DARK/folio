@@ -30,6 +30,7 @@ import {
   NodeColor,
   NodeFit,
   TopLevelClassExtension,
+  MarkdownPaste,
 } from "src/components/tiptap-extension";
 
 import { ImageUploadNode } from "src/components/tiptap-node/image-upload-node/image-upload-node-extension";
@@ -189,6 +190,7 @@ export function useEditorExtensions(
       TocNode.configure({ topOffset: 80, maxShowCount: 20, showTitle: true }),
 
       // --- Node attributes ---
+      MarkdownPaste,
       NodeBackground.configure({ useStyle: false }),
       NodeAlignment.configure({ useStyle: false }),
       NodeColor.configure({ useStyle: false }),

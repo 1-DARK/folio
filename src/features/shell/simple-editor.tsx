@@ -22,6 +22,7 @@ import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useApplyTheme } from "src/hooks/use-apply-theme";
 import { useApplyLanguage } from "src/hooks/use-apply-language";
 import { ChatRoomView } from "../chat/chat-room-view";
+import { ShortcutSheet } from "src/components/tiptap-ui/shortcut-sheet";
 
 function SimpleEditorMain({ view }: { view: View }) {
   return (
@@ -59,6 +60,7 @@ export function SimpleEditor({ view }: { view: View }) {
     <div className="simple-editor-wrapper">
       <SimpleEditorToolbar view={view} rectY={0} />
       <SimpleEditorMain view={view} />
+      <ShortcutSheet />
     </div>
   );
 }

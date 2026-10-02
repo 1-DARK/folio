@@ -1,7 +1,7 @@
 /**
  * ExportButtons.tsx
  *
- * Drop-in toolbar buttons for PDF and Word export.
+ * Drop-in toolbar buttons for PDF, Word and Markdown export.
  * Place inside <ToolbarGroup> in your MainToolbarContent.
  *
  * Usage:
@@ -15,7 +15,13 @@
 import { useState } from "react";
 import { useCurrentEditor } from "@tiptap/react";
 import { Button } from "src/components/tiptap-ui-primitive/button";
-import { exportToPdf, exportToWord } from "src/lib/export-utils.js";
+import {
+  exportToMarkdown,
+  exportToPdf,
+  exportToWord,
+} from "src/lib/export-utils.js";
+import { useTranslation } from "react-i18next";
+import { useActiveEditor } from "src/features/editor/context/active-editor-store";
 import {
   Popover,
   PopoverContent,
@@ -72,6 +78,29 @@ function WordIcon() {
   );
 }
 
+function MarkdownIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="tiptap-button-icon"
+    >
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <polyline points="6 15 6 9 9 12 12 9 12 15" />
+      <polyline points="15 12 17 14 19 12" />
+      <line x1="17" y1="9" x2="17" y2="14" />
+    </svg>
+  );
+}
+
 // ── component ───────────────────────────────────────────────────────────────
 
 interface ExportButtonsProps {
@@ -82,13 +111,24 @@ interface ExportButtonsProps {
 export function ExportButtons({
   documentTitle = "document",
 }: ExportButtonsProps) {
-  const { editor } = useCurrentEditor();
+  // The page menu sits outside the editor's provider: fall back to the
+  // open page's editor.
+  const { editor: contextEditor } = useCurrentEditor();
+  const activeEditor = useActiveEditor();
+  const editor = contextEditor ?? activeEditor;
+  const { t } = useTranslation();
   const [exportingWord, setExportingWord] = useState(false);
 
   if (!editor) return null;
 
   const handlePdf = () => {
     exportToPdf(editor, documentTitle);
+  };
+
+  const handleMarkdown = () => {
+    exportToMarkdown(editor, documentTitle).catch((err) =>
+      console.error("Markdown export failed:", err),
+    );
   };
 
   const handleWord = async () => {
@@ -107,7 +147,7 @@ export function ExportButtons({
       <PopoverTrigger asChild>
         <Button variant="ghost" style={{ width: "100%" }}>
           <ArrowDownToLine className="tiptap-button-icon" />
-          <span>Export</span>
+          <span>{t("export.label")}</span>
           <Spacer orientation="horizontal" />
           <ChevronRight className="tiptap-button-icon" />
         </Button>
@@ -122,8 +162,8 @@ export function ExportButtons({
           <Button
             variant="ghost"
             onClick={handlePdf}
-            aria-label="Export as PDF"
-            title="Export as PDF"
+            aria-label={t("export.pdfAria")}
+            title={t("export.pdfHint")}
             className="tiptap-button"
             style={{
               width: "100%",
@@ -142,8 +182,8 @@ export function ExportButtons({
             variant="ghost"
             onClick={handleWord}
             disabled={exportingWord}
-            aria-label="Export as Word document"
-            title="Export as Word (.docx)"
+            aria-label={t("export.wordAria")}
+            title={t("export.wordAria")}
             className="tiptap-button"
             style={{
               width: "100%",
@@ -155,6 +195,25 @@ export function ExportButtons({
               style={{ marginLeft: 4, fontSize: 12 }}
             >
               {exportingWord ? "…" : "Word"}
+            </span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={handleMarkdown}
+            aria-label={t("export.markdownAria")}
+            title={t("export.markdownAria")}
+            className="tiptap-button"
+            style={{
+              width: "100%",
+            }}
+          >
+            <MarkdownIcon />
+            <span
+              className="tiptap-button-text"
+              style={{ marginLeft: 4, fontSize: 12 }}
+            >
+              Markdown
             </span>
           </Button>
         </Card>

@@ -63,6 +63,7 @@ import {
 } from "./landing-editor/landing-editor";
 import { CollabDemo, type CollabPerson } from "./landing-editor/collab-demo";
 import "./landing.scss";
+import { ShortcutSheet } from "src/components/tiptap-ui/shortcut-sheet";
 
 // ── Theme ─────────────────────────────────────────────────────────────────
 type LandingTheme = "light" | "dark";
@@ -121,6 +122,8 @@ const EXAMPLE_EMOJI: Record<ShowcaseId, string> = {
   "project-tracker": "✅",
   "meeting-notes": "🗓️",
   course: "🎓",
+  buttons: "🔘",
+  containers: "📦",
 };
 
 /** A cover per example, so every page opens looking like a real one. */
@@ -233,6 +236,7 @@ export function Landing({
 
   return (
     <div className="landing" data-theme={theme} lang={lang}>
+      <ShortcutSheet />
       <header className="landing-header">
         <a href="#/" className="landing-logo">
           <FolioMark size={24} title="" />

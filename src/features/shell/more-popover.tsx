@@ -23,6 +23,7 @@ import { NotificationBell } from "src/features/inbox/notification";
 import EditedTimeButton from "../pages/edited-time-button/edited-time-button";
 import { PageCategorySelect } from "../pages/page-category-select";
 import type { Page, PageCategory } from "src/types";
+import { ShortcutsButton } from "src/components/tiptap-ui/shortcut-sheet";
 
 export function MorePopover({
   includeUndoRedo = false,
@@ -180,7 +181,8 @@ export function MorePopover({
             <Separator orientation="horizontal" />
             <CardItemGroup className="more-item">
               <PageTemplateMenu />
-              <ExportButtons documentTitle="First Document" />
+              <ExportButtons documentTitle={activePage?.title || undefined} />
+              <ShortcutsButton onOpen={() => setOpen(false)} />
             </CardItemGroup>
           </Card>
         </PopoverContent>

@@ -296,6 +296,10 @@
   "editedBy": "Edited by",
   "edited": "Edited",
   "home": {
+    "guides": {
+      "buttons": "Buttons",
+      "containers": "Containers"
+    },
     "recentlyVisited": "Recently visited",
     "earlier": "Earlier",
     "edited": "Edited {{time}}",
@@ -686,7 +690,8 @@
     "sections": {
       "style": "Style",
       "insert": "Insert",
-      "upload": "Upload"
+      "upload": "Upload",
+      "recent": "Recently used"
     },
     "items": {
       "text": {
@@ -857,5 +862,38 @@
     "filter": "Filter...",
     "commandsAria": "Slash commands",
     "closeAria": "Close (Esc)"
+  },
+  "mention": {
+    "dates": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "yesterday": "Yesterday",
+      "nextWeek": "Next week",
+      "remindMe": "Remind me"
+    },
+    "sections": {
+      "dates": "Dates",
+      "pages": "Pages",
+      "people": "People"
+    },
+    "noResults": "No results"
+  },
+  "pageLink": {
+    "deleted": "Deleted page",
+    "unavailable": "Deleted or no access",
+    "remove": "Remove link",
+    "inTrash": "In trash"
+  },
+  "export": {
+    "label": "Export",
+    "pdfAria": "Export as PDF",
+    "pdfHint": "Export as PDF (choose “Save as PDF” in the print dialog)",
+    "wordAria": "Export as Word (.docx)",
+    "markdownAria": "Export as Markdown (.md)"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "search": "Search shortcuts…",
+    "none": "No shortcut matches."
   }
 }

@@ -207,3 +207,31 @@ export const toggle = (summary: string, content: JSONContent[]): JSONContent => 
     { type: "appendixContent", content },
   ],
 });
+
+/** Button block: a label and a link (a web address or a page id). */
+export const button = (
+  label: string,
+  href: string | null = null,
+  backgroundColor?: HighlightColor,
+): JSONContent => ({
+  type: "ctaButton",
+  attrs: {
+    label,
+    href,
+    ...(backgroundColor
+      ? { backgroundColor: `var(--tt-color-highlight-${backgroundColor})` }
+      : {}),
+  },
+});
+
+/** Container block: a box around other blocks, with an optional color. */
+export const container = (
+  content: JSONContent[],
+  backgroundColor?: HighlightColor,
+): JSONContent => ({
+  type: "container",
+  attrs: backgroundColor
+    ? { backgroundColor: `var(--tt-color-highlight-${backgroundColor})` }
+    : {},
+  content: content.length ? content : [br()],
+});

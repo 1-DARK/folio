@@ -9,7 +9,9 @@ import {
 
 import "./mention-view.scss";
 import { users } from "./users";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { relativeDayLabel } from "./date-suggestions";
 import { Card, CardGroupLabel } from "src/components/tiptap-ui-primitive/card";
 import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
 import { Badge } from "src/components/tiptap-ui-primitive/badge";
@@ -19,53 +21,39 @@ import { useActivePageState } from "src/features/pages/context/active-page-conte
 import { usePeople } from "src/hooks/use-people";
 import type { Person } from "src/types";
 
-function getRelativeLabel(date: Date): string {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const diff = Math.round(
-    (d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Tomorrow";
-  if (diff === -1) return "Yesterday";
-  if (diff > 0 && diff < 7) return `In ${diff} days`;
-  if (diff < 0 && diff > -7) return `${Math.abs(diff)} days ago`;
-  if (diff >= 7 && diff < 14) return "Next week";
-  if (diff <= -7 && diff > -14) return "Last week";
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 function isPast(date: Date) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-
   return d < today;
 }
 
+const localeOf = (lang: string | undefined) =>
+  lang?.startsWith("fr") ? "fr-FR" : "en-US";
+
+/** Older chips stored no date: "Today" meant today, "Remind me" tomorrow. */
+function legacyDate(id: unknown): Date | undefined {
+  if (id !== "Today" && id !== "Reminder") return undefined;
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  if (id === "Reminder") d.setDate(d.getDate() + 1);
+  return d;
+}
+
 export function MentionView({ node, updateAttributes }: ReactNodeViewProps) {
-  const [today] = useState(new Date());
-  const [tomorrow] = useState(() => {
-    const t = new Date();
-    t.setDate(t.getDate() + 1);
-    return t;
-  });
-  // read from attrs instead of local state
-  const savedDate = node.attrs.date ? new Date(node.attrs.date) : undefined;
-  const [date, setDate] = useState<Date | undefined>(savedDate);
+  const { i18n } = useTranslation();
+  const locale = localeOf(i18n.language);
+
+  // The date lives in the node's attrs only (no local copy), so a change
+  // made by a collaborator shows up here too.
+  const date: Date | undefined = node.attrs.date
+    ? new Date(node.attrs.date)
+    : legacyDate(node.attrs.id);
+  const isDateMention = !!date;
 
   const handleDateChange = (d: Date) => {
-    setDate(d);
-    updateAttributes({ date: d.toISOString() }); // ← persist to node attrs
+    updateAttributes({ date: d.toISOString() });
   };
 
   const { activePage } = useActivePageState();
@@ -76,7 +64,7 @@ export function MentionView({ node, updateAttributes }: ReactNodeViewProps) {
     const id = node.attrs.id;
     const p = (people as Person[]).find((pp) => String(pp.id) === String(id));
     if (p) return { id: String(p.id), label: p.name, role: "user" };
-    // fall back to static users for dates/demo items
+    // fall back to static users for demo items
     return users.find((u) => u.id === id);
   }, [node, people]);
 
@@ -89,33 +77,55 @@ export function MentionView({ node, updateAttributes }: ReactNodeViewProps) {
       // set default time to 12:00 when toggling on
       const withTime = new Date(date);
       withTime.setHours(12, 0, 0, 0);
-      setDate(withTime);
       updateAttributes({ date: withTime.toISOString(), includeTime: true });
     } else if (!v && date) {
       // strip time when toggling off
       const stripped = new Date(date);
       stripped.setHours(0, 0, 0, 0);
-      setDate(stripped);
       updateAttributes({ date: stripped.toISOString(), includeTime: false });
     } else {
       updateAttributes({ includeTime: v });
     }
   };
 
-  const isUserMention = Boolean(mentionItem?.role);
+  const isUserMention = !isDateMention && Boolean(mentionItem?.role);
+  const remind = node.attrs.remind as string | null;
 
   // ── Wire up notifications ──────────────────────────────────────────────
+  // A date chip notifies only when it has a reminder: "@yesterday" in a note
+  // is not an overdue task.
   useMentionNotification({
     mentionId: node.attrs.id ?? node.attrs.label ?? "unknown",
     mentionLabel: mentionItem?.label ?? node.attrs.label ?? "",
     isUserMention,
-    date,
+    date: remind ? date : undefined,
     sourcePageId: Number(activePage?.id),
     sourcePageTitle: activePage?.title || "New Page",
     targetNodeId: node.attrs.nodeId,
-    remind: node.attrs.remind,
+    remind,
   });
   const endDateValue = node.attrs.endDate ? new Date(node.attrs.endDate) : null;
+
+  const absolute = (d: Date) =>
+    d.toLocaleDateString(locale, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const dateText = date
+    ? (node.attrs.dateFormat === "absolute"
+        ? absolute(date)
+        : relativeDayLabel(date)) +
+      (node.attrs.includeTime
+        ? " " +
+          date.toLocaleTimeString(locale, {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "") +
+      (endDateValue ? ` → ${absolute(endDateValue)}` : "")
+    : "";
 
   return (
     <NodeViewWrapper
@@ -127,48 +137,44 @@ export function MentionView({ node, updateAttributes }: ReactNodeViewProps) {
           <Button
             variant="ghost"
             data-type="mention"
-            className={`mention-label ${date && isPast(date) ? "mention-past" : ""}`}
+            className={`mention-label${isDateMention ? " mention-date" : ""}${
+              date && remind && isPast(date) ? " mention-past" : ""
+            }`}
+            title={
+              date
+                ? date.toLocaleDateString(locale, { dateStyle: "full" })
+                : undefined
+            }
           >
-            {/* @ {node.attrs.label ?? node.attrs.id} */}@
-            {mentionItem?.date && date ? (
-              <>
-                {node.attrs.dateFormat === "relative"
-                  ? getRelativeLabel(date)
-                  : date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                {node.attrs.includeTime &&
-                  " " +
-                    date.toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                {node.attrs.endDate && (
-                  <>
-                    {" → "}
-                    {new Date(node.attrs.endDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                {mentionItem?.label === "Remind me"
-                  ? "Tomorrow"
-                  : mentionItem?.label}
-              </>
-            )}
+            @
+            {isDateMention
+              ? dateText
+              : (mentionItem?.label ?? node.attrs.label)}
           </Button>
         </PopoverTrigger>
         <PopoverPortal container={document.getElementById("#root")}>
           <PopoverContent side="right" align="center" style={{ zIndex: 99999 }}>
             <>
-              {mentionItem && mentionItem.role ? (
+              {isDateMention ? (
+                <CalendarView
+                  value={date ?? new Date()}
+                  onChange={handleDateChange}
+                  remind={remind}
+                  onRemindChange={handleRemindChange}
+                  includeTime={node.attrs.includeTime}
+                  onIncludeTimeChange={onIncludeTimeChange}
+                  dateFormat={node.attrs.dateFormat ?? "relative"}
+                  onDateFormatChange={(fmt) =>
+                    updateAttributes({ dateFormat: fmt })
+                  }
+                  endDate={endDateValue}
+                  onEndDateChange={(d) =>
+                    updateAttributes({
+                      endDate: d ? d.toISOString() : null,
+                    })
+                  }
+                />
+              ) : mentionItem && mentionItem.role ? (
                 <Card
                   style={{
                     minWidth: "10rem",
@@ -196,51 +202,7 @@ export function MentionView({ node, updateAttributes }: ReactNodeViewProps) {
                     <Badge>{mentionItem.role}</Badge>
                   </Button>
                 </Card>
-              ) : (
-                <>
-                  {mentionItem?.date === "Today" ? (
-                    <CalendarView
-                      value={date ?? today}
-                      onChange={handleDateChange}
-                      remind={node.attrs.remind}
-                      onRemindChange={handleRemindChange}
-                      includeTime={node.attrs.includeTime}
-                      onIncludeTimeChange={onIncludeTimeChange}
-                      dateFormat={node.attrs.dateFormat ?? "relative"}
-                      onDateFormatChange={(fmt) =>
-                        updateAttributes({ dateFormat: fmt })
-                      }
-                      endDate={endDateValue}
-                      onEndDateChange={(d) =>
-                        updateAttributes({
-                          endDate: d ? d.toISOString() : null,
-                        })
-                      }
-                    />
-                  ) : (
-                    <CalendarView
-                      value={date ?? tomorrow}
-                      onChange={(d) => {
-                        setDate(d);
-                      }}
-                      remind={node.attrs.remind}
-                      onRemindChange={handleRemindChange}
-                      includeTime={node.attrs.includeTime}
-                      onIncludeTimeChange={onIncludeTimeChange}
-                      dateFormat={node.attrs.dateFormat ?? "relative"}
-                      onDateFormatChange={(fmt) =>
-                        updateAttributes({ dateFormat: fmt })
-                      }
-                      endDate={endDateValue}
-                      onEndDateChange={(d) =>
-                        updateAttributes({
-                          endDate: d ? d.toISOString() : null,
-                        })
-                      }
-                    />
-                  )}
-                </>
-              )}
+              ) : null}
             </>
           </PopoverContent>
         </PopoverPortal>

@@ -97,4 +97,11 @@
   }
 }
 
-
+.mention-item__hint {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--tt-color-text-gray);
+  white-space: nowrap;
+}

@@ -101,8 +101,8 @@ let emojiDataPromise: Promise<void> | null = null;
 function ensureEmojiData(): Promise<void> {
   if (emojiDataLoaded) return Promise.resolve();
   if (!emojiDataPromise) {
-    emojiDataPromise =
-      import("src/features/pages/cover/data/emoji-data").then((mod) => {
+    emojiDataPromise = import("src/features/pages/cover/data/emoji-data").then(
+      (mod) => {
         // Flatten every category's emojis into the extension's entry shape.
         emojiList = mod.EMOJI_CATEGORIES.flatMap((cat) =>
           cat.emojis.map((e) => ({
@@ -137,7 +137,8 @@ function ensureEmojiData(): Promise<void> {
         shortcodeIndex = sIdx;
         tagIndex = tIdx;
         emojiDataLoaded = true;
-      });
+      },
+    );
   }
   return emojiDataPromise;
 }
@@ -147,7 +148,7 @@ function ensureEmojiData(): Promise<void> {
 // the dataset has loaded (shouldn't happen: callers await ensureEmojiData
 // first, but this keeps it safe).
 // ---------------------------------------------------------------------------
-function searchEmojis(query: string, limit = 20) {
+function searchEmojisRaw(query: string, limit: number) {
   if (!emojiDataLoaded) return [];
   if (!query) return emojiList.slice(0, limit);
   const q = query.toLowerCase();
@@ -178,6 +179,60 @@ function searchEmojis(query: string, limit = 20) {
   }
 
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// Recently used — kept per browser, best effort (storage may be blocked).
+// Shown first when nothing is typed, and ranked first among matches.
+// ---------------------------------------------------------------------------
+const RECENT_EMOJI_KEY = "folio.emoji.recent";
+const RECENT_EMOJI_MAX = 8;
+
+function getRecentEmojiIds(): string[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(RECENT_EMOJI_KEY) ?? "[]");
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function recordEmojiUse(id: string) {
+  try {
+    const next = [id, ...getRecentEmojiIds().filter((x) => x !== id)];
+    localStorage.setItem(
+      RECENT_EMOJI_KEY,
+      JSON.stringify(next.slice(0, RECENT_EMOJI_MAX)),
+    );
+  } catch {
+    // ignore
+  }
+}
+
+/** A search result; `recent` marks the recently used ones (listed first). */
+export type EmojiResult = EmojiEntry & { recent?: boolean };
+
+function searchEmojis(query: string, limit = 20): EmojiResult[] {
+  if (!emojiDataLoaded) return [];
+  const recentIds = getRecentEmojiIds();
+  if (recentIds.length === 0) return searchEmojisRaw(query, limit);
+
+  const byId = new Map(emojiList.map((e) => [e.id, e]));
+  const recentSet = new Set(recentIds);
+  const matches = searchEmojisRaw(query, limit + recentIds.length);
+
+  // Nothing typed: every recent emoji. Typed: the recent ones that match.
+  const recents = (
+    query
+      ? recentIds.filter((id) => matches.some((e) => e.id === id))
+      : recentIds
+  )
+    .map((id) => byId.get(id))
+    .filter((e): e is EmojiEntry => !!e)
+    .map((e) => ({ ...e, recent: true }));
+
+  const rest = matches.filter((e) => !recentSet.has(e.id));
+  return [...recents, ...rest].slice(0, limit + recents.length);
 }
 
 // ---------------------------------------------------------------------------
@@ -272,6 +327,7 @@ export const EmojiExtension = Emoji.extend({
     decorationContent: "emoji",
 
     command: ({ editor, range, props }) => {
+      if (props.shortcodes?.[0]) recordEmojiUse(props.shortcodes[0]);
       const nodeAfter = editor.state.selection.$to.nodeAfter;
       const overrideSpace = nodeAfter?.text?.startsWith(" ");
 

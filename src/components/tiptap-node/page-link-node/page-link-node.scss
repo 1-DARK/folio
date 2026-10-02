@@ -87,3 +87,82 @@ Box Model: box-sizing: border-box
     overflow: hidden;
   }
 }
+
+// ── States: loading, in the trash, gone ────────────────────────────────────
+.page-link-node {
+  &.is-loading {
+    cursor: default;
+    border-bottom-color: transparent;
+    &:hover {
+      background: none;
+    }
+  }
+
+  &__skeleton-icon,
+  &__skeleton-text {
+    display: inline-block;
+    border-radius: 4px;
+    background: var(--tt-border-color);
+    animation: page-link-pulse 1.2s ease-in-out infinite;
+  }
+  &__skeleton-icon {
+    width: 18px;
+    height: 18px;
+  }
+  &__skeleton-text {
+    width: 140px;
+    height: 12px;
+  }
+
+  &.is-trashed,
+  &.is-gone {
+    cursor: default;
+    &:hover {
+      background: none;
+      width: auto;
+      border-bottom: 1px solid var(--tt-border-color);
+    }
+    .page-link-node__title {
+      text-decoration: line-through;
+      opacity: 0.55;
+    }
+  }
+
+  &__gone-icon {
+    color: var(--tt-color-text-gray);
+    flex-shrink: 0;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--tt-color-text-red, #d44c47);
+    background: var(--tt-color-highlight-red, rgba(212, 76, 71, 0.12));
+  }
+
+  &__action {
+    border: none;
+    background: none;
+    padding: 1px 4px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--tt-color-text-gray);
+    cursor: pointer;
+    border-radius: 4px;
+    &:hover {
+      background: var(--page-link-node-hover-bg-color);
+    }
+  }
+}
+
+@keyframes page-link-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
