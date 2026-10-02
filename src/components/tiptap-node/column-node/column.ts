@@ -7,6 +7,19 @@ import { WrappedColumnView } from "./wrapped-column-view";
 
 let globalDragNodePos: number | null = null;
 
+// How a saved width sizes the column in its row. The node view's outer
+// element is the flex item, so the width goes there (ReactNodeViewRenderer
+// `attrs`). "30%" → grows in proportion 30; old "312px" widths keep their
+// size; anything else shares the row equally.
+function columnFlexStyle(width: unknown): string {
+  const value = typeof width === "string" ? width.trim() : "";
+  const percent = /^(\d+(?:\.\d+)?)%$/.exec(value);
+  if (percent) return `flex: ${percent[1]} 1 0%; min-width: 0;`;
+  if (/^\d+(?:\.\d+)?px$/.test(value))
+    return `flex: 0 1 ${value}; min-width: 0;`;
+  return "flex: 1 1 0%; min-width: 0;";
+}
+
 // Listen for our custom event to capture the dragged node pos reliably
 document.addEventListener("draghandle:dragstart", (e: Event) => {
   globalDragNodePos = (e as CustomEvent).detail.pos;
@@ -48,7 +61,9 @@ export const Column = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(WrappedColumnView);
+    return ReactNodeViewRenderer(WrappedColumnView, {
+      attrs: ({ node }) => ({ style: columnFlexStyle(node.attrs.width) }),
+    });
   },
 
   addProseMirrorPlugins() {

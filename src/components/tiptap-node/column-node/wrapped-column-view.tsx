@@ -1,30 +1,8 @@
-import { useCallback } from "react";
-import { ResizableNodeProvider } from "src/components/tiptap-node/resizable-node";
+import type { ReactNodeViewProps } from "@tiptap/react";
 import ColumnView from "./column-view";
-import type {
-  ReactNodeViewProps,
-  ResizableNodeDimensions,
-} from "@tiptap/react";
 
+// Kept as the node view entry (column.ts). Resizing now lives in ColumnView
+// and saves percentages, so there is no resize provider here any more.
 export function WrappedColumnView(props: ReactNodeViewProps) {
-  const onResizeEnd = useCallback(
-    ({ width }: ResizableNodeDimensions) =>
-      props.updateAttributes({ width: `${width}px` }),
-    [props],
-  );
-  return (
-    <ResizableNodeProvider
-      min={{
-        width: 10,
-        height: 10,
-      }}
-      max={{
-        width: 600,
-        height: 600,
-      }}
-      onResizeEnd={onResizeEnd}
-    >
-      <ColumnView {...props} />
-    </ResizableNodeProvider>
-  );
+  return <ColumnView {...props} />;
 }

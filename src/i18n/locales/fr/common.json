@@ -202,7 +202,6 @@
     "leave": "Quitter",
     "stop": "Arrêter la session"
   },
-  "blockMenu": { "discussInChat": "En discuter dans le chat…" },
   "chat": {
     "discussBlock": "Discuter de ce bloc",
     "sendTo": "Envoyer vers",
@@ -651,6 +650,8 @@
     }
   },
   "blockMenu": {
+    "discussInChat": "En discuter dans le chat…",
+    "unwrapColumns": "Défaire les colonnes",
     "text": "Texte",
     "turnInto": "Transformer en",
     "comment": "Commenter",

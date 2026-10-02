@@ -11,7 +11,6 @@ import {
   TocContentContext,
   TocUIStateContext,
 } from "./toc-context";
-import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
 import { useActivePageState } from "src/features/pages/context/active-page-context";
 
 function normalizeDepths(items: TocItem[]): number[] {
@@ -65,7 +64,6 @@ export function TocProvider({ children }: { children: React.ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const { activePageId } = useActivePageState();
-  const { editor } = useTiptapEditor();
   const hasRestoredRef = useRef<string | null>(null);
 
   const showTocContent = useCallback(() => setOpen(true), []);
@@ -77,6 +75,10 @@ export function TocProvider({ children }: { children: React.ReactNode }) {
     return () => cancelAnimationFrame(raf);
   }, [activePageId]);
 
+  // While a click scrolls smoothly to a heading, keep that heading
+  // highlighted instead of flickering through the ones scrolled past.
+  const navigatingRef = useRef<{ id: string; until: number } | null>(null);
+
   const navigateToHeading = useCallback((item: TocItem, topOffset = 60) => {
     const el = document.getElementById(item.id);
     const container = getScrollContainer();
@@ -87,10 +89,21 @@ export function TocProvider({ children }: { children: React.ReactNode }) {
       container.scrollTop -
       topOffset;
     container.scrollTo({ top: y, behavior: "smooth" });
+    navigatingRef.current = { id: item.id, until: Date.now() + 900 };
+    container.addEventListener(
+      "scrollend",
+      () => {
+        navigatingRef.current = null;
+      },
+      { once: true },
+    );
     setActiveId(item.id);
   }, []);
 
   const computeActiveHeading = useCallback(() => {
+    const nav = navigatingRef.current;
+    if (nav && Date.now() < nav.until) return;
+    navigatingRef.current = null;
     const container = getScrollContainer();
     if (!container) return;
     const containerTop = container.getBoundingClientRect().top;
@@ -174,14 +187,12 @@ export function TocProvider({ children }: { children: React.ReactNode }) {
     });
   }, [activePageId, tocContent]);
 
-  // update activeId on editor update
+  // Headings changed (added, removed, renamed): recompute once the DOM has
+  // them. tocContent drives computeActiveHeading, so no editor listener.
   useEffect(() => {
-    if (!editor) return;
-    editor.on("update", computeActiveHeading);
-    return () => {
-      editor.off("update", computeActiveHeading);
-    };
-  }, [editor, computeActiveHeading]);
+    const raf = requestAnimationFrame(computeActiveHeading);
+    return () => cancelAnimationFrame(raf);
+  }, [computeActiveHeading]);
 
   // ── Actions: memoized ONCE. Setters + useCallback'd fns are all stable. ──
   const actions = useMemo(

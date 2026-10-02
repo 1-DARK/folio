@@ -20,3 +20,7 @@
 .tab-panel__content {
   min-height: 1.5em;
 }
+// Reordering: where the dragged tab will land.
+.tabs .tab-item.is-drop-target {
+  box-shadow: inset 2px 0 0 var(--tt-brand-color-500);
+}

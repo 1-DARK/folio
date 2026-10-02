@@ -185,7 +185,6 @@
     "leave": "Leave",
     "stop": "Stop session"
   },
-  "blockMenu": { "discussInChat": "Discuss in chat…" },
   "chat": {
     "discussBlock": "Discuss this block",
     "sendTo": "Send to",
@@ -649,6 +648,8 @@
     }
   },
   "blockMenu": {
+    "discussInChat": "Discuss in chat…",
+    "unwrapColumns": "Unwrap columns",
     "text": "Text",
     "turnInto": "Turn into",
     "comment": "Comment",
@@ -672,7 +673,7 @@
     "turnIntoPage": "Turn into page"
   },
   "alignment": {
-    "label": "Alignements",
+    "label": "Alignment",
     "left": "Aligner à gauche",
     "center": "Aligner au centre",
     "right": "Aligner à droite",

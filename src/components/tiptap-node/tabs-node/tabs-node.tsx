@@ -3,9 +3,11 @@ import {
   ReactNodeViewRenderer,
   NodeViewWrapper,
   NodeViewContent,
+  useEditorState,
   type NodeViewProps,
 } from "@tiptap/react";
-import { useEffect, useState } from "react";
+import { Fragment } from "@tiptap/pm/model";
+import { useEffect, useRef, useState } from "react";
 import {
   TabList,
   TabItem,
@@ -25,36 +27,30 @@ declare module "@tiptap/core" {
   }
 }
 
-// ── resolve "am I the active tab?" from the parent, re-checked per transaction ──
+// ── "am I the active tab?", read through useEditorState (a boolean, so the
+// panel re-renders only when it actually changes) ──
 function useIsActiveTab(
   editor: Editor,
   getPos: NodeViewProps["getPos"],
   tabId: string,
 ) {
-  const read = () => {
-    try {
-      const pos = typeof getPos === "function" ? getPos() : null;
-      if (pos == null) return false;
-      const $pos = editor.state.doc.resolve(pos);
-      const parent = $pos.parent;
-      return parent?.type?.name === "tabs" && parent.attrs.activeTab === tabId;
-    } catch {
-      return false;
-    }
-  };
-
-  const [active, setActive] = useState<boolean>(read);
-  useEffect(() => {
-    const handler = () => setActive(read());
-    handler();
-    editor.on("transaction", handler);
-    return () => {
-      editor.off("transaction", handler);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, getPos, tabId]);
-
-  return active;
+  return (
+    useEditorState({
+      editor,
+      selector: ({ editor }) => {
+        try {
+          const pos = typeof getPos === "function" ? getPos() : null;
+          if (pos == null) return false;
+          const parent = editor.state.doc.resolve(pos).parent;
+          return (
+            parent?.type?.name === "tabs" && parent.attrs.activeTab === tabId
+          );
+        } catch {
+          return false;
+        }
+      },
+    }) ?? false
+  );
 }
 
 // ── Tab panel view ──────────────────────────────────────────────────────────
@@ -127,6 +123,35 @@ function TabsView({ node, editor, getPos, updateAttributes }: NodeViewProps) {
     // the self-heal effect re-points activeTab if we removed the active one
   };
 
+  // Reorder: rebuild the tabs in the new order in one transaction.
+  const moveTab = (from: number, to: number) => {
+    if (base == null || from === to || to < 0 || to >= node.childCount) return;
+    const children: NonNullable<typeof node.firstChild>[] = [];
+    node.forEach((child) => children.push(child));
+    const [moved] = children.splice(from, 1);
+    children.splice(to, 0, moved);
+    editor
+      .chain()
+      .command(({ tr }) => {
+        tr.replaceWith(
+          base + 1,
+          base + node.nodeSize - 1,
+          Fragment.fromArray(children),
+        );
+        return true;
+      })
+      .run();
+  };
+  const dragFrom = useRef<number | null>(null);
+  const [dropAt, setDropAt] = useState<number | null>(null);
+  const headersRef = useRef<HTMLDivElement>(null);
+  const focusTab = (index: number) =>
+    requestAnimationFrame(() => {
+      const items =
+        headersRef.current?.querySelectorAll<HTMLElement>('[role="tab"]');
+      items?.[index]?.focus();
+    });
+
   const renameTab = (pos: number, label: string) => {
     editor
       .chain()
@@ -139,13 +164,64 @@ function TabsView({ node, editor, getPos, updateAttributes }: NodeViewProps) {
 
   return (
     <NodeViewWrapper as="div" className="tabs" data-type="tabs">
-      <div className="tabs__headers" contentEditable={false}>
+      <div className="tabs__headers" contentEditable={false} ref={headersRef}>
         <TabList aria-label="Tabs">
-          {tabs.map((t) => (
+          {tabs.map((t, index) => (
             <TabItem
               key={t.id}
               label={t.label}
               active={t.id === activeTab}
+              className={dropAt === index ? "is-drop-target" : undefined}
+              draggable={editor.isEditable}
+              onDragStart={(e) => {
+                dragFrom.current = index;
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/x-folio-tab", String(index));
+              }}
+              onDragOver={(e) => {
+                if (dragFrom.current === null) return;
+                e.preventDefault();
+                setDropAt(index);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (dragFrom.current !== null) moveTab(dragFrom.current, index);
+                dragFrom.current = null;
+                setDropAt(null);
+              }}
+              onDragEnd={() => {
+                dragFrom.current = null;
+                setDropAt(null);
+              }}
+              onKeyDownExtra={(e) => {
+                const last = tabs.length - 1;
+                // Alt+←/→ moves the tab; ←/→/Home/End switch tabs.
+                if (
+                  e.altKey &&
+                  (e.key === "ArrowLeft" || e.key === "ArrowRight")
+                ) {
+                  e.preventDefault();
+                  const to = index + (e.key === "ArrowLeft" ? -1 : 1);
+                  moveTab(index, to);
+                  focusTab(Math.min(Math.max(to, 0), last));
+                  return;
+                }
+                const next =
+                  e.key === "ArrowLeft"
+                    ? (index - 1 + tabs.length) % tabs.length
+                    : e.key === "ArrowRight"
+                      ? (index + 1) % tabs.length
+                      : e.key === "Home"
+                        ? 0
+                        : e.key === "End"
+                          ? last
+                          : null;
+                if (next === null) return;
+                e.preventDefault();
+                setActive(tabs[next].id);
+                focusTab(next);
+              }}
               onSelect={() => setActive(t.id)}
               onRename={(value) => renameTab(t.pos, value)}
               onClose={
