@@ -5,6 +5,7 @@ import { useLayoutMode } from "../hooks/use-layout-mode";
 import { calculateDrawerWidth, calculateSidebarWidth } from "src/lib/utils";
 import { SidebarHeader } from "./sidebar-header";
 import { SidebarBody } from "./sidebar-body";
+import { SidebarFooter } from "./sidebar-footer";
 import { CustomizeSidebarPanel } from "./customize-sidebar-panel";
 import { useSectionOrder } from "../hooks/use-sidebar-order";
 import { useHiddenSections } from "../hooks/use-hidden-sections";
@@ -101,6 +102,8 @@ export const Sidebar = memo(() => {
 
       {showContent && !customizeSidebarOpen && <SidebarBody />}
 
+      {showContent && !peeking && !customizeSidebarOpen && <SidebarFooter />}
+
       {customizeSidebarOpen && (
         <CustomizeSidebarPanel
           order={order}
@@ -109,7 +112,7 @@ export const Sidebar = memo(() => {
           onDone={() => setCustomizeSidebarOpen?.(false)}
         />
       )}
-    
+
       <SidebarResizeHandle />
     </Card>
   );
