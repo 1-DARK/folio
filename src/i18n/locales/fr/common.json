@@ -662,6 +662,7 @@
   },
   "blockTypes": {
     "paragraph": "Paragraphe",
+    "callout": "Encadré",
     "heading1": "Titre 1",
     "heading2": "Titre 2",
     "heading3": "Titre 3",
@@ -795,6 +796,18 @@
       "video": {
         "title": "Vidéo",
         "description": "Importer une vidéo, ou intégrer YouTube, Vimeo ou Loom."
+      },
+      "toggleHeading1": {
+        "title": "Titre repliable 1"
+      },
+      "toggleHeading2": {
+        "title": "Titre repliable 2"
+      },
+      "toggleHeading3": {
+        "title": "Titre repliable 3"
+      },
+      "toggleHeading": {
+        "description": "Un titre qui replie les blocs en dessous."
       },
       "bookmark": {
         "title": "Marque-page web",

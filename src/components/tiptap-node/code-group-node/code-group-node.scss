@@ -55,3 +55,14 @@
     }
   }
 }
+// Reordering: where the dragged tab will land.
+.code-group .tab-item.is-drop-target {
+  box-shadow: inset 2px 0 0 var(--tt-brand-color-500);
+}
+
+// Inside a group, the tabs pick the language and the header copies, so the
+// inner code block keeps only its line-number and wrap toggles.
+.code-group .code-block-wrapper .code-block-lang-pill,
+.code-group .code-block-wrapper .code-block-copy-pill {
+  display: none;
+}

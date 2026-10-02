@@ -89,7 +89,11 @@ export function MathInlineNodeViewKatex({
                 New equation
               </span>
             ) : committed.error ? (
-              <span className="math-inline__error">⚠</span>
+              // The source in red, the KaTeX message on hover: you can see
+              // what's wrong without opening the editor.
+              <span className="math-inline__error" title={committed.error}>
+                {latex}
+              </span>
             ) : (
               <span dangerouslySetInnerHTML={{ __html: committed.html }} />
             )}
