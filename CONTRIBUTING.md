@@ -1,0 +1,113 @@
+# Contributing to Folio
+
+Thanks for wanting to help. Folio is a small project, mostly built by one person, so a few shared habits keep it easy to work on. This page covers how to set up, the conventions the code follows, and how to get a change merged.
+
+## Before you start
+
+- **Small fix** (a typo, a clear bug): open a pull request directly.
+- **Anything bigger** (a new feature, a change to how something works, a new dependency): open an issue first and describe what you'd like to do. It saves you from building something that doesn't fit.
+- [Where things stand](README.md#where-things-stand) in the README lists what's coming next. If you'd like to take one of those on, say so in an issue so nobody does it twice.
+
+## Setting up
+
+Follow [Getting started](README.md#getting-started) in the README: install, `.env.local`, the Supabase migrations, the Edge Functions and the Hocuspocus server. Then:
+
+```bash
+npm run dev
+```
+
+You don't need an account to work on the editor: the landing page (`/` when signed out) runs the real editor with nearly every block, the slash menu, the drag handle and a live two-window collaboration demo. Anything that needs pages, people or a database (page links, mentions, the sidebar, databases, chat) needs a signed-in session.
+
+## Branches and commits
+
+- Branch from an up-to-date `main`, one branch per change:
+
+  | Prefix      | For                                      |
+  | ----------- | ---------------------------------------- |
+  | `feat/`     | a new feature (`feat/move-to-page`)      |
+  | `fix/`      | a bug fix (`fix/drag-handle-listeners`)  |
+  | `perf/`     | performance                              |
+  | `refactor/` | restructuring without a behaviour change |
+  | `docs/`     | documentation                            |
+  | `chore/`    | tooling, dependencies, clean-up          |
+
+- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org): `type(scope): what changed`, in the present tense, with a body when the why isn't obvious.
+
+  ```
+  fix(drag-handle): keep drag listeners when plugin views are rebuilt
+
+  Registering any plugin after the drag handle destroyed its plugin view,
+  which removed its dragstart/dragend listeners: drops did nothing.
+  ```
+
+- Keep a pull request to one topic. Several small related fixes can share one; an unrelated change gets its own.
+
+## Code conventions
+
+### Where code goes
+
+[`docs/STRUCTURE.md`](docs/STRUCTURE.md) has the full layout. In short:
+
+- Code that belongs to one feature → `src/features/<feature>/`
+- Data access → `src/api/`, with a React Query hook in `src/hooks/`
+- An editor node → `src/components/tiptap-node/`; editor UI → `src/components/tiptap-ui/`; an extension → `src/components/tiptap-extension/`
+- Generic UI with no Folio concepts → `src/components/tiptap-ui-primitive/`
+- Pure functions → `src/lib/` (logic) or `src/utils/` (factories)
+
+### Changes
+
+- **Keep changes small and focused.** Change what the task needs, leave the rest. Don't reformat files you didn't otherwise touch.
+- **Read the code before changing it.** Most bugs here come from an assumption about how a piece works. Check the actual code (and the library's source in `node_modules` when it matters) first.
+- **Don't invent APIs.** Use the types and hooks that exist. If something you need is missing, add it properly rather than casting around it.
+
+### TipTap and React
+
+These rules come from real bugs:
+
+- **Never update React state from an editor event listener.** `editor.on("transaction" | "update", () => setState(...))` causes "Maximum update depth exceeded" loops. Read editor state with TipTap's `useEditorState({ editor, selector })` and return a primitive (a boolean, a number, a string) so the component re-renders only when that value changes. For an external store, use `useSyncExternalStore`.
+- **No `contentEditable` inside a node view.** It fights ProseMirror for the selection. Use an `<input>` or `<textarea>` and stop key events from reaching the editor.
+- **Inputs opened from the editor get focus on the next frame.** The editor takes focus back after a slash command or a click, so focus inner inputs in `requestAnimationFrame`.
+- **Copy ProseMirror attrs before passing them to Yjs.** Write `{ ...node.attrs }`: Yjs rejects null-prototype objects.
+- **Plugins registered at runtime rebuild every plugin view.** Anything a plugin view sets up must survive being destroyed and recreated (see `drag-handle-extension-react/DragHandle.tsx`).
+
+### Text and languages
+
+- Every string a user can see goes through i18next, with both languages: `src/i18n/locales/en/common.json` and `src/i18n/locales/fr/common.json`.
+- Add new keys by hand, next to related ones. Some sections appear twice in these files, so a script that parses and rewrites the whole JSON would silently drop keys.
+- Write plainly: short sentences, everyday words, no jargon in the interface.
+
+### Data and security
+
+- **Database changes are migrations.** Add a new numbered file in `supabase/migrations/` (the next number after the last one). Never edit a migration that has already been applied.
+- **Access rules live in Postgres.** New tables get Row Level Security policies, and the frontend never relies on hiding something as its only protection.
+- **Secrets stay on the server.** API keys for third-party services go in an Edge Function (`supabase/functions/`) or the Hocuspocus server, never in a `VITE_` variable. The service role key is for the Hocuspocus server only.
+- Never commit `.env.local`, `.env`, or any key.
+
+## Before you open a pull request
+
+1. **Type check:** `npx tsc -p tsconfig.app.json --noEmit` with no errors.
+2. **Lint:** `npm run lint` with no errors.
+3. **Format only what you changed:** `npx prettier --write <your files>`. Don't run it on the whole repo.
+4. **Try it in the browser.** Use the landing editor for editor changes, and a signed-in page for anything that needs data. Check the console for errors, and try light and dark themes, and English and French when you've added text.
+5. **Build:** `npm run build` succeeds.
+
+## Pull requests
+
+- Give the pull request a Conventional Commit style title.
+- In the description, say what changed and why, how you tested it, and anything you couldn't test. Add a screenshot or a short recording for visual changes.
+- Link the issue it closes (`Closes #12`).
+- Expect review comments. They're about the code, not you.
+
+## Reporting a bug
+
+Open an issue with:
+
+- what you did, what you expected, and what happened
+- the browser and whether you were signed in
+- any red lines from the browser console (F12)
+
+For a security problem (someone could see or change data they shouldn't), don't open a public issue: contact the maintainer directly through their GitHub profile.
+
+## Licence
+
+There's no licence file yet. Ask the maintainer before reusing the code outside this project.

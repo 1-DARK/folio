@@ -379,6 +379,8 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       "project-tracker": "Page · a board and a task table",
       "meeting-notes": "Page · agenda, decisions, to-dos",
       course: "Page · equations, code, exercises",
+      buttons: "Page · buttons and what they're for",
+      containers: "Page · containers and cards",
     },
     example: {
       badge: "Example",
@@ -722,6 +724,8 @@ export const LANDING_COPY: Record<LandingLang, LandingCopy> = {
       "project-tracker": "Page · un kanban et un tableau de tâches",
       "meeting-notes": "Page · ordre du jour, décisions, actions",
       course: "Page · équations, code, exercices",
+      buttons: "Page · les boutons et leur usage",
+      containers: "Page · conteneurs et cartes",
     },
     example: {
       badge: "Exemple",
