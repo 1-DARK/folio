@@ -9,8 +9,10 @@ declare module "@tiptap/core" {
     appendix: {
       /** Insert an empty toggle block (open, cursor in the title). */
       insertAppendix: () => ReturnType;
-      /** Alias — reads better at call sites. */
-      insertToggle: () => ReturnType;
+      /** Alias — reads better at call sites. Pass 1–3 for a toggle heading. */
+      insertToggle: (level?: 1 | 2 | 3) => ReturnType;
+      /** A toggle whose title is styled as a heading. */
+      insertToggleHeading: (level: 1 | 2 | 3) => ReturnType;
     };
   }
 }
@@ -80,6 +82,16 @@ export const Appendix = Node.create({
         parseHTML: (el) => el.getAttribute("data-open") !== "false",
         renderHTML: (attrs) => ({ "data-open": String(attrs.open) }),
       },
+      // null: a plain toggle. 1–3: a toggle heading (title styled as H1–H3).
+      level: {
+        default: null,
+        parseHTML: (el) => {
+          const n = Number(el.getAttribute("data-level"));
+          return n >= 1 && n <= 3 ? n : null;
+        },
+        renderHTML: (attrs) =>
+          attrs.level ? { "data-level": String(attrs.level) } : {},
+      },
     };
   },
 
@@ -104,22 +116,37 @@ export const Appendix = Node.create({
 
   addCommands() {
     const insert =
-      () =>
+      (level?: 1 | 2 | 3) =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ({ chain }: any) =>
         chain()
           .insertContent({
             type: this.name,
-            attrs: { open: true },
+            attrs: { open: true, level: level ?? null },
             content: [
               { type: "appendixSummary" },
               { type: "appendixContent", content: [{ type: "paragraph" }] },
             ],
           })
+          // insertContent leaves the cursor in the body; put it in the title.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .command(({ tr }: any) => {
+            const { $from } = tr.selection;
+            for (let d = $from.depth; d > 0; d--) {
+              if ($from.node(d).type.name === this.name) {
+                tr.setSelection(
+                  TextSelection.create(tr.doc, $from.before(d) + 2),
+                );
+                return true;
+              }
+            }
+            return true;
+          })
           .run();
     return {
-      insertAppendix: insert,
+      insertAppendix: () => insert(),
       insertToggle: insert,
+      insertToggleHeading: (level: 1 | 2 | 3) => insert(level),
     };
   },
 

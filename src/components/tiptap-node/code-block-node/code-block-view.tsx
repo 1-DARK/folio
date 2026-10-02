@@ -181,7 +181,7 @@ export const CodeBlockView = memo(function CodeBlockView({
           <Popover open={langOpen} onOpenChange={setLangOpen}>
             <PopoverTrigger asChild>
               <button
-                className="code-block-pill"
+                className="code-block-pill code-block-lang-pill"
                 aria-label={`Language: ${languageLabel(currentLang)}. Change`}
               >
                 <span>{languageLabel(currentLang)}</span>
@@ -201,7 +201,7 @@ export const CodeBlockView = memo(function CodeBlockView({
             </PopoverContent>
           </Popover>
         ) : (
-          <span className="code-block-pill is-static">
+          <span className="code-block-pill code-block-lang-pill is-static">
             {languageLabel(currentLang)}
           </span>
         )}
@@ -231,7 +231,10 @@ export const CodeBlockView = memo(function CodeBlockView({
           </>
         )}
 
-        <button className="code-block-pill" onClick={handleCopy}>
+        <button
+          className="code-block-pill code-block-copy-pill"
+          onClick={handleCopy}
+        >
           {copied ? <Check size={13} /> : <Copy size={13} />}
           <span>{copied ? "Copied!" : "Copy"}</span>
         </button>

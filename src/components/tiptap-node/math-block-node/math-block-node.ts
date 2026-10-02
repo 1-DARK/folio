@@ -1,4 +1,4 @@
-import { Node, mergeAttributes } from "@tiptap/core";
+import { Node, mergeAttributes, type InputRule } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { MathBlockNodeView } from "./math-block-node-view.js";
 
@@ -36,6 +36,27 @@ export const MathBlockNode = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(MathBlockNodeView);
+  },
+
+  // "$$" then a space on an empty line → a math block.
+  addInputRules() {
+    return [
+      {
+        find: /^\$\$\s$/,
+        handler: ({ state, range, chain }) => {
+          const $from = state.doc.resolve(range.from);
+          // Only a line that holds nothing but "$$".
+          if ($from.parent.textContent.trim() !== "$$") return null;
+          chain()
+            .deleteRange({ from: $from.before(), to: $from.after() })
+            .insertContentAt($from.before(), {
+              type: this.name,
+              attrs: { latex: "" },
+            })
+            .run();
+        },
+      } as InputRule,
+    ];
   },
 
   addCommands() {

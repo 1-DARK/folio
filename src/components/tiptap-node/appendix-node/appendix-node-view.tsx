@@ -46,6 +46,7 @@ export function AppendixView({ node, editor, getPos }: NodeViewProps) {
         .filter(Boolean)
         .join(" ")}
       data-empty={summaryEmpty ? "true" : "false"}
+      data-level={node.attrs.level ?? undefined}
     >
       <Chevron
         className="appendix__caret"

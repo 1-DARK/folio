@@ -33,6 +33,14 @@ export interface TabItemProps {
   onRename?: (value: string) => void;
   closeLabel?: string;
   className?: string;
+  /** Optional drag-to-reorder: the list handles the drop. */
+  draggable?: boolean;
+  onDragStart?: React.DragEventHandler<HTMLDivElement>;
+  onDragOver?: React.DragEventHandler<HTMLDivElement>;
+  onDrop?: React.DragEventHandler<HTMLDivElement>;
+  onDragEnd?: React.DragEventHandler<HTMLDivElement>;
+  /** Extra keys while the tab has focus (e.g. Alt+Arrow to move it). */
+  onKeyDownExtra?: React.KeyboardEventHandler<HTMLDivElement>;
 }
 
 export function TabItem({
@@ -44,6 +52,12 @@ export function TabItem({
   onRename,
   closeLabel = "Remove tab",
   className,
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onKeyDownExtra,
 }: TabItemProps) {
   const [editing, setEditing] = useState(false);
 
@@ -58,11 +72,18 @@ export function TabItem({
       onClick={() => {
         if (!editing) onSelect?.();
       }}
+      draggable={draggable && !editing}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
       onDoubleClick={() => {
         if (onRename) setEditing(true);
       }}
       onKeyDown={(e) => {
         if (editing) return;
+        onKeyDownExtra?.(e);
+        if (e.defaultPrevented) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect?.();

@@ -1,4 +1,5 @@
 import type { Editor } from "@tiptap/core";
+import { TextSelection } from "@tiptap/pm/state";
 import { useTurnIntoDropdown } from "./use-turn-into-dropdown";
 import type { BlockTypeOption } from "./types";
 import { ChevronRight } from "lucide-react";
@@ -17,7 +18,6 @@ import {
 
 import "./turn-into-dropdown.scss";
 import { Card } from "src/components/tiptap-ui-primitive/card";
-import { toggleBlockquote } from "../blockquote-button";
 import { toggleList } from "../list-button";
 import { toggleCodeBlock } from "../code-block-button";
 import { TurnIntoPageButton } from "../turn-into-page-button";
@@ -54,6 +54,8 @@ function optionLabelKey(option: BlockTypeOption): string | null {
       return "blockTypes.taskList";
     case "blockquote":
       return "blockTypes.blockquote";
+    case "callout":
+      return "blockTypes.callout";
     case "codeBlock":
       return "blockTypes.codeBlock";
     default:
@@ -61,10 +63,68 @@ function optionLabelKey(option: BlockTypeOption): string | null {
   }
 }
 
+// Callouts and quotes wrap other blocks. Before turning one into something
+// else, take its blocks out (keeping every word), so a callout turned into a
+// quote becomes a quote, not a quote inside a callout.
+const WRAPPERS = ["callout", "blockquote"];
+
+function unwrapAround(editor: Editor): string | null {
+  const { state } = editor;
+  const { selection } = state;
+  let pos: number | null = null;
+  let wrapper = null;
+
+  // Selected as a whole (drag handle), or the cursor is somewhere inside.
+  const selected = (selection as { node?: typeof state.doc }).node;
+  if (selected && WRAPPERS.includes(selected.type.name)) {
+    pos = selection.from;
+    wrapper = selected;
+  } else {
+    const { $from } = selection;
+    for (let d = $from.depth; d > 0; d--) {
+      if (WRAPPERS.includes($from.node(d).type.name)) {
+        pos = $from.before(d);
+        wrapper = $from.node(d);
+        break;
+      }
+    }
+  }
+  if (pos === null || !wrapper) return null;
+
+  const from = pos;
+  const inner = wrapper.content;
+  editor
+    .chain()
+    .command(({ tr }) => {
+      tr.replaceWith(from, from + wrapper.nodeSize, inner);
+      // Select the unwrapped blocks so the next step applies to all of them.
+      const end = from + inner.size;
+      tr.setSelection(
+        TextSelection.between(
+          tr.doc.resolve(from + 1),
+          tr.doc.resolve(end - 1),
+        ),
+      );
+      return true;
+    })
+    .run();
+  return wrapper.type.name;
+}
+
 function turnInto(editor: Editor, option: BlockTypeOption) {
+  const target = option.type;
+  // Already this wrapper: nothing to do.
+  if (WRAPPERS.includes(target) && editor.isActive(target)) return;
+  const unwrapped =
+    ["paragraph", "callout", "blockquote"].includes(target) &&
+    unwrapAround(editor) !== null;
+
   switch (option.type) {
     case "paragraph":
       editor.chain().focus().setParagraph().run();
+      break;
+    case "callout":
+      editor.chain().focus().wrapIn("callout").run();
       break;
     case "heading":
       editor
@@ -80,16 +140,21 @@ function turnInto(editor: Editor, option: BlockTypeOption) {
       toggleList(editor, "orderedList");
       //editor.chain().focus().toggleOrderedList().run();
       break;
-    case "tasklist":
+    case "taskList":
       toggleList(editor, "taskList");
       break;
     case "blockquote":
-      toggleBlockquote(editor);
-      //editor.chain().focus().toggleBlockquote().run();
+      editor.chain().focus().wrapIn("blockquote").run();
       break;
     case "codeBlock":
       toggleCodeBlock(editor);
       break;
+  }
+
+  // Unwrapping selected the blocks so the new type applied to all of them;
+  // leave a cursor at the end instead of highlighted text.
+  if (unwrapped) {
+    editor.commands.setTextSelection(editor.state.selection.to);
   }
 }
 
@@ -100,6 +165,7 @@ export function TurnIntoDropdown({
     "paragraph",
     "heading",
     "blockquote",
+    "callout",
     "codeBlock",
     "orderedList",
     "bulletList",

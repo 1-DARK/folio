@@ -387,6 +387,14 @@ export function getSlashCommands(t: TFunction): SlashCommand[] {
       icon: BookMarked,
       run: (e) => e.chain().focus().insertAppendix().run(),
     },
+    ...([1, 2, 3] as const).map((level) => ({
+      id: `toggle-heading-${level}`,
+      type: "command" as const,
+      title: t(`slash.items.toggleHeading${level}.title`),
+      description: t("slash.items.toggleHeading.description"),
+      icon: [Heading1, Heading2, Heading3][level - 1],
+      run: (e: Editor) => e.chain().focus().insertToggleHeading(level).run(),
+    })),
     // ─── Button ─────────────────────────────────────────────
     {
       id: "button",

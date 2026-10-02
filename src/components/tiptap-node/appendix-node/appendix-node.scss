@@ -67,3 +67,11 @@ div[data-type="appendix-content"] .is-empty[data-placeholder]:has(> .ProseMirror
 }
 
 .appendix-summary__prefix { display: none; }
+// Toggle headings: the title takes the heading's size and weight.
+.appendix[data-level] .appendix-summary {
+  font-weight: 700;
+  line-height: 1.3;
+}
+.appendix[data-level="1"] .appendix-summary { font-size: 1.875rem; }
+.appendix[data-level="2"] .appendix-summary { font-size: 1.5rem; }
+.appendix[data-level="3"] .appendix-summary { font-size: 1.25rem; }

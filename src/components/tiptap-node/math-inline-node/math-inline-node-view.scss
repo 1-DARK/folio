@@ -86,3 +86,11 @@
     opacity: 0.85;
   }
 }
+// An equation KaTeX can't render: its source, in red and monospace.
+.math-inline__error {
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  color: var(--tt-color-red-base, #e03e3e);
+  text-decoration: wavy underline;
+  text-decoration-thickness: 1px;
+}
