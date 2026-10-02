@@ -876,5 +876,17 @@
     "unavailable": "Supprimée ou sans accès",
     "remove": "Retirer le lien",
     "inTrash": "Dans la corbeille"
+  },
+  "export": {
+    "label": "Exporter",
+    "pdfAria": "Exporter en PDF",
+    "pdfHint": "Exporter en PDF (choisissez « Enregistrer au format PDF » dans la fenêtre d'impression)",
+    "wordAria": "Exporter en Word (.docx)",
+    "markdownAria": "Exporter en Markdown (.md)"
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "search": "Rechercher un raccourci…",
+    "none": "Aucun raccourci ne correspond."
   }
 }

@@ -27,6 +27,7 @@ import { makePage } from "src/utils/make-page";
 import { useScrollToPendingTarget } from "../../inbox/inbox-panel";
 import { usePageCapabilities } from "src/hooks/use-page-role";
 import { CollabProviderContext } from "./collab-provider-context";
+import { clearActiveEditor, setActiveEditor } from "./active-editor-store";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 
 // Exactly the array type useEditorExtensions produces — derived so it can't
@@ -275,6 +276,12 @@ function EditorInstance({
       editor.off("update", update);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
+
+  // Let UI outside this provider (the page menu's Export) reach the editor.
+  useEffect(() => {
+    setActiveEditor(editor);
+    return () => clearActiveEditor(editor);
   }, [editor]);
 
   return (

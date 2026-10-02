@@ -19,6 +19,13 @@ import { createPortal } from "react-dom";
 import { recordSelection } from "src/features/database/utils/record-selection-store";
 import { RecordDragMenu } from "src/features/database/components/record-drag-menu";
 import { GripVerticalIcon } from "src/components/tiptap-icons";
+import {
+  extendSelectionToBlock,
+  rangeContains,
+  selectedBlockRange,
+  startMultiBlockDrag,
+  type BlockRange,
+} from "./multi-block-drag";
 
 const NODE_LABELS: Record<string, string> = {
   paragraph: "Text",
@@ -96,6 +103,11 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
   const isDraggingRef = useRef(false);
   const targetRef = useRef(target);
   const posRef = useRef(-1);
+  // Set on pointer down when the grip is inside a selection of several
+  // blocks: the drag then moves all of them.
+  const multiRangeRef = useRef<BlockRange | null>(null);
+  // Shift+click extends the selection; it doesn't open the menu.
+  const shiftClickRef = useRef(false);
   const gripRef = useRef<HTMLButtonElement>(null);
 
   // Hide the drag handle while a column is being resized to avoid
@@ -211,6 +223,17 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
       }}
       onElementDragStart={() => {
         isDraggingRef.current = true;
+        const range = multiRangeRef.current;
+        if (range) {
+          // Runs after the library's own dragstart handler (this listener is
+          // on the document, the library's on the handle), so it has the
+          // last word on what is dragged.
+          document.addEventListener(
+            "dragstart",
+            (e) => startMultiBlockDrag(editor, e, range),
+            { once: true },
+          );
+        }
         setOpen(false);
         editor.view.dom.classList.add("is-dragging");
 
@@ -387,21 +410,12 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
 
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
           <ColorDropdownProvider>
-            {/* The grip and, laid over it, the menu's anchor: the menu
-                opens right under the grip (flipping above it near the
-                bottom of the screen) instead of at the page edge. */}
+            {/* The grip, with the menu's anchor at its bottom-left corner:
+                the menu opens right under the grip (flipping above it near
+                the bottom of the screen) instead of at the page edge. The
+                anchor is 1px and sits beside the grip, never over it, so it
+                can't get in the way of grabbing the grip. */}
             <span style={{ position: "relative", display: "inline-flex" }}>
-              <DropdownMenuTrigger asChild>
-                <span
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    pointerEvents: "none",
-                  }}
-                />
-              </DropdownMenuTrigger>
-
               {/* Grip button — selecting the node on pointer down ensures
                   it's selected before the drag starts, giving ProseMirror
                   the right context for the drag operation */}
@@ -413,10 +427,30 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
                 ref={gripRef}
                 className="grip-button"
                 tabIndex={-1}
-                onPointerDown={() => {
-                  editor.commands.setNodeSelection(posRef.current);
+                onPointerDown={(e) => {
+                  const pos = posRef.current;
+                  if (e.shiftKey && pos >= 0) {
+                    shiftClickRef.current = true;
+                    multiRangeRef.current = null;
+                    extendSelectionToBlock(editor, pos);
+                    return;
+                  }
+                  shiftClickRef.current = false;
+                  // Inside a multi-block selection: keep it, so dragging
+                  // moves every selected block.
+                  const range = selectedBlockRange(editor);
+                  if (range && rangeContains(range, pos)) {
+                    multiRangeRef.current = range;
+                    return;
+                  }
+                  multiRangeRef.current = null;
+                  editor.commands.setNodeSelection(pos);
                 }}
                 onClick={() => {
+                  if (shiftClickRef.current) {
+                    shiftClickRef.current = false;
+                    return;
+                  }
                   if (isDraggingRef.current) return;
                   editor.commands.lockDragHandle();
                   setOpen((v) => !v);
@@ -430,6 +464,20 @@ export function DragHandle({ editor }: { editor: Editor | null }) {
               >
                 <GripVerticalIcon className="tiptap-button-icon" />
               </Button>
+              <DropdownMenuTrigger asChild>
+                <span
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    bottom: 0,
+                    width: 1,
+                    height: 1,
+                    pointerEvents: "none",
+                  }}
+                />
+              </DropdownMenuTrigger>
             </span>
 
             {menu}

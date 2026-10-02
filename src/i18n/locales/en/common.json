@@ -883,5 +883,17 @@
     "unavailable": "Deleted or no access",
     "remove": "Remove link",
     "inTrash": "In trash"
+  },
+  "export": {
+    "label": "Export",
+    "pdfAria": "Export as PDF",
+    "pdfHint": "Export as PDF (choose “Save as PDF” in the print dialog)",
+    "wordAria": "Export as Word (.docx)",
+    "markdownAria": "Export as Markdown (.md)"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "search": "Search shortcuts…",
+    "none": "No shortcut matches."
   }
 }

@@ -26,6 +26,7 @@ import {
   NodeColor,
   NodeFit,
   TopLevelClassExtension,
+  MarkdownPaste,
 } from "src/components/tiptap-extension";
 import { Image } from "src/components/tiptap-node/image-node/image";
 import { ImageUploadNode } from "src/components/tiptap-node/image-upload-node/image-upload-node-extension";
@@ -169,6 +170,7 @@ export function makeLandingExtensions({
     TableWrapperNode,
 
     // --- Node attributes ---
+    MarkdownPaste,
     NodeBackground.configure({ useStyle: false }),
     NodeAlignment.configure({ useStyle: false }),
     NodeColor.configure({ useStyle: false }),
