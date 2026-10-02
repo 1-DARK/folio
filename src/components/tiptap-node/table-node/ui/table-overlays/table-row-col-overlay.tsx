@@ -16,6 +16,7 @@ export function TableRowColOverlay({
   const { left, top, width, height } = useTableOverlays();
   const anchorRef = useRef<HTMLSpanElement>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const visible = !!width && !!height;
 
   // Measure the table's viewport rect from a zero-size anchor we drop into the
   // normal (non-portaled) tree. The anchor sits inside .table-overlays, so its
@@ -42,9 +43,11 @@ export function TableRowColOverlay({
       window.removeEventListener("scroll", measure, true);
       window.removeEventListener("resize", measure);
     };
-  }, []);
+    // Re-run when the overlay appears: on the first render it's hidden, so
+    // the anchor isn't in the DOM yet and there's nothing to measure.
+  }, [visible]);
 
-  if (width === 0 || height === 0) return null;
+  if (!visible) return null;
 
   // The zero-size anchor always renders in the normal tree (for measuring).
   const anchor = (

@@ -1,9 +1,36 @@
-import { useEffect, useState } from "react";
 import { Editor } from "@tiptap/core";
+import { useEditorState } from "@tiptap/react";
 import type { ReactNode } from "react";
 import { TableOverlaysContext } from "./table-overlays-context";
 import { tableContextPluginKey } from "../../extensions/table-context";
 
+interface OverlayGeometry {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  tableWidth: number;
+  tableHeight: number;
+  isLastCol: boolean;
+  isLastRow: boolean;
+}
+
+const EMPTY: OverlayGeometry = {
+  left: 0,
+  top: 0,
+  width: 0,
+  height: 0,
+  tableWidth: 0,
+  tableHeight: 0,
+  isLastCol: false,
+  isLastRow: false,
+};
+
+const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
+
+// Where the row/column handles and add buttons go, read from the table
+// context plugin through useEditorState (re-renders only when a value
+// changes). Off the table, everything is 0 and the handles hide.
 export function TableOverlaysProvider({
   children,
   editor,
@@ -11,117 +38,29 @@ export function TableOverlaysProvider({
   children: ReactNode;
   editor: Editor | null;
 }) {
-  const getPluginState = () => tableContextPluginKey.getState(editor!.state);
-
-  const [left, setLeft] = useState(() => {
-    const s = getPluginState();
-    const cols = s?.cols ?? [];
-    return cols
-      .slice(0, s?.currentCol?.index ?? 0)
-      .reduce((sum, w) => sum + w, 0);
-  });
-
-  const [top, setTop] = useState(() => {
-    const s = getPluginState();
-    const rows = s?.rows ?? [];
-    return rows
-      .slice(0, s?.currentRow?.index ?? 0)
-      .reduce((sum, h) => sum + h, 0);
-  });
-
-  const [width, setWidth] = useState(
-    () => getPluginState()?.currentCol?.width ?? 0,
-  );
-
-  const [height, setHeight] = useState(
-    () => getPluginState()?.currentRow?.height ?? 0,
-  );
-
-  const [tableWidth, setTableWidth] = useState(() => {
-    const cols = getPluginState()?.cols ?? [];
-    return cols.reduce((sum, w) => sum + w, 0);
-  });
-
-  const [tableHeight, setTableHeight] = useState(() => {
-    const rows = getPluginState()?.rows ?? [];
-    return rows.reduce((sum, h) => sum + h, 0);
-  });
-
-  const [isLastRow, setIsLastRow] = useState(
-    () => getPluginState()?.isLastRow ?? false,
-  );
-
-  const [isLastCol, setIsLastCol] = useState(
-    () => getPluginState()?.isLastColumn ?? false,
-  );
-
-  useEffect(() => {
-    if (!editor) return;
-
-    const update = () => {
-      const pluginState = tableContextPluginKey.getState(editor.state);
-
-      // Don't update if we're not hovering a table
-      if (!pluginState?.parentTableDOM || pluginState.columnIndex === -1) {
-        return;
-      }
-      const colWidths =
-        tableContextPluginKey.getState(editor.state)?.cols ?? [];
-      const rowHeights =
-        tableContextPluginKey.getState(editor.state)?.rows ?? [];
-
-      const currentRow = tableContextPluginKey.getState(
-        editor.state,
-      )?.currentRow;
-      const currentCol = tableContextPluginKey.getState(
-        editor.state,
-      )?.currentCol;
-      const overLastCol = tableContextPluginKey.getState(
-        editor.state,
-      )?.isLastColumn;
-      const overLastRow = tableContextPluginKey.getState(
-        editor.state,
-      )?.isLastRow;
-
-      setTop(
-        rowHeights
-          .slice(0, currentRow?.index ?? 0)
-          .reduce((sum: number, h: number) => sum + h, 0),
-      );
-      setLeft(
-        colWidths
-          .slice(0, currentCol?.index ?? 0)
-          .reduce((sum: number, w: number) => sum + w, 0),
-      );
-
-      setTableWidth(colWidths.reduce((sum: number, w: number) => sum + w, 0));
-      setTableHeight(rowHeights.reduce((sum: number, h: number) => sum + h, 0));
-      setWidth(currentCol?.width ?? 0);
-      setHeight(currentRow?.height ?? 0);
-      setIsLastCol(overLastCol ?? false);
-      setIsLastRow(overLastRow ?? false);
-    };
-
-    editor.on("transaction", update);
-    return () => {
-      editor.off("transaction", update);
-    };
-  }, [editor]);
+  const geometry =
+    useEditorState({
+      editor,
+      selector: ({ editor }): OverlayGeometry => {
+        const s = editor ? tableContextPluginKey.getState(editor.state) : null;
+        if (!s?.parentTableDOM || s.columnIndex === -1) return EMPTY;
+        const cols = s.cols ?? [];
+        const rows = s.rows ?? [];
+        return {
+          left: sum(cols.slice(0, s.currentCol?.index ?? 0)),
+          top: sum(rows.slice(0, s.currentRow?.index ?? 0)),
+          width: s.currentCol?.width ?? 0,
+          height: s.currentRow?.height ?? 0,
+          tableWidth: sum(cols),
+          tableHeight: sum(rows),
+          isLastCol: s.isLastColumn ?? false,
+          isLastRow: s.isLastRow ?? false,
+        };
+      },
+    }) ?? EMPTY;
 
   return (
-    <TableOverlaysContext.Provider
-      value={{
-        editor,
-        left,
-        top,
-        width,
-        height,
-        tableWidth,
-        tableHeight,
-        isLastCol,
-        isLastRow,
-      }}
-    >
+    <TableOverlaysContext.Provider value={{ editor, ...geometry }}>
       {children}
     </TableOverlaysContext.Provider>
   );

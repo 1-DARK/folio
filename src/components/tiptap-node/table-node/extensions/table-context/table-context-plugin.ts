@@ -174,8 +174,14 @@ export const TableContextPlugin = () => {
           queueMicrotask(() => {
             const meta = tableContextPluginKey.getState(view.state);
 
-            // During cell selection drag — update cellRect to follow the head cell
-            if (view.state.selection instanceof CellSelection) {
+            // During a cell selection drag (button held) — update cellRect to
+            // follow the head cell. Without the button check, a selected row
+            // or column (e.g. from its handle menu) froze hover tracking until
+            // the next click.
+            if (
+              view.state.selection instanceof CellSelection &&
+              (event.buttons & 1) === 1
+            ) {
               const pos = view.posAtCoords({
                 left: event.clientX,
                 top: event.clientY,

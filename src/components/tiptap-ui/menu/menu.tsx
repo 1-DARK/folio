@@ -6,7 +6,7 @@ import {
 import { Separator } from "src/components/tiptap-ui-primitive/separator";
 import type { Editor } from "@tiptap/core";
 import { NodeSelection } from "@tiptap/pm/state";
-import { MessagesSquare } from "lucide-react";
+import { Columns2, MessagesSquare } from "lucide-react";
 import ColorDropdownMenu from "src/components/tiptap-ui/color-dropdown-menu";
 import AlignmentDropdownMenu from "src/components/tiptap-ui/alignment-dropdown-menu";
 import { TurnIntoDropdown } from "src/components/tiptap-ui/turn-into-dropdown";
@@ -27,6 +27,24 @@ import { requestDiscussBlock } from "src/features/chat/block-share-store";
 import { SuggestButton } from "../../../features/comments/suggest-button";
 
 const SNAPSHOT_MAX = 600;
+
+// The block the drag handle selected is a columns block, or sits inside one:
+// offer to unwrap the columns. Read when the menu opens (it renders on
+// open), so no editor listener is needed.
+function isColumnsBlock(editor: Editor): boolean {
+  const { selection } = editor.state;
+  if (
+    selection instanceof NodeSelection &&
+    selection.node.type.name === "columnBlock"
+  ) {
+    return true;
+  }
+  const { $from } = selection;
+  for (let d = $from.depth; d > 0; d--) {
+    if ($from.node(d).type.name === "columnBlock") return true;
+  }
+  return false;
+}
 
 // The block the drag handle selected — the node itself when it's a node
 // selection, else the nearest ancestor. Only blocks with a UniqueID id can be
@@ -93,6 +111,25 @@ export function Menu({
         <DropdownMenuItem asChild>
           <TurnIntoDropdown hideWhenUnavailable={true} editor={editor} />
         </DropdownMenuItem>
+        {isColumnsBlock(editor) && (
+          <DropdownMenuItem asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="menu-button"
+              style={{ justifyContent: "flex-start", width: "100%" }}
+              onClick={() => {
+                editor.chain().focus().unwrapColumns().run();
+                onAction?.();
+              }}
+            >
+              <Columns2 className="tiptap-button-icon" />
+              <span className="tiptap-button-text">
+                {t("blockMenu.unwrapColumns", "Unwrap columns")}
+              </span>
+            </Button>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <ResetFormattingButton
             text={t("blockMenu.resetFormatting")}

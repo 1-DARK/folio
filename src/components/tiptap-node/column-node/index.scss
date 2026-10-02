@@ -129,3 +129,26 @@
     background: var(--color-border-primary);
   }
 }
+
+// The column being dragged shows its border.
+[data-type="column"][data-resizing="true"] > .column-resizer::after {
+  background: var(--tt-brand-color-500);
+}
+
+// Phones: columns stack, full width, no resize handle.
+@media (max-width: 640px) {
+  .column-block-columns > [data-node-view-wrapper] {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .column-block-columns [data-node-view-wrapper] > .react-renderer.node-column {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .column-resizer {
+    display: none;
+  }
+}
