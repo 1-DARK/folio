@@ -1,0 +1,24 @@
+// The sidebar's footer: one full-width New page button.
+.sb-footer {
+  flex-shrink: 0;
+  padding: 6px 10px 10px;
+  border-top: 1px solid var(--tt-border-color);
+}
+
+.sb-footer__new.tiptap-button {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
+  color: var(--tt-text-secondary);
+
+  .tiptap-button-text {
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+
+  &:hover {
+    color: var(--tt-text-primary);
+  }
+}

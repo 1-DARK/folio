@@ -1,151 +1,134 @@
 import { memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ChevronsUpDown } from "lucide-react";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useCurrentSpace } from "src/hooks/use-current-space";
+import { usePeople } from "src/hooks/use-people";
+import { useGroups } from "src/hooks/use-groups";
+import { effectiveMemberCount, type Group, type Person } from "src/types";
 import { Bone } from "../skeletons";
 import { useNotificationState } from "src/features/inbox/notification/notification-context";
-import {
-  Grid,
-  GridCell,
-  GridRow,
-} from "src/components/tiptap-ui-primitive/grid";
-import { Button } from "src/components/tiptap-ui-primitive/button";
 import { WorkspaceSwitcherPopover } from "../../workspace/workspace-switcher-popover";
 import { DynamicIcon } from "src/features/pages/cover/dynamic-icon";
 import { PageItemIcon } from "../../pages/page-item/page-item-icon";
-import { useIsMobile } from "src/hooks/use-breakpoint";
 import "./sidebar-user.scss";
 
 const UserSkeleton = memo(() => {
   return (
-    <div className="sidebar-tree-skeleton__row">
-      <Bone width={13} height={13} rounded />
-      <Bone width={"62%"} height={10} pill />
+    <div className="sb-ws sb-ws--skeleton">
+      <Bone width={28} height={28} rounded />
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <Bone width={96} height={10} pill />
+        <Bone width={60} height={8} pill />
+      </div>
     </div>
   );
 });
 UserSkeleton.displayName = "UserSkeleton";
 
-// Shows the CURRENT space's identity — your workspace, or the teamspace
-// you've entered — and opens the space switcher.
+// The current space — your workspace, or the teamspace you're in — as one
+// button: its tile, its name, a line under it, and ⇅. Clicking anywhere on
+// it opens the space switcher. Inside a teamspace, a back arrow before it
+// returns to the workspace.
 export const User = memo(() => {
   const { t } = useTranslation();
   const { person, isLoading } = useCurrentPerson();
-  const isMobile = useIsMobile();
-
   const { workspace } = useCurrentWorkspace();
   const space = useCurrentSpace();
-  const [switcherOpen, setSwitcherOpen] = useState(false);
-  const initialRef = useRef<HTMLButtonElement>(null);
-
+  const { data: people = [] } = usePeople();
+  const { data: groups = [] } = useGroups();
   const { unreadCount } = useNotificationState();
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (isLoading) return <UserSkeleton />;
 
-  const iconSize = isMobile ? 15 : 18;
+  const inTeamspace = space.kind === "teamspace";
 
   let name: string;
-  let glyph: React.ReactNode;
+  let meta: string;
+  let tile: React.ReactNode;
+  let tileKind: "initial" | "glyph";
 
-  if (space.kind === "teamspace") {
+  if (inTeamspace) {
     name = space.page?.title || t("teamspaces.untitled");
-    glyph = space.page ? (
+    meta = [
+      workspace?.name,
+      space.teamspace
+        ? t("workspace.memberCount", {
+            count: effectiveMemberCount(space.teamspace, groups as Group[]),
+          })
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    tileKind = space.page ? "glyph" : "initial";
+    tile = space.page ? (
       <PageItemIcon
         cover={space.page.cover}
-        styles={{ width: iconSize, height: iconSize, fontSize: iconSize }}
+        styles={{ width: 16, height: 16, fontSize: 16 }}
       />
-    ) : null;
+    ) : (
+      name.charAt(0).toUpperCase()
+    );
   } else {
     name = workspace?.name ?? person?.name ?? "";
-    const initial = name ? name.charAt(0).toUpperCase() : "?";
+    meta = t("workspace.memberCount", {
+      count: (people as Person[]).length,
+    });
     if (workspace?.icon) {
-      glyph =
+      tileKind = "glyph";
+      tile =
         workspace.iconTarget === "Emoji" ? (
-          <span style={{ fontSize: iconSize, lineHeight: 1 }}>
-            {workspace.icon}
-          </span>
+          <span className="sb-ws__emoji">{workspace.icon}</span>
         ) : (
           <DynamicIcon
             name={workspace.icon}
             style={{
-              width: iconSize,
-              height: iconSize,
+              width: 16,
+              height: 16,
               color: workspace.iconColor ?? "currentColor",
             }}
           />
         );
     } else {
-      glyph = initial;
+      tileKind = "initial";
+      tile = name ? name.charAt(0).toUpperCase() : "?";
     }
   }
 
   return (
-    <>
-      <Grid columns="36px 1fr" gap={4} style={{ width: "fit-content" }}>
-        <GridRow style={{ width: "fit-content" }}>
-          <GridCell>
-            <Button
-              ref={initialRef}
-              data-has-icon={workspace?.icon !== null}
-              className="name-initial workspace-avatar"
-              onClick={() => setSwitcherOpen((v) => !v)}
-              variant="ghost"
-              style={{
-                width: isMobile ? 18 : 32,
-                height: isMobile ? 16 : 28,
-                minWidth: isMobile ? 18 : 32,
-                minHeight: isMobile ? 16 : 28,
-                padding: 0,
-                borderRadius: "var(--tt-radius-sm)",
-                cursor: "pointer",
-              }}
-            >
-              <span className="tiptap-button-icon workspace-icon-button">
-                {glyph}
-                {unreadCount > 0 && (
-                  <span className="workspace-notification-badge" />
-                )}
-              </span>
-            </Button>
+    <div className="sb-ws-row">
+      <button
+        ref={buttonRef}
+        type="button"
+        className={`sb-ws${switcherOpen ? " is-open" : ""}`}
+        aria-haspopup="menu"
+        aria-expanded={switcherOpen}
+        aria-label={t("workspace.switch", {
+          name,
+          defaultValue: "Switch space: {{name}}",
+        })}
+        onClick={() => setSwitcherOpen((v) => !v)}
+      >
+        <span className={`sb-ws__tile sb-ws__tile--${tileKind}`}>
+          {tile}
+          {unreadCount > 0 && <span className="workspace-notification-badge" />}
+        </span>
+        <span className="sb-ws__text">
+          <span className="sb-ws__name">{name}</span>
+          {meta && <span className="sb-ws__meta">{meta}</span>}
+        </span>
+        <ChevronsUpDown size={15} className="sb-ws__chevron" aria-hidden />
+      </button>
 
-            <WorkspaceSwitcherPopover
-              anchorRef={initialRef}
-              open={switcherOpen}
-              onClose={() => setSwitcherOpen(false)}
-            />
-          </GridCell>
-
-          {/* ── Middle: name over subtext ── */}
-          <GridCell
-            className="sidebar-ws-name-cell"
-            style={{
-              flexDirection: "column",
-              alignItems: "flex-start",
-              justifyContent: "center",
-              gap: 1,
-            }}
-          >
-            <span
-              style={{
-                color: "var(--tt-text-primary)",
-                fontSize: 15,
-                fontFamily:
-                  'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"',
-                fontWeight: 500,
-                lineHeight: 1.15,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
-              }}
-            >
-              {name}
-            </span>
-          </GridCell>
-        </GridRow>
-      </Grid>
-    </>
+      <WorkspaceSwitcherPopover
+        anchorRef={buttonRef}
+        open={switcherOpen}
+        onClose={() => setSwitcherOpen(false)}
+      />
+    </div>
   );
 });
 User.displayName = "User";
