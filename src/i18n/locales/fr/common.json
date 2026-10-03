@@ -568,8 +568,44 @@
   "home": {
     "guides": {
       "buttons": "Boutons",
-      "containers": "Conteneurs"
+      "containers": "Conteneurs",
+      "gettingStarted": "Bien démarrer avec Folio",
+      "blocks": "Écrire avec des blocs",
+      "databases": "Tout organiser avec les bases de données",
+      "collaborate": "Travailler ensemble : commentaires, suggestions et salons"
     },
+    "search": {
+      "label": "Rechercher ou créer une page",
+      "placeholder": "Cherchez une page ou créez-en une",
+      "create": "Créer « {{title}} »"
+    },
+    "actions": {
+      "template": "Utiliser un modèle",
+      "inbox": "Boîte de réception",
+      "chats": "Discussions"
+    },
+    "place": {
+      "private": "Privé",
+      "shared": "Partagé"
+    },
+    "day": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "thisWeek": "Plus tôt cette semaine",
+      "older": "Plus ancien"
+    },
+    "favorites": "Favoris",
+    "pinned": "Épinglées",
+    "recent": "Récent",
+    "showMore": "Afficher plus",
+    "readMinutes": "{{count}} min de lecture",
+    "learnProgress": "Découvrir Folio · {{read}} sur {{total}}",
+    "learnStart": "Commencez par « {{title}} »",
+    "learnContinue": "Continuez avec « {{title}} »",
+    "learnDone": "Vous avez lu tous les guides.",
+    "learnAll": "Tous les guides",
+    "learnHide": "Masquer les guides",
+    "learnRead": "Lu",
     "recentlyVisited": "Récemment consultés",
     "earlier": "Plus tôt",
     "edited": "Modifié {{time}}",
