@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DataSource, Page } from "src/types";
 import type { UseDatabaseReturn } from "./use-database";
 import { recordMatchesFilters } from "../utils/apply-filters";
+import { useSession } from "src/hooks/use-session";
 import { sortRecords } from "../utils/apply-sorts";
 
 // filter → search → sort → pin-editing
@@ -13,13 +14,15 @@ export function useResolvedRecords(
   editingRecordId: string | null,
 ): Page[] {
   const activeView = db.activeView;
+  // For the "Me" person filter.
+  const meId = useSession().session?.user.id ?? null;
 
   return useMemo(() => {
     const props = source?.properties ?? [];
 
     const filtered = activeView?.filters?.length
       ? resolvedRecords.filter((r) =>
-          recordMatchesFilters(r, activeView.filters, props),
+          recordMatchesFilters(r, activeView.filters, props, { meId }),
         )
       : resolvedRecords;
 
@@ -38,6 +41,7 @@ export function useResolvedRecords(
     return [...sorted.slice(0, idx), ...sorted.slice(idx + 1), sorted[idx]];
   }, [
     editingRecordId,
+    meId,
     resolvedRecords,
     activeView,
     source?.properties,

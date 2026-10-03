@@ -20,6 +20,29 @@ function compareValues(
     return mult * (a - b);
   }
 
+  // Lists (people, multi-select, created by…): compare their names or ids.
+  if (Array.isArray(a) || Array.isArray(b)) {
+    const text = (v: unknown) =>
+      (Array.isArray(v) ? v : [v])
+        .map((x) =>
+          x && typeof x === "object"
+            ? String(
+                (x as { name?: unknown; label?: unknown; id?: unknown }).name ??
+                  (x as { label?: unknown }).label ??
+                  (x as { id?: unknown }).id ??
+                  "",
+              )
+            : String(x ?? ""),
+        )
+        .join(", ");
+    const ta = text(a);
+    const tb = text(b);
+    if (!ta && !tb) return 0;
+    if (!ta) return mult;
+    if (!tb) return -mult;
+    return mult * ta.localeCompare(tb);
+  }
+
   // Date strings
   const da = new Date(String(a));
   const db = new Date(String(b));

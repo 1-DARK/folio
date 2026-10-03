@@ -4,6 +4,8 @@ import { Button } from "src/components/tiptap-ui-primitive/button";
 import { DynamicIcon } from "src/features/pages/cover/dynamic-icon";
 import { type DatabaseProperty, type FilterRule } from "src/types";
 import { PROPERTY_TYPE_ICONS } from "src/types/property-type-meta";
+import { useTranslation } from "react-i18next";
+import { ME_FILTER_VALUE } from "../../utils/apply-filters";
 
 export const FilterChipButton = forwardRef<
   HTMLButtonElement,
@@ -18,6 +20,7 @@ export const FilterChipButton = forwardRef<
     "count" | "locked" | "property" | "rule" | "advanced"
   >
 >(({ locked, property, rule, count, advanced = false, ...props }, ref) => {
+  const { t } = useTranslation();
   const hasOptions =
     rule?.propertyType === "select" ||
     rule?.propertyType === "multi_select" ||
@@ -26,6 +29,26 @@ export const FilterChipButton = forwardRef<
   const propName = property?.name ?? "Property";
   const value = rule?.value;
   const labels = hasOptions ? (rule.labels ?? []) : [];
+  const isPerson =
+    rule?.propertyType === "person" ||
+    rule?.propertyType === "created_by" ||
+    rule?.propertyType === "edited_by";
+  // People: their names, "Me" in the viewer's language.
+  const personText = (() => {
+    if (!isPerson) return "";
+    const ids = Array.isArray(rule.value)
+      ? rule.value
+      : rule.value
+        ? [rule.value]
+        : [];
+    return ids
+      .map((id, i) =>
+        id === ME_FILTER_VALUE
+          ? t("database.person.me")
+          : (rule.labels?.[i] ?? id),
+      )
+      .join(", ");
+  })();
 
   return (
     <Button
@@ -63,7 +86,9 @@ export const FilterChipButton = forwardRef<
             ? labels.length > 0
               ? labels.join(", ")
               : "Any"
-            : value}
+            : isPerson
+              ? personText || "Any"
+              : value}
       </span>
 
       {!locked && (

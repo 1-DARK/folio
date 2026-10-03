@@ -98,4 +98,11 @@
       }
     }
   }
+
+  // Small grey note at the end of a row ("Me" in the person filter).
+  &__hint {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--tt-text-muted, var(--tt-text-secondary));
+  }
 }

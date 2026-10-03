@@ -21,13 +21,43 @@ export function getCellValue(
 ): unknown {
   const prop = properties?.find((p) => p.id === propertyId);
   if (prop?.config.type === "title") return record.title ?? "";
+  // Created by / Edited by live on the page, not in values[]. Same shape as a
+  // person cell (a list of {id}) so filters and sorts treat them alike.
+  if (prop?.config.type === "created_by")
+    return record.ownerId ? [{ id: record.ownerId }] : [];
+  if (prop?.config.type === "edited_by") {
+    const id = record.editedBy ?? record.ownerId;
+    return id ? [{ id }] : [];
+  }
   return record.values?.[propertyId] ?? null;
+}
+
+/** What a filter needs to know about the viewer. */
+export type FilterContext = {
+  /** The signed-in person's id, for the "Me" person filter value. */
+  meId?: string | null;
+};
+
+/** The "Me" value of a person filter: whoever is looking at the view. */
+export const ME_FILTER_VALUE = "me";
+
+// Person rules store a list of person ids (older rules: one id string).
+function personRuleIds(ruleValue: unknown, ctx: FilterContext): string[] {
+  const raw = Array.isArray(ruleValue)
+    ? ruleValue.map(String)
+    : ruleValue
+      ? [String(ruleValue)]
+      : [];
+  return raw.flatMap((id) =>
+    id === ME_FILTER_VALUE ? (ctx.meId ? [ctx.meId] : []) : [id],
+  );
 }
 
 function matchesRule(
   record: Page,
   rule: FilterRule,
-  properties?: DatabaseProperty[],
+  properties: DatabaseProperty[] | undefined,
+  ctx: FilterContext,
 ): boolean {
   const value = getCellValue(record, rule.propertyId, properties);
 
@@ -59,6 +89,27 @@ function matchesRule(
       rule.propertyType === "status") &&
     hasNoValue
   ) {
+    return true;
+  }
+
+  if (
+    rule.propertyType === "person" ||
+    rule.propertyType === "created_by" ||
+    rule.propertyType === "edited_by"
+  ) {
+    // No person picked yet (or only "Me" while signed out): show everything.
+    const ruleIds = hasNoValue ? [] : personRuleIds(ruleValue, ctx);
+    if (ruleIds.length === 0) return true;
+    const cellIds = Array.isArray(value)
+      ? value.map((v) =>
+          v && typeof v === "object" && "id" in v
+            ? String((v as { id: unknown }).id)
+            : String(v),
+        )
+      : [];
+    const overlap = cellIds.some((id) => ruleIds.includes(id));
+    if (op === "contains") return overlap;
+    if (op === "does_not_contain") return !overlap;
     return true;
   }
 
@@ -223,20 +274,22 @@ function matchesRule(
 function matchesGroup(
   record: Page,
   group: FilterGroup,
-  properties?: DatabaseProperty[],
+  properties: DatabaseProperty[] | undefined,
+  ctx: FilterContext,
 ): boolean {
   const rules = group.rules as FilterRule[];
   if (rules.length === 0) return true;
   if (group.operator === "and")
-    return rules.every((r) => matchesRule(record, r, properties));
-  return rules.some((r) => matchesRule(record, r, properties));
+    return rules.every((r) => matchesRule(record, r, properties, ctx));
+  return rules.some((r) => matchesRule(record, r, properties, ctx));
 }
 
 export function recordMatchesFilters(
   record: Page,
   filters: FilterGroup[],
   properties?: DatabaseProperty[],
+  ctx: FilterContext = {},
 ): boolean {
   if (!filters || filters.length === 0) return true;
-  return filters.every((group) => matchesGroup(record, group, properties));
+  return filters.every((group) => matchesGroup(record, group, properties, ctx));
 }

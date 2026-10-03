@@ -105,7 +105,8 @@ function makeFilterRule(property: DatabaseProperty): FilterRule {
         propertyId: property.id,
         propertyType: type,
         operator: "contains",
-        value: "",
+        value: [],
+        labels: [],
       };
     default:
       return {

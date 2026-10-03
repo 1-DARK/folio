@@ -170,6 +170,11 @@ export function useDataSource(
         content: templatePage?.content ?? undefined,
         cover: templatePage?.cover,
         workspaceId,
+        me: {
+          id: person.id,
+          name: person.name || person.email,
+          ...(person.avatarUrl ? { avatarUrl: person.avatarUrl } : {}),
+        },
       });
 
       await addRowAsync(row);

@@ -1,6 +1,7 @@
 import { StatusFilterDropdown } from "./status-filter-dropdown";
 import { SelectFilterDropdown } from "./select-filter-dropdown";
 import { TextFilterDropdown } from "./text-filter-dropdown";
+import { PersonFilterDropdown } from "./person-filter-dropdown";
 // import { DateFilterDropdown } from "./date-filter-dropdown"; // when built
 import type { DatabaseProperty, ID } from "src/types";
 import type { FilterRule } from "src/types/filter-types";
@@ -33,6 +34,11 @@ export function SimpleFilterEditor({
     case "created_time":
     case "edited_time":
       return <DateFilterDropdown {...shared} rule={rule} />;
+
+    case "person":
+    case "created_by":
+    case "edited_by":
+      return <PersonFilterDropdown {...shared} rule={rule} />;
 
     default:
       // title, text, url, email, phone, number, relation, formula, person…

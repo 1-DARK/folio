@@ -7,6 +7,7 @@ import type {
   RowTemplate,
   PageCover,
   PageCategory,
+  PersonValue,
 } from "src/types";
 import { makePage } from "./make-page";
 import type { JSONContent } from "@tiptap/core";
@@ -21,6 +22,10 @@ export function makeRow(
     content?: JSONContent; // caller passes the cloned page content, if any
     category?: PageCategory; // so template pages can be "Template"
     cover?: PageCover;
+    /** The person creating the row, for person properties whose default is
+     *  "Me". Leave it out for template pages so "Me" stays a rule, not a
+     *  name baked into the template. */
+    me?: PersonValue;
   },
 ): Page {
   const values: Record<ID, CellValue> = {};
@@ -29,6 +34,17 @@ export function makeRow(
   }
   if (opts.template) {
     Object.assign(values, opts.template.values);
+  }
+  // Person defaults: "Me" fills an empty person cell (a template that set
+  // the person keeps its value).
+  if (opts.me) {
+    for (const prop of source.properties) {
+      if (prop.config.type !== "person" || prop.config.default !== "me")
+        continue;
+      const current = values[prop.id];
+      if (Array.isArray(current) && current.length > 0) continue;
+      values[prop.id] = [opts.me] as CellValue;
+    }
   }
 
   return {
