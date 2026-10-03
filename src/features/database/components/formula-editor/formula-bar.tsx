@@ -39,7 +39,9 @@ interface FormulaBarProps {
 export interface FormulaBarHandle {
   // Inserts at the caret ONLY if the editor currently has focus. Returns true
   // if it inserted, false if it was ignored (editor not focused).
-  insertSnippet: (text: string) => boolean;
+  // `cursor` puts the caret that many characters into the inserted text
+  // (default: after it), e.g. between the parentheses of "round()".
+  insertSnippet: (text: string, cursor?: number) => boolean;
   focus: () => void;
 }
 
@@ -169,7 +171,7 @@ const FormulaBar = forwardRef<FormulaBarHandle, FormulaBarProps>(
     useImperativeHandle(
       ref,
       () => ({
-        insertSnippet(text: string) {
+        insertSnippet(text: string, cursor?: number) {
           const view = viewRef.current;
           if (!view) return false;
           // Focus guard: ignore inserts when the editor isn't focused, so
@@ -178,7 +180,7 @@ const FormulaBar = forwardRef<FormulaBarHandle, FormulaBarProps>(
           const { from, to } = view.state.selection.main;
           view.dispatch({
             changes: { from, to, insert: text },
-            selection: { anchor: from + text.length },
+            selection: { anchor: from + (cursor ?? text.length) },
             scrollIntoView: true,
           });
           // updateListener fires onChange since the doc changed.

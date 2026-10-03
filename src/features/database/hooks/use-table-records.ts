@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DataSource, ID, Page, TableView } from "src/types";
 import type { UseDatabaseReturn } from "./use-database";
 import { recordMatchesFilters } from "../utils/apply-filters";
+import { useSession } from "src/hooks/use-session";
 import { sortRecords } from "../utils/apply-sorts";
 import { useTableLayout } from "./use-table-layout";
 
@@ -17,6 +18,8 @@ export function useTableRecords({
   editingRecordId: ID | null;
 }) {
   const activeView = db.activeView;
+  // For the "Me" person filter.
+  const meId = useSession().session?.user.id ?? null;
   const filters = activeView?.filters;
   const sorts = activeView?.sorts;
   const properties = source?.properties;
@@ -25,7 +28,9 @@ export function useTableRecords({
   const sortedRecords = useMemo(() => {
     const props = properties ?? [];
     const filtered = filters?.length
-      ? resolvedRecords.filter((r) => recordMatchesFilters(r, filters, props))
+      ? resolvedRecords.filter((r) =>
+          recordMatchesFilters(r, filters, props, { meId }),
+        )
       : resolvedRecords;
 
     const q = searchQuery.trim().toLowerCase();
@@ -42,6 +47,7 @@ export function useTableRecords({
     return [...sorted.slice(0, idx), ...sorted.slice(idx + 1), sorted[idx]];
   }, [
     editingRecordId,
+    meId,
     resolvedRecords,
     filters,
     sorts,

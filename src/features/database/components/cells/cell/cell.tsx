@@ -22,8 +22,7 @@ import { FormulaCell } from "../formula-cell";
 //import { RelationCell } from "../relation-cell";
 import { CreatedTimeCell } from "../created-time-cell";
 import { EditedTimeCell } from "../edited-time-cell";
-//import { CreatedByCell } from "../created-by-cell";
-//import { EditedByCell } from "../edited-by-cell";
+import { CreatedByCell, EditedByCell } from "../created-by-cell";
 import "./cell.scss";
 import { evaluateFormula } from "../../formula-editor/formula-evaluator";
 import { RelationCell } from "../relation-cell";
@@ -273,15 +272,24 @@ function CellImpl({
         />
       );
 
-    // case "created_by":
-    //   return (
-    //     <CreatedByCell value={v} config={config} onChange={change} readonly />
-    //   );
+    case "created_by":
+      return (
+        <CreatedByCell
+          ownerId={record.ownerId}
+          unwrapped={unwrapped}
+          className={`db-cell ${view?.type === "gallery" || view?.type === "board" ? "db-cell-board-view" : ""}`}
+        />
+      );
 
-    // case "edited_by":
-    //   return (
-    //     <EditedByCell value={v} config={config} onChange={change} readonly />
-    //   );
+    case "edited_by":
+      return (
+        <EditedByCell
+          editedBy={record.editedBy}
+          ownerId={record.ownerId}
+          unwrapped={unwrapped}
+          className={`db-cell ${view?.type === "gallery" || view?.type === "board" ? "db-cell-board-view" : ""}`}
+        />
+      );
 
     default: {
       // Exhaustiveness guard — if a new PropertyType is added and not handled,

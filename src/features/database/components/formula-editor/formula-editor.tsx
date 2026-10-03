@@ -8,6 +8,9 @@ import { validateFormula } from "./formula-evaluator";
 import FormulaBar, { type FormulaBarHandle } from "./formula-bar";
 import PropertiesPanel from "./properties-panel";
 import PropertyDetail from "./property-detail";
+import FunctionsPanel from "./functions-panel";
+import FunctionDetail from "./function-detail";
+import { insertFor, type FormulaFunctionHelp } from "./formula-help";
 import {
   Card,
   CardBody,
@@ -43,6 +46,14 @@ export default function FormulaEditor({
   const [formula, setFormula] = useState(initialExpression);
   const [selectedProperty, setSelectedProperty] =
     useState<DatabaseProperty | null>(properties[0] ?? null);
+  // The help below shows the property or the function picked last.
+  const [selectedFunction, setSelectedFunction] =
+    useState<FormulaFunctionHelp | null>(null);
+
+  function selectProperty(prop: DatabaseProperty) {
+    setSelectedProperty(prop);
+    setSelectedFunction(null);
+  }
 
   const formulaBarRef = useRef<FormulaBarHandle>(null);
 
@@ -72,8 +83,15 @@ export default function FormulaEditor({
   }
 
   // Focus-gated inside FormulaBar: only inserts when the editor has focus.
-  function handleInsertSnippet(snippet: string) {
-    formulaBarRef.current?.insertSnippet(snippet);
+  function handleInsertSnippet(snippet: string, cursor?: number) {
+    formulaBarRef.current?.insertSnippet(snippet, cursor);
+  }
+
+  // The Insert buttons in the function help: always insert, focusing the
+  // formula first (the caret stays where it was).
+  function insertNow(text: string, cursor?: number) {
+    formulaBarRef.current?.focus();
+    formulaBarRef.current?.insertSnippet(text, cursor);
   }
 
   return (
@@ -108,17 +126,33 @@ export default function FormulaEditor({
           <PropertiesPanel
             properties={properties}
             selectedPropertyId={selectedProperty?.id}
-            onSelectProperty={setSelectedProperty}
+            onSelectProperty={selectProperty}
             onInsertProperty={(prop) =>
               handleInsertSnippet(`prop("${prop.name}")`)
             }
           />
-          <Separator style={{ height: 0.5 }} orientation="horizontal" />
-          <PropertyDetail
-            property={selectedProperty}
-            properties={properties}
-            onInsertSnippet={handleInsertSnippet}
+          <FunctionsPanel
+            selectedName={selectedFunction?.name}
+            onSelect={setSelectedFunction}
+            onInsert={(f) => {
+              const { text, cursor } = insertFor(f);
+              handleInsertSnippet(text, cursor);
+            }}
           />
+          <Separator style={{ height: 0.5 }} orientation="horizontal" />
+          {selectedFunction ? (
+            <FunctionDetail
+              fn={selectedFunction}
+              insertCall={insertFor(selectedFunction)}
+              onInsert={insertNow}
+            />
+          ) : (
+            <PropertyDetail
+              property={selectedProperty}
+              properties={properties}
+              onInsertSnippet={handleInsertSnippet}
+            />
+          )}
         </div>
       </CardBody>
     </Card>

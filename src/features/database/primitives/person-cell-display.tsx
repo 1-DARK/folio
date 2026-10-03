@@ -1,5 +1,6 @@
 import { Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "src/components/tiptap-ui-primitive/button";
 import { Card, CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import {
@@ -62,6 +63,7 @@ export function PersonCellDisplay({
   single,
   readonly,
 }: PersonCellDisplayProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -88,7 +90,7 @@ export function PersonCellDisplay({
 
   const chips =
     value.length === 0 ? (
-      <span className="db-person-empty">Empty</span>
+      <span className="db-person-empty">{t("database.person.empty")}</span>
     ) : (
       value.map((p) => <PersonChip key={p.id} person={p} />)
     );
@@ -140,7 +142,7 @@ export function PersonCellDisplay({
           <input
             autoFocus
             className="db-person-search"
-            placeholder="Search for a person…"
+            placeholder={t("database.person.search")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -160,7 +162,7 @@ export function PersonCellDisplay({
           <CardItemGroup style={{ marginTop: 6 }}>
             {filtered.length === 0 ? (
               <span className="db-person-empty" style={{ padding: "4px 8px" }}>
-                No people found
+                {t("database.person.none")}
               </span>
             ) : (
               filtered.map((p) => {

@@ -99,6 +99,18 @@ function cellToFormulaValue(
   }
 }
 
+// ISO 8601 week number (weeks start on Monday; week 1 holds the year's first
+// Thursday), as Notion's week() gives it.
+function isoWeek(date: Date): number {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7)); // Thursday of this week
+  const firstThursday = new Date(d.getFullYear(), 0, 4);
+  firstThursday.setDate(
+    firstThursday.getDate() + 3 - ((firstThursday.getDay() + 6) % 7),
+  );
+  return 1 + Math.round((d.getTime() - firstThursday.getTime()) / 604_800_000);
+}
+
 // ─── Notion built-in function scope ───────────────────────────────────────────
 
 function buildFunctionScope(): Record<string, unknown> {
@@ -160,15 +172,7 @@ function buildFunctionScope(): Record<string, unknown> {
     fromTimestamp: (ms: number) => new Date(ms).toISOString(),
     formatDate: (d: unknown, fmt: string) => {
       const date = parseAnyDate(d);
-      const weekNum = (() => {
-        const start = new Date(date.getFullYear(), 0, 1);
-        return Math.ceil(
-          ((date.getTime() - start.getTime()) / 86_400_000 +
-            start.getDay() +
-            1) /
-            7,
-        );
-      })();
+      const weekNum = isoWeek(date);
 
       const tokens: Record<string, string> = {
         dddd: date.toLocaleString("en", { weekday: "long" }),
@@ -245,14 +249,7 @@ function buildFunctionScope(): Record<string, unknown> {
     date: (d: unknown) => parseAnyDate(d).getDate(),
     month: (d: unknown) => parseAnyDate(d).getMonth() + 1,
     year: (d: unknown) => parseAnyDate(d).getFullYear(),
-    week: (d: unknown) => {
-      const date = parseAnyDate(d);
-      const start = new Date(date.getFullYear(), 0, 1);
-      return Math.ceil(
-        ((date.getTime() - start.getTime()) / 86_400_000 + start.getDay() + 1) /
-          7,
-      );
-    },
+    week: (d: unknown) => isoWeek(parseAnyDate(d)),
 
     // ── List ───────────────────────────────────────────────────────────────
     at: (list: unknown[], i: number) => list[i],

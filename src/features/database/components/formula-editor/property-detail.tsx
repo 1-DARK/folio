@@ -35,92 +35,62 @@ const FORMULA_RETURN_TYPE: Record<PropertyType, string> = {
 
 // ─── snippets per type ────────────────────────────────────────────────────────
 
+// Every snippet uses a form the evaluator runs: function calls, not
+// method calls (prop("A").length() doesn't evaluate).
 function getSnippets(prop: DatabaseProperty): string[] {
-  const n = prop.name;
+  const p = `prop("${prop.name}")`;
   const c = prop.config;
 
   switch (c.type) {
     case "title":
     case "text":
       return [
-        `prop("${n}")`,
-        `prop("${n}").length()`,
-        `prop("${n}").contains("keyword")`,
-        `prop("${n}").replaceAll("old", "new")`,
+        p,
+        `length(${p})`,
+        `contains(${p}, "keyword")`,
+        `replaceAll(${p}, "old", "new")`,
       ];
 
     case "number":
-      return [
-        `prop("${n}")`,
-        `prop("${n}") / 2`,
-        `round(prop("${n}"), 2)`,
-        `pi() * prop("${n}") ^ 2`,
-      ];
+      return [p, `${p} / 2`, `round(${p}, 2)`, `pi * ${p} ^ 2`];
 
     case "checkbox":
-      return [
-        `prop("${n}")`,
-        `not prop("${n}")`,
-        `prop("${n}") == true ? "Complete" : "Incomplete"`,
-      ];
+      return [p, `not(${p})`, `if(${p}, "Complete", "Incomplete")`];
 
     case "select":
     case "status":
       return [
-        `prop("${n}")`,
-        `prop("${n}") == "Option"`,
-        `if(prop("${n}") == "Option", "match", "no match")`,
+        p,
+        `${p} == "Option"`,
+        `if(${p} == "Option", "match", "no match")`,
       ];
 
     case "multi_select":
-      return [
-        `prop("${n}").length()`,
-        `prop("${n}").includes("Tag")`,
-        `prop("${n}").filter(current == "Tag")`,
-      ];
+      // The options arrive as one text: "A, B, C".
+      return [p, `length(split(${p}, ", "))`, `contains(${p}, "Tag")`];
 
     case "date":
     case "created_time":
     case "edited_time":
       return [
-        `prop("${n}") > now()`,
-        `dateBetween(prop("${n}"), now(), "days")`,
-        `formatDate(prop("${n}"), "MMMM D, YYYY")`,
-        `dateAdd(prop("${n}"), 7, "days")`,
-      ];
-
-    case "person":
-    case "created_by":
-    case "edited_by":
-      return [
-        `prop("${n}")`,
-        `prop("${n}").at(0).name()`,
-        `prop("${n}").map(current.email()).join(", ")`,
+        `${p} > now()`,
+        `dateBetween(${p}, now(), "days")`,
+        `formatDate(${p}, "MMMM D, YYYY")`,
+        `dateAdd(${p}, 7, "days")`,
       ];
 
     case "url":
     case "email":
     case "phone":
-      return [
-        `prop("${n}")`,
-        `!empty(prop("${n}"))`,
-        ...(c.type === "phone" ? [`link("Call", "tel:" + prop("${n}"))`] : []),
-        ...(c.type === "email"
-          ? [`link("Email", "mailto:" + prop("${n}"))`]
-          : []),
-      ];
+      return [p, `not(empty(${p}))`];
 
+    case "person":
+    case "created_by":
+    case "edited_by":
     case "relation":
-      return [
-        `prop("${n}").length()`,
-        `prop("${n}").filter(current.prop("Status") != "Done")`,
-      ];
-
     case "rollup":
-      return [`prop("${n}")`, `prop("${n}").length()`, `prop("${n}") * 12`];
-
     case "formula":
-      return [`prop("${n}")`];
+      return [p];
   }
 }
 

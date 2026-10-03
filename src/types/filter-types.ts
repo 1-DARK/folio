@@ -154,7 +154,10 @@ export interface FormulaFilterRule extends BaseFilterRule {
 export interface PersonFilterRule extends BaseFilterRule {
   propertyType: "person" | "created_by" | "edited_by";
   operator: PersonOperator;
-  value: string; // user id
+  /** Person ids; "me" stands for whoever views the database. Older rules
+   *  hold a single id string. */
+  value: string | string[];
+  labels?: string[];
 }
 
 // The discriminated union

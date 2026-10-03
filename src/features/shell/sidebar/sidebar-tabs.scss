@@ -80,7 +80,9 @@ $dur: 0.3s;
 .sb-tab {
   display: inline-flex;
   align-items: center;
-  height: 100%;
+  //height: 100%;
+  height: 32px !important;
+  min-height: 32px !important;
   padding: 0 8px;
   border: none;
   border-radius: calc(var(--tt-radius-md) - 2px);
@@ -116,7 +118,10 @@ $dur: 0.3s;
     line-height: 14px;
     text-align: center;
     color: #fff;
-    background: var(--sidebar-accent, var(--tt-brand-color-500));
+    background: var(--tt-color-red-dec-2);
+    .dark & {
+      background: var(--tt-color-red-inc-2);
+    }
     box-shadow: 0 0 0 2px var(--sidebar-bg, var(--tt-card-bg-color));
   }
 

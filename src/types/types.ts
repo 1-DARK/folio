@@ -633,6 +633,9 @@ export type Page = {
   generalAccessRole: PageRole;
 
   ownerId: ID | null;
+  /** Who last changed the page. Set by a database trigger (migration 036),
+   *  never written by the client. Missing on pages loaded before it. */
+  editedBy?: ID | null;
   deletedAt?: number | null;
 };
 

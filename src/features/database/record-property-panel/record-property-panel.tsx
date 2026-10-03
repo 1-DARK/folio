@@ -19,6 +19,11 @@ import { DateCellDisplay } from "src/features/database/primitives/date-cell-disp
 import { EmailCellDisplay } from "src/features/database/primitives/email-cell-display";
 import { UrlCellDisplay } from "src/features/database/primitives/url-cell-display";
 import { PhoneCellDisplay } from "src/features/database/primitives/phone-cell-display";
+import { PersonCellDisplay } from "src/features/database/primitives/person-cell-display";
+import {
+  findPerson,
+  useWorkspacePeople,
+} from "src/features/database/hooks/use-workspace-people";
 import "./record-property-panel.scss";
 import i18n from "src/i18n/config";
 import { useTranslation } from "react-i18next";
@@ -75,6 +80,20 @@ function PropertyRow({
   // components — so it's rendered through DynamicIcon rather than as <Icon />.
   const iconName = PROPERTY_TYPE_ICONS[prop.config.type];
   const { t } = useTranslation();
+  const people = useWorkspacePeople();
+
+  // Created by / Edited by: one person, resolved from the page itself.
+  const personRef = (id: string | null | undefined) => {
+    const person = findPerson(people, id);
+    return (
+      <PersonCellDisplay
+        value={person ? [person] : []}
+        people={people}
+        onChange={() => {}}
+        readonly
+      />
+    );
+  };
 
   const rendered = (() => {
     switch (prop.config.type) {
@@ -172,6 +191,16 @@ function PropertyRow({
           />
         );
 
+      case "person":
+        return (
+          <PersonCellDisplay
+            value={(value as CellValueMap["person"]) ?? []}
+            people={people}
+            onChange={(v) => onChange(v as CellValue)}
+            single={prop.config.limit === "single"}
+          />
+        );
+
       // ── Computed / record-level: read-only, and NOT from values[] ──────────
       // These live on the page itself, not in values[] — reading values[propId]
       // returns null, which is why they rendered empty.
@@ -191,8 +220,13 @@ function PropertyRow({
           />
         );
 
-      // Not implemented yet — person, formula, relation, rollup, created_by,
-      // edited_by. Each needs its own display in the panel; falling through to
+      case "created_by":
+        return personRef(page.ownerId);
+
+      case "edited_by":
+        return personRef(page.editedBy ?? page.ownerId);
+
+      // Not implemented yet — formula, relation, rollup. Each needs its own display in the panel; falling through to
       // null drops the whole row rather than showing a broken one.
       default:
         return null;
