@@ -4,6 +4,7 @@ import type { UseDatabaseReturn } from "./use-database";
 import { recordMatchesFilters } from "../utils/apply-filters";
 import { useSession } from "src/hooks/use-session";
 import { sortRecords } from "../utils/apply-sorts";
+import { usePageTitles } from "./use-page-titles";
 import { useTableLayout } from "./use-table-layout";
 
 export function useTableRecords({
@@ -20,6 +21,8 @@ export function useTableRecords({
   const activeView = db.activeView;
   // For the "Me" person filter.
   const meId = useSession().session?.user.id ?? null;
+  // For relation filters and sorts, which go by the linked pages' titles.
+  const titleOf = usePageTitles();
   const filters = activeView?.filters;
   const sorts = activeView?.sorts;
   const properties = source?.properties;
@@ -29,7 +32,7 @@ export function useTableRecords({
     const props = properties ?? [];
     const filtered = filters?.length
       ? resolvedRecords.filter((r) =>
-          recordMatchesFilters(r, filters, props, { meId }),
+          recordMatchesFilters(r, filters, props, { meId, titleOf }),
         )
       : resolvedRecords;
 
@@ -38,7 +41,7 @@ export function useTableRecords({
       ? filtered.filter((r) => (r.title ?? "").toLowerCase().includes(q))
       : filtered;
 
-    const sorted = sortRecords(searched, sorts ?? [], props);
+    const sorted = sortRecords(searched, sorts ?? [], props, { titleOf });
 
     // Pin the row being created to the end so it doesn't jump under the sort.
     if (!editingRecordId) return sorted;
@@ -48,6 +51,7 @@ export function useTableRecords({
   }, [
     editingRecordId,
     meId,
+    titleOf,
     resolvedRecords,
     filters,
     sorts,

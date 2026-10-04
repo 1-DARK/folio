@@ -25,10 +25,7 @@ export type NumberOperator =
 export type SelectOperator = "is" | "is_not" | "is_empty" | "is_not_empty";
 
 export type MultiSelectOperator =
-  | "contains"
-  | "does_not_contain"
-  | "is_empty"
-  | "is_not_empty";
+  "contains" | "does_not_contain" | "is_empty" | "is_not_empty";
 
 export type StatusOperator = "is" | "is_not" | "is_empty" | "is_not_empty";
 
@@ -55,10 +52,7 @@ export type DateWithinRange =
   | "the_past_30_days";
 
 export type RelationOperator =
-  | "contains"
-  | "does_not_contain"
-  | "is_empty"
-  | "is_not_empty";
+  "contains" | "does_not_contain" | "is_empty" | "is_not_empty";
 
 export type FormulaOperator =
   | "contains"
@@ -69,10 +63,7 @@ export type FormulaOperator =
   | "is_not_empty";
 
 export type PersonOperator =
-  | "contains"
-  | "does_not_contain"
-  | "is_empty"
-  | "is_not_empty";
+  "contains" | "does_not_contain" | "is_empty" | "is_not_empty";
 
 // All operators combined (useful for storing in a generic filter row)
 export type FilterOperator =
@@ -142,7 +133,10 @@ export interface DateFilterRule extends BaseFilterRule {
 export interface RelationFilterRule extends BaseFilterRule {
   propertyType: "relation";
   operator: RelationOperator;
-  value: string; // record id
+  /** Linked page ids picked in the filter (any of them matches). Older
+   *  rules hold a typed string, matched against the linked pages' titles. */
+  value: string | string[];
+  labels?: string[];
 }
 
 export interface FormulaFilterRule extends BaseFilterRule {

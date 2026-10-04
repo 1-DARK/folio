@@ -87,7 +87,8 @@ function makeFilterRule(property: DatabaseProperty): FilterRule {
         propertyId: property.id,
         propertyType: "relation",
         operator: "contains",
-        value: "",
+        value: [],
+        labels: [],
       };
     case "formula":
       return {

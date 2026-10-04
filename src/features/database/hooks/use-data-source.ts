@@ -8,6 +8,7 @@ import type {
   PropertyType,
 } from "src/types";
 import { resolveRecordFormulas } from "../../../lib/resolve-records-formula";
+import { resolveMirrorRelations } from "src/lib/relation-ids";
 import { usePagesBase, useRows } from "src/hooks/use-pages";
 import { usePatchPage } from "src/hooks/use-patch-page";
 import { patchPage } from "src/api/pages";
@@ -462,9 +463,17 @@ export function useDataSource(
     [patchSourceAsync],
   );
 
+  // Derived values, computed for the filter / sort / group pipeline:
+  // mirror-relation links first (formulas may read them), then formulas.
   const resolvedRecords = useMemo(
-    () => (source ? resolveRecordFormulas(rows, source.properties) : []),
-    [rows, source],
+    () =>
+      source
+        ? resolveRecordFormulas(
+            resolveMirrorRelations(rows, source.properties, allPages ?? []),
+            source.properties,
+          )
+        : [],
+    [rows, source, allPages],
   );
 
   return {

@@ -57,3 +57,45 @@ export function linkedIds(
   }
   return relationRecordIds(record.values?.[prop.id]);
 }
+
+/**
+ * Returns a copy of `rows` with each mirror relation's links written into
+ * `values[mirrorPropId]`, so filters, sorts and formulas see both sides of a
+ * two-way relation. Derived like formula values: never saved (writes go
+ * through the raw rows).
+ */
+export function resolveMirrorRelations<
+  T extends { id: ID; values?: Record<ID, unknown> | null },
+>(rows: T[], properties: DatabaseProperty[], pages: Page[]): T[] {
+  const mirrors = properties.filter(isMirrorRelation);
+  if (!mirrors.length || !pages.length) return rows;
+
+  // One pass over the pages per mirror: row id → the origin rows linking to it.
+  const linksByMirror = mirrors.map((prop) => {
+    const originPropId =
+      prop.config.type === "relation"
+        ? prop.config.mirrorPropertyId
+        : undefined;
+    const targetSourceId =
+      prop.config.type === "relation" ? prop.config.targetSourceId : undefined;
+    const byRow = new Map<ID, ID[]>();
+    if (!originPropId) return { prop, byRow };
+    for (const p of pages) {
+      if (p.sourceId !== targetSourceId || p.deletedAt != null) continue;
+      for (const rowId of relationRecordIds(p.values?.[originPropId])) {
+        const list = byRow.get(rowId);
+        if (list) list.push(p.id);
+        else byRow.set(rowId, [p.id]);
+      }
+    }
+    return { prop, byRow };
+  });
+
+  return rows.map((row) => {
+    const values: Record<ID, unknown> = { ...(row.values ?? {}) };
+    for (const { prop, byRow } of linksByMirror) {
+      values[prop.id] = byRow.get(row.id) ?? [];
+    }
+    return { ...row, values } as T;
+  });
+}
