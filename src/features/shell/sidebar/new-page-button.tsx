@@ -22,7 +22,6 @@ export const NewPageButton = memo(
         size="large"
         className={className}
         aria-label={t("page.newPage")}
-        tooltip={t("page.newPage")}
         disabled={isPending}
         onClick={() => {
           createPageInSpace(t("page.newPage"))

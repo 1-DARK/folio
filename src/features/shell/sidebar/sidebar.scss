@@ -1,5 +1,7 @@
 :root {
-  --sidebar-bg-color: rgb(249, 248, 245);
+  // Warm gray, a step darker than the old rgb(249, 248, 245) so it separates
+  // from the white page. Keep --sidebar-fog-color in step with it.
+  --sidebar-bg-color: rgb(244, 243, 239);
   // --sidebar-bg-color: rgb(251, 251, 251);  //rgba(252, 249, 249, 1);
   --sidebar-shadow-color: rgba(240, 239, 237, 0.737);
   --sidebar-text-color: var(--tt-theme-text);
@@ -7,7 +9,10 @@
   --sidebar-accent: #7c3aed;
   --sidebar-border-color: rgba(0, 0, 0, 0.08);
   --sidebar-stroke-color: var(--sidebar-bg-color);
-  --sidebar-fog-color: rgba(249, 248, 245, 0.879);
+  --sidebar-fog-color: rgba(244, 243, 239, 0.879);
+  // Faint glow along the docked sidebar's right edge. Kept well under the
+  // floating sidebar's --tt-shadow-elevated-md so the two still read apart.
+  --sidebar-edge-shadow: 4px 0 12px -10px rgba(0, 0, 0, 0.12);
 }
 
 .dark {
@@ -21,6 +26,8 @@
   --sidebar-border-color: var(--tt-border-color);
   --sidebar-stroke-color: var(--sidebar-bg-color);
   --sidebar-fog-color: #1f1e1ec4;
+  // Shadows barely show on dark backgrounds, so this one is stronger.
+  --sidebar-edge-shadow: 4px 0 12px -10px rgba(0, 0, 0, 0.35);
 }
 .sidebar {
   .sidebar-collapse-toggle {
@@ -62,7 +69,7 @@
   font-weight: 500;
   background: var(--sidebar-bg-color);
   border-right: 1px solid var(--sidebar-border-color);
-  box-shadow: none;
+  box-shadow: var(--sidebar-edge-shadow);
   padding: 0;
   z-index: 10;
   transition: width 200ms ease;
@@ -345,6 +352,7 @@
 .sidebar--collapsed {
   background: transparent;
   border: none;
+  box-shadow: none;
   position: relative;
 
   .sidebar-nav {

@@ -33,6 +33,7 @@ import { useUnreadCounts } from "src/hooks/use-chat";
 import { InboxIcon } from "src/components/tiptap-icons";
 import { useGuidesRead } from "./use-guides-read";
 import "./home-page-content.scss";
+import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
 
 // Home: search or create first, then favourite (or pinned) pages, then
 // recent pages grouped by day, then the next guide to read.
@@ -238,6 +239,7 @@ export function HomePageContent({ userName }: { userName?: string }) {
       <div className="home-calm">
         <header className="home-calm__header">
           <Greeting name={userName} />
+          {!isMobile && <Spacer size={13} />}
           {space.kind === "teamspace" && (
             <div className="home-calm__space">
               {space.page && (

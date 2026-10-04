@@ -296,8 +296,44 @@
   "home": {
     "guides": {
       "buttons": "Buttons",
-      "containers": "Containers"
+      "containers": "Containers",
+      "gettingStarted": "Getting started with Folio",
+      "blocks": "Write with blocks",
+      "databases": "Organize anything with databases",
+      "collaborate": "Work together: comments, suggestions and rooms"
     },
+    "search": {
+      "label": "Search or create a page",
+      "placeholder": "Search your pages, or type a title to create one",
+      "create": "Create “{{title}}”"
+    },
+    "actions": {
+      "template": "Use a template",
+      "inbox": "Inbox",
+      "chats": "Chats"
+    },
+    "place": {
+      "private": "Private",
+      "shared": "Shared"
+    },
+    "day": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "Earlier this week",
+      "older": "Older"
+    },
+    "favorites": "Favorites",
+    "pinned": "Pinned",
+    "recent": "Recent",
+    "showMore": "Show more",
+    "readMinutes": "{{count}} min read",
+    "learnProgress": "Learn Folio · {{read}} of {{total}}",
+    "learnStart": "Start with “{{title}}”",
+    "learnContinue": "Continue with “{{title}}”",
+    "learnDone": "You've read every guide.",
+    "learnAll": "All guides",
+    "learnHide": "Hide guides",
+    "learnRead": "Read",
     "recentlyVisited": "Recently visited",
     "earlier": "Earlier",
     "edited": "Edited {{time}}",

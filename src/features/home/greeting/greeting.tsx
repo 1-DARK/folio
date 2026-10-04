@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-// Time-of-day greeting for the home page ("Good afternoon, Jule").
+// Time-of-day greeting for the home page ("🌅 Good morning, Jule").
 // Set in the app's own UI font, bold with tight tracking, like Notion's home
 // heading, so it reads as part of the layout rather than a decorative serif.
 
-function getGreetingKey(): string {
+type Period = "morning" | "afternoon" | "evening" | "night";
+
+const EMOJI: Record<Period, string> = {
+  morning: "🌅",
+  afternoon: "☀️",
+  evening: "🌆",
+  night: "🌙",
+};
+
+function getPeriod(): Period {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "greeting.morning";
-  if (hour >= 12 && hour < 18) return "greeting.afternoon";
-  if (hour >= 18 && hour < 22) return "greeting.evening";
-  return "greeting.night";
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "afternoon";
+  if (hour >= 18 && hour < 22) return "evening";
+  return "night";
 }
 
 interface GreetingProps {
@@ -20,7 +29,7 @@ interface GreetingProps {
 
 export function Greeting({ name, className }: GreetingProps) {
   const { t } = useTranslation();
-  const [textKey, setTextKey] = useState(getGreetingKey);
+  const [period, setPeriod] = useState(getPeriod);
 
   // Re-check on each minute boundary so the greeting flips at 12:00, 18:00…
   useEffect(() => {
@@ -29,8 +38,8 @@ export function Greeting({ name, className }: GreetingProps) {
     const msUntilNextMinute =
       (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
     const timeout = setTimeout(() => {
-      setTextKey(getGreetingKey());
-      interval = setInterval(() => setTextKey(getGreetingKey()), 60_000);
+      setPeriod(getPeriod());
+      interval = setInterval(() => setPeriod(getPeriod()), 60_000);
     }, msUntilNextMinute);
     return () => {
       clearTimeout(timeout);
@@ -38,7 +47,7 @@ export function Greeting({ name, className }: GreetingProps) {
     };
   }, []);
 
-  const text = t(textKey);
+  const text = t(`greeting.${period}`);
 
   return (
     <h1
@@ -57,6 +66,10 @@ export function Greeting({ name, className }: GreetingProps) {
         color: "inherit",
       }}
     >
+      {/* Decorative: screen readers just read the greeting. */}
+      <span aria-hidden="true" style={{ marginRight: "0.3em" }}>
+        {EMOJI[period]}
+      </span>
       {name ? t("greeting.withName", { greeting: text, name }) : text}
     </h1>
   );
