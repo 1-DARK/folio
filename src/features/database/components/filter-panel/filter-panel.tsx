@@ -109,6 +109,15 @@ function makeFilterRule(property: DatabaseProperty): FilterRule {
         value: [],
         labels: [],
       };
+    case "rollup":
+      // Compared as a number (counts, sums, percents) or a date.
+      return {
+        id: nanoid(),
+        propertyId: property.id,
+        propertyType: "rollup" as never,
+        operator: (operator ?? "equals") as never,
+        value: "",
+      };
     default:
       return {
         id: nanoid(),

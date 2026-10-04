@@ -1,5 +1,6 @@
 import type {
   CellValue,
+  ConfigOf,
   DatabaseProperty,
   DatabaseView,
   Page,
@@ -29,6 +30,7 @@ import { RelationCell } from "../relation-cell";
 import { RollupCell } from "../rollup-cell";
 import { PhoneCell } from "../phone-cell";
 import { memo } from "react";
+import { useWorkspacePeople } from "../../../hooks/use-workspace-people";
 
 function CellImpl({
   property,
@@ -224,22 +226,17 @@ function CellImpl({
       );
 
     // ── Read-only / computed: always readonly, no onChange effect ────────────
-    case "formula": {
-      const computed = evaluateFormula(config.expression, {
-        properties: properties ?? [],
-        cellValues: record.values as Record<string, CellValue>,
-        page: record,
-      });
+    case "formula":
       return (
-        <FormulaCell
-          value={computed as CellValue<"formula"> | null}
+        <ComputedFormulaCell
           config={config}
+          properties={properties ?? []}
+          record={record}
           onChange={onChange as (v: CellValue<"formula"> | null) => void}
           unwrapped={unwrapped}
           className={`db-cell ${view?.type === "gallery" || view?.type === "board" ? "db-cell-board-view" : ""}`}
         />
       );
-    }
 
     case "created_time":
       return (
@@ -300,6 +297,43 @@ function CellImpl({
       return null;
     }
   }
+}
+
+// A formula cell: evaluated against the row's values (rollups and mirror
+// links included when the row comes from the resolved pipeline), with
+// people's names for Created by / Edited by. Its own component so the
+// people hook isn't called inside CellImpl's switch.
+function ComputedFormulaCell({
+  config,
+  properties,
+  record,
+  onChange,
+  unwrapped,
+  className,
+}: {
+  config: ConfigOf<"formula">;
+  properties: DatabaseProperty[];
+  record: Page;
+  onChange: (v: CellValue<"formula"> | null) => void;
+  unwrapped?: boolean;
+  className: string;
+}) {
+  const people = useWorkspacePeople();
+  const computed = evaluateFormula(config.expression, {
+    properties,
+    cellValues: record.values as Record<string, CellValue>,
+    page: record,
+    personName: (id) => people.find((p) => p.id === id)?.name,
+  });
+  return (
+    <FormulaCell
+      value={computed as CellValue<"formula"> | null}
+      config={config}
+      onChange={onChange}
+      unwrapped={unwrapped}
+      className={className}
+    />
+  );
 }
 
 export const Cell = memo(CellImpl);

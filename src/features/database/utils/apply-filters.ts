@@ -116,6 +116,49 @@ function matchesRule(
     return true;
   }
 
+  // Rollups are resolved into values upstream (resolveRecordRollups). They
+  // compare as numbers (count, sum, percent…) or, for earliest / latest
+  // date, as days.
+  if ((rule.propertyType as string) === "rollup") {
+    if (hasNoValue) return true;
+    const toComparable = (v: unknown): number | null => {
+      if (typeof v === "number") return v;
+      if (typeof v !== "string" || v.trim() === "") return null;
+      if (!isNaN(Number(v))) return Number(v);
+      const d = new Date(v);
+      return isNaN(d.getTime())
+        ? null
+        : new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    };
+    const a = toComparable(value);
+    const b = toComparable(ruleValue);
+    if (a !== null && b !== null) {
+      switch (op) {
+        case "equals":
+          return a === b;
+        case "does_not_equal":
+          return a !== b;
+        case "greater_than":
+          return a > b;
+        case "greater_than_or_equal":
+          return a >= b;
+        case "less_than":
+          return a < b;
+        case "less_than_or_equal":
+          return a <= b;
+      }
+    }
+    if (op === "does_not_equal") return a === null || a !== b;
+    if (a === null || b === null) {
+      // Text rollups ("Show original"): compare as text.
+      const text = String(value ?? "").toLowerCase();
+      const q = String(ruleValue).toLowerCase();
+      if (op === "equals") return text === q;
+      if (op === "contains") return text.includes(q);
+      return false;
+    }
+  }
+
   if (rule.propertyType === "relation") {
     // The cell holds linked page ids (mirror sides are resolved into values
     // upstream, see resolveMirrorRelations).

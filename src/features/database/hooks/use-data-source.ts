@@ -9,6 +9,9 @@ import type {
 } from "src/types";
 import { resolveRecordFormulas } from "../../../lib/resolve-records-formula";
 import { resolveMirrorRelations } from "src/lib/relation-ids";
+import { resolveRecordRollups } from "src/lib/compute-rollup";
+import { useDataSources } from "src/hooks/use-data-sources";
+import { useWorkspacePeople } from "./use-workspace-people";
 import { usePagesBase, useRows } from "src/hooks/use-pages";
 import { usePatchPage } from "src/hooks/use-patch-page";
 import { patchPage } from "src/api/pages";
@@ -463,18 +466,28 @@ export function useDataSource(
     [patchSourceAsync],
   );
 
-  // Derived values, computed for the filter / sort / group pipeline:
-  // mirror-relation links first (formulas may read them), then formulas.
-  const resolvedRecords = useMemo(
-    () =>
-      source
-        ? resolveRecordFormulas(
-            resolveMirrorRelations(rows, source.properties, allPages ?? []),
-            source.properties,
-          )
-        : [],
-    [rows, source, allPages],
-  );
+  // Derived values, computed for the filter / sort / group pipeline (and
+  // for formulas reading them): mirror-relation links, then rollups, then
+  // formulas. Never saved; writes go through the raw rows.
+  const { data: allSources } = useDataSources();
+  const people = useWorkspacePeople();
+  const personName = useMemo(() => {
+    const names = new Map(people.map((p) => [p.id, p.name] as const));
+    return (id: string) => names.get(id);
+  }, [people]);
+
+  const resolvedRecords = useMemo(() => {
+    if (!source) return [];
+    const pages = allPages ?? [];
+    const withLinks = resolveMirrorRelations(rows, source.properties, pages);
+    const withRollups = resolveRecordRollups(
+      withLinks,
+      source.properties,
+      (allSources as DataSource[] | undefined) ?? [],
+      pages,
+    );
+    return resolveRecordFormulas(withRollups, source.properties, personName);
+  }, [rows, source, allPages, allSources, personName]);
 
   return {
     source,

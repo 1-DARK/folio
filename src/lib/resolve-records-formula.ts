@@ -29,6 +29,8 @@ import { evaluateFormula } from "../features/database/components/formula-editor/
 export function resolveRecordFormulas(
   rows: Page[],
   properties: DatabaseProperty[],
+  /** Person id → name, so Created by / Edited by read as names. */
+  personName?: (id: string) => string | undefined,
 ): Page[] {
   const formulaProps = properties.filter((p) => p.config.type === "formula");
   if (!formulaProps.length) return rows;
@@ -41,6 +43,7 @@ export function resolveRecordFormulas(
         properties,
         cellValues: values as Record<string, CellValue>,
         page: row,
+        personName,
       });
     }
     return { ...row, values };
