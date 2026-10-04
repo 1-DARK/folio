@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { SquarePen } from "lucide-react";
+import { TbEdit } from "react-icons/tb";
+import { SB_ICON } from "./sidebar-icon";
 import { useCreatePageInSpace } from "src/api/use-create-page-in-space";
 import { useActivePageActions } from "../../pages/context/active-page-context";
 import { useIsMobile } from "src/hooks/use-breakpoint";
@@ -22,6 +23,7 @@ export const NewPageButton = memo(
         size="large"
         className={className}
         aria-label={t("page.newPage")}
+        tooltip={t("page.newPage")}
         disabled={isPending}
         onClick={() => {
           createPageInSpace(t("page.newPage"))
@@ -34,11 +36,7 @@ export const NewPageButton = memo(
         }}
         variant="ghost"
       >
-        <SquarePen
-          className="tiptap-button-icon"
-          size={17}
-          // style={{ color: "var(--tt-text-primary)" }}
-        />
+        <TbEdit {...SB_ICON} className="tiptap-button-icon" />
         {label && (
           <span className="tiptap-button-text">{t("page.newPage")}</span>
         )}

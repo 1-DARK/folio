@@ -5,7 +5,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
-import { Ellipsis, Plus, PencilIcon, Trash2 } from "lucide-react";
+import { Plus, PencilIcon, Trash2 } from "lucide-react";
+import { TbDots } from "react-icons/tb";
+import { SB_ICON_SM } from "../../shell/sidebar/sidebar-icon";
 import type { Page } from "src/types";
 import { useActivePage } from "../context/active-page-context";
 import { useCreatePage } from "src/hooks/use-create-page";
@@ -66,7 +68,7 @@ export function PageItemOptions({
         }}
         tooltip={"Options"}
       >
-        <Ellipsis size={14} className="tiptap-button-icon" />
+        <TbDots {...SB_ICON_SM} className="tiptap-button-icon" />
       </Button>
     );
   }
@@ -87,7 +89,7 @@ export function PageItemOptions({
             style={{ opacity: shouldShow ? 1 : 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <Ellipsis size={14} className="tiptap-button-icon" />
+            <TbDots {...SB_ICON_SM} className="tiptap-button-icon" />
           </Button>
         </PopoverTrigger>
         <PopoverContent style={{ zIndex: 9555 }}>

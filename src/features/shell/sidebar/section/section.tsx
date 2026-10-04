@@ -9,14 +9,15 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import { Check } from "lucide-react";
 import {
-  ChevronRight,
-  ChevronDown,
-  Plus,
-  MoreHorizontal,
-  Check,
-  LibraryBig,
-} from "lucide-react";
+  TbBooks,
+  TbChevronDown,
+  TbChevronRight,
+  TbDots,
+  TbPlus,
+} from "react-icons/tb";
+import { SB_ICON_SM } from "../sidebar-icon";
 
 import { readStorage, writeStorage } from "src/lib/local-storage";
 
@@ -267,9 +268,9 @@ export function Section({
             }}
           >
             {isCollapsed ? (
-              <ChevronRight size={12} />
+              <TbChevronRight size={12} strokeWidth={2} />
             ) : (
-              <ChevronDown size={12} />
+              <TbChevronDown size={12} strokeWidth={2} />
             )}
           </span>
         )}
@@ -289,7 +290,7 @@ export function Section({
                 aria-label={"View Library"}
                 onClick={onLibraryClick}
               >
-                <LibraryBig className="tiptap-button-icon" size={15} />
+                <TbBooks className="tiptap-button-icon" {...SB_ICON_SM} />
               </Button>
             )}
             {onAddClick && (
@@ -300,7 +301,7 @@ export function Section({
                 aria-label={addLabel}
                 onClick={onAddClick}
               >
-                <Plus className="tiptap-button-icon" size={15} />
+                <TbPlus className="tiptap-button-icon" {...SB_ICON_SM} />
               </Button>
             )}
             {hasMenu && (
@@ -312,7 +313,7 @@ export function Section({
                 aria-label={menuLabel}
                 onClick={() => setMenuOpen((v) => !v)}
               >
-                <MoreHorizontal className="tiptap-button-icon" size={15} />
+                <TbDots className="tiptap-button-icon" {...SB_ICON_SM} />
               </Button>
             )}
           </div>

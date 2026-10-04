@@ -1,0 +1,122 @@
+
+// A sidebar row (SidebarNavRow). Sizes and colors come from the --sb-*
+// tokens in sidebar.scss, shared with the page rows (page-item.scss).
+//
+// Icon column: the row's background starts where a page row's does, and
+// 6px padding + a 20px icon box + 7px gap puts the label on the same
+// line as page titles.
+
+.sb-nav-row {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  height: var(--sb-row-h);
+  padding: 0 8px 0 6px;
+  border-radius: var(--sb-row-radius);
+  font-family: var(--sb-font);
+  font-size: var(--sb-font-size);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--sb-row-color);
+  cursor: pointer;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+
+  &:hover {
+    background: var(--sb-hover-bg);
+    color: var(--sb-active-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tt-brand-color-500);
+    outline-offset: -2px;
+  }
+
+  &.is-active {
+    background: var(--sb-active-bg);
+    color: var(--sb-active-color);
+    font-weight: 600;
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    color: var(--sb-icon-color);
+    transition: color 0.12s ease;
+
+    svg {
+      display: block;
+    }
+  }
+
+  &:hover &__icon,
+  &.is-active &__icon {
+    color: var(--sb-active-color);
+  }
+
+  &__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    // the 1px nudge keeps the text optically centred against the icon
+    padding-top: 1px;
+  }
+
+  &__trailing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: none;
+  }
+
+  &__count {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    background: var(--tt-color-red-dec-2);
+    .dark & {
+      background: var(--tt-color-red-inc-2);
+    }
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__hint {
+    font-family: var(--sb-font);
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--sb-label-color);
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+
+  &:hover &__hint,
+  &:focus-visible &__hint {
+    opacity: 1;
+  }
+}
+
+// Touch: no hover, so the hint would never show; drop it.
+@media (hover: none) {
+  .sb-nav-row__hint {
+    display: none;
+  }
+}

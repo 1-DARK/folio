@@ -13,6 +13,26 @@
   // Faint glow along the docked sidebar's right edge. Kept well under the
   // floating sidebar's --tt-shadow-elevated-md so the two still read apart.
   --sidebar-edge-shadow: 4px 0 12px -10px rgba(0, 0, 0, 0.12);
+
+  // ── Sidebar rows: one font, one height, one set of colors ──
+  // Used by the nav rows (sidebar-nav-row.scss), the page rows
+  // (page-item.scss) and the section labels (section.scss).
+  // The system UI font: Segoe UI Variable on Windows, SF on macOS.
+  --sb-font: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif,
+    -apple-system, BlinkMacSystemFont, system-ui, Helvetica, Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --sb-font-size: 14px;
+  --sb-row-h: 28px;
+  --sb-row-radius: 6px;
+  --sb-row-color: #4a4844;
+  --sb-active-color: #2f2e2b;
+  --sb-icon-color: #8a8781;
+  --sb-label-color: #9b9893;
+  --sb-hover-bg: rgba(55, 53, 47, 0.05);
+  --sb-active-bg: rgba(55, 53, 47, 0.08);
+  --sb-count-bg: rgba(55, 53, 47, 0.08);
+  --sb-count-color: #6f6c66;
+  --sb-divider: rgba(55, 53, 47, 0.08);
 }
 
 .dark {
@@ -28,6 +48,23 @@
   --sidebar-fog-color: #1f1e1ec4;
   // Shadows barely show on dark backgrounds, so this one is stronger.
   --sidebar-edge-shadow: 4px 0 12px -10px rgba(0, 0, 0, 0.35);
+
+  --sb-row-color: #c3c1bc;
+  --sb-active-color: #ecebe8;
+  --sb-icon-color: #8f8d88;
+  --sb-label-color: #7f7d78;
+  --sb-hover-bg: rgba(255, 255, 255, 0.05);
+  --sb-active-bg: rgba(255, 255, 255, 0.08);
+  --sb-count-bg: rgba(255, 255, 255, 0.08);
+  --sb-count-color: #a9a7a2;
+  --sb-divider: rgba(255, 255, 255, 0.07);
+}
+
+// Touch targets: taller rows on phones and tablets.
+@media (max-width: 768px) {
+  :root {
+    --sb-row-h: 36px;
+  }
 }
 .sidebar {
   .sidebar-collapse-toggle {
@@ -57,11 +94,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  font-family:
-    Inter,
-    -apple-system,
-    system-ui,
-    sans-serif;
+  font-family: var(--sb-font);
   height: 100vh;
   overflow: hidden;
   color: var(--sidebar-text-color);
@@ -302,11 +335,10 @@
 }
 
 // ── Page item ──
-:root {
-  --page-item-active-bg-color: rgba(0, 0, 0, 0.05);
-}
+// Listed under .dark too so the var() resolves to the dark value there.
+:root,
 .dark {
-  --page-item-active-bg-color: rgba(255, 255, 255, 0.07);
+  --page-item-active-bg-color: var(--sb-active-bg);
 }
 
 .page-icon {

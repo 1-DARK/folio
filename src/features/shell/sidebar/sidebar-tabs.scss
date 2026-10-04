@@ -1,33 +1,38 @@
 $ease-out: cubic-bezier(0.32, 0.72, 0, 1);
 $dur: 0.3s;
 
-// One rounded strip: tabs (or the search input) + the search toggle.
-.sb-tabs-shell {
+:root{
+  --sb-row-h: 34px;
+}
+
+
+// ── Top navigation: Search · Home · Inbox · Chats as rows ──────────────────
+// The rows themselves are SidebarNavRow (sidebar-nav-row.scss). The 5px
+// left inset lines their backgrounds up with the page rows in the body
+// (the header has 5px of padding, the body 10px).
+.sb-nav {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
+  gap: 1px;
   width: 100%;
   min-width: 0;
-  height: 40px;
-  padding: 4px;
+  padding-left: 5px;
   box-sizing: border-box;
 }
 
-// Tabs and search input share one grid cell and cross-animate.
-.sb-tabs-stack {
+// Search row and the find input share one grid cell and cross-fade.
+.sb-nav-search {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  flex: 1 1 0;
-  min-width: 0;
-  height: 100%;
+  height: var(--sb-row-h);
 
   > * {
     grid-area: 1 / 1;
     min-width: 0;
   }
 
-  &__tabs,
-  &.is-searching &__search {
+  &__row,
+  &.is-searching &__input {
     opacity: 1;
     transform: none;
     visibility: visible;
@@ -38,8 +43,8 @@ $dur: 0.3s;
       visibility 0s linear 0s;
   }
 
-  &__search,
-  &.is-searching &__tabs {
+  &__input,
+  &.is-searching &__row {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -49,149 +54,65 @@ $dur: 0.3s;
       visibility 0s linear $dur;
   }
 
-  &__search {
-    transform: translateX(10px);
+  &__input {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    transform: translateX(8px);
+
+    .sb-search {
+      flex: 1;
+      min-width: 0;
+      height: var(--sb-row-h);
+      min-height: 0;
+      padding: 0 2px 0 8px;
+      border-radius: var(--sb-row-radius);
+      font-family: var(--sb-font);
+    }
+
+    .sb-search__input {
+      font-family: var(--sb-font);
+      font-size: var(--sb-font-size);
+    }
   }
 
-  &.is-searching &__tabs {
-    transform: translateX(-10px);
+  &.is-searching &__row {
+    transform: translateX(-8px);
   }
 
-  .sb-search {
-    height: 100%;
-    min-height: 0;
-    padding: 0 2px 0 6px;
-    border: none;
-    background: transparent;
+  &__close {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: var(--sb-row-h);
+    height: var(--sb-row-h);
+    border-radius: var(--sb-row-radius);
+    color: var(--sb-icon-color);
+    cursor: pointer;
 
-    &:focus-within {
-      border: none;
+    &:hover {
+      background: var(--sb-hover-bg);
+      color: var(--sb-active-color);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tt-brand-color-500);
+      outline-offset: -2px;
     }
   }
 }
 
-.sb-tabs {
+// Library · Templates · Trash, under the page tree.
+.sb-nav-bottom {
   display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 100%;
-}
-
-.sb-tab {
-  display: inline-flex;
-  align-items: center;
-  //height: 100%;
-  height: 32px !important;
-  min-height: 32px !important;
-  padding: 0 8px;
-  border: none;
-  border-radius: calc(var(--tt-radius-md) - 2px);
-  background: transparent;
-  font: inherit;
-  color: var(--tt-text-secondary);
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-
-  &:hover {
-    color: var(--tt-text-primary);
-    background: color-mix(in srgb, var(--tt-text-primary) 6%, transparent);
-  }
-
-  &__icon {
-    position: relative;
-    display: inline-flex;
-    flex-shrink: 0;
-  }
-
-  &__badge {
-    position: absolute;
-    top: -6px;
-    right: -8px;
-    min-width: 14px;
-    height: 14px;
-    padding: 0 3px;
-    border-radius: 999px;
-    font-size: 9.5px;
-    font-weight: 600;
-    line-height: 14px;
-    text-align: center;
-    color: #fff;
-    background: var(--tt-color-red-dec-2);
-    .dark & {
-      background: var(--tt-color-red-inc-2);
-    }
-    box-shadow: 0 0 0 2px var(--sidebar-bg, var(--tt-card-bg-color));
-  }
-
-  &__label {
-    max-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    opacity: 0;
-    font-size: 13.5px;
-    font-weight: 600;
-    transition:
-      max-width $dur $ease-out,
-      opacity 0.2s ease,
-      margin 0.2s ease;
-  }
-
-  &.is-active {
-    color: var(--tt-text-primary);
-    background: color-mix(in srgb, var(--tt-text-primary) 9%, transparent);
-  }
-
-  &.is-active &__label {
-    max-width: 110px;
-    margin-left: 8px;
-    opacity: 1;
-  }
-}
-
-.sb-find-toggle {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 32px;
-  height: 100%;
-  border: none;
-  border-radius: calc(var(--tt-radius-md) - 2px);
-  background: transparent;
-  color: var(--tt-text-secondary);
-  cursor: pointer;
-
-  &:hover,
-  &.is-on {
-    color: var(--tt-text-primary);
-    background: color-mix(in srgb, var(--tt-text-primary) 6%, transparent);
-  }
-
-  &__icon {
-    position: absolute;
-    transition:
-      opacity 0.18s ease,
-      transform $dur $ease-out;
-
-    &.is-close {
-      opacity: 0;
-      transform: rotate(-90deg) scale(0.6);
-    }
-  }
-
-  &.is-on &__icon {
-    &.is-search {
-      opacity: 0;
-      transform: rotate(90deg) scale(0.6);
-    }
-
-    &.is-close {
-      opacity: 1;
-      transform: none;
-    }
-  }
+  flex-direction: column;
+  gap: 1px;
+  margin: 12px 0 20px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sb-divider);
 }
 
 // ── Top row: workspace switcher, borderless ────────────────────────────────
@@ -321,9 +242,8 @@ $dur: 0.3s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sb-tabs-stack > *,
-  .sb-tab__label,
-  .sb-find-toggle__icon,
+  .sb-nav-search > *,
+  .sb-nav-row,
   .sb-top__collapse,
   .sb-top__back {
     transition-duration: 0s !important;

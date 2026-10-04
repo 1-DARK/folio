@@ -1,32 +1,20 @@
 import { useNavigate } from "@tanstack/react-location";
-import { LibraryBig } from "lucide-react";
 import { memo } from "react";
-import { Button } from "src/components/tiptap-ui-primitive/button";
-import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
+import { useTranslation } from "react-i18next";
+import { TbBooks } from "react-icons/tb";
+import { SidebarNavRow } from "./sidebar-nav-row";
+import { SB_ICON } from "./sidebar-icon";
 
 export const LibraryPaletteTrigger = memo(() => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const handleLibraryClick = () => {
-    navigate({ to: "/library/Recents" });
-  };
 
   return (
-    <Button
-      onClick={handleLibraryClick}
-      size="large"
-      variant="ghost"
-      style={{ width: "100%", justifyContent: "flex-start" }}
-    >
-      <LibraryBig className="tiptap-button-icon" />
-      <Spacer orientation="horizontal" size={2} />
-
-      <span
-        className="tiptap-button-text"
-        style={{ opacity: 1, display: "block" }}
-      >
-        Library
-      </span>
-    </Button>
+    <SidebarNavRow
+      icon={<TbBooks {...SB_ICON} />}
+      label={t("sidebar.library", "Library")}
+      onClick={() => navigate({ to: "/library/Recents" })}
+    />
   );
 });
 LibraryPaletteTrigger.displayName = "LibraryPaletteTrigger";

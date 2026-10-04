@@ -12,70 +12,96 @@
 .page-item-tree {
   display: flex;
   flex-direction: column;
-  gap: 2.5px;
+  gap: 0; // rows sit ~1px apart (PageItem's own 1px spacer), like the nav rows
 }
 
 .page-options-btn{
   color: var(--tt-text-color);
 }
+// A page row in the sidebar. Height, font and colors come from the
+// sidebar row tokens (--sb-*, sidebar.scss) so pages line up with the
+// Search / Home / Library rows: 6px in, a 20px icon box, 7px to the title.
 .page-item {
-  border-radius: var(--tt-radius-sm) !important;
+  border-radius: var(--sb-row-radius, var(--tt-radius-sm)) !important;
   gap: 0;
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 2.5px 5px;
-  opacity:1;
-  font-weight: 400;
+  min-height: 28px;
+  height: var(--sb-row-h, 28px);
+  padding: 0 4px 0 6px;
   overflow: hidden;
   text-overflow: clip;
-  color: #5f5e59;
+  font-family: var(--sb-font);
+  font-weight: 400;
+  color: var(--sb-row-color, #5f5e59);
+  max-width: calc(var(--sidebar-width, 290px) - 5px);
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 
-  .dark & {
-    color: #bcbab6;
+  // The icon and the hover caret take the same 20px column.
+  > .page-icon,
+  > .chevron {
+    flex: none;
+    margin-right: 6px;
   }
 
-  //  min-height: 27px;
-    height: 29.5px;
-    
-  
- // min-width: 200px;
+  > .page-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--sb-icon-color);
+    opacity: 1 !important;
+
+    svg {
+      display: block;
+    }
+  }
+
+  > .chevron {
+    margin-left: 2px;
+    margin-right: 8px; // 2 + 16 + 8 = the icon's 20 + 6
+  }
+
   &:hover {
-    background: var(--page-item-active-bg-color);
-    color: var(--sidebar-text-color);
+    background: var(--sb-hover-bg, var(--page-item-active-bg-color));
+    color: var(--sb-active-color, var(--sidebar-text-color));
 
     .page-options-btn {
       opacity: 1;
     }
+
+    > .page-icon {
+      color: var(--sb-active-color);
+    }
+
+    .page-item-title {
+      max-width: calc(var(--sidebar-width, 290px) - 124px);
+    }
+
+    .page-item-actions {
+      opacity: 1;
+      width: 55px !important;
+      max-width: 55px;
+    }
   }
 
-  .page-icon{
-    opacity: 1 !important;
+  &.teamspace-root{
+    min-height: 34px;
+    height: var(--sb-row-h, 34px);
   }
 
   &.active {
-    .page-item-title{
-       max-width: calc(var(--sidebar-width, 290px) - 124px);
-       line-height: 1.4;
-       font-weight: 500;
-    }
-    background: var(--page-item-active-bg-color);
-    color: var(--tt-text-primary) !important;
-    font-weight: 500;
-    .dark & {
-      color: var(--white);
-    }
-    opacity: 1;
-    min-height: 27px;
-    height: 29px;
+    background: var(--sb-active-bg, var(--page-item-active-bg-color));
+    color: var(--sb-active-color, var(--tt-text-primary)) !important;
 
-
-    .page-icon {
-      opacity: 1 !important;
-      stroke: var(--tt-text-primary);  //currentColor;
+    > .page-icon {
+      color: var(--sb-active-color);
     }
-    .page-icon.emoji{
-      fill: currentColor;
+
+    .page-item-title {
+      max-width: calc(var(--sidebar-width, 290px) - 124px);
+      font-weight: 600;
     }
   }
 
@@ -84,19 +110,9 @@
     align-items: center;
     gap: 1px;
     width: 55px;
-    // flex-shrink: 0;
-    // opacity: 0;
     pointer-events: none;
     transition: opacity 0.1s;
-   
     // no width:0 or overflow:hidden — space is always reserved
-  }
-
-  .page-item-title{
-    color: inherit;
-    font-weight: 500;
-    line-height: 20px !important;
-    font-size: 14.3px !important;
   }
 
   &:hover .page-item-actions,
@@ -107,60 +123,32 @@
     max-width: 55px;
   }
 
-  max-width: calc(var(--sidebar-width, 290px) - 5px);
-
-  &:hover{
-    .page-item-title{
-       max-width: calc(var(--sidebar-width, 290px) - 124px);
-      
-      // was 130px at the fixed 290px sidebar → same 168px offset, now live
-   //   max-width: calc(var(--sidebar-width, 290px) - 124px);
-    }
-    .page-item-actions{
-      opacity: 1;
-      width: 55px !important;
-      max-width: 55px;
-    }
-   
+  .page-item-title {
+    color: inherit;
+    font-weight: 400;
+    font-size: var(--sb-font-size, 14px);
+    line-height: 20px;
+    padding-top: 1px;
   }
 }
 
 .page-item-title {
-  font-size: 14px;
-  
-  //font-weight: inherit;
-  // color: #5f5e59;
-
+  font-size: var(--sb-font-size, 14px);
   color: inherit !important;
-  
-  // color: inherit;
   opacity: 1;
-  // was 175px at the fixed 290px sidebar 
-   max-width: calc(var(--sidebar-width, 290px) - 60px);
-
-  flex: 1;           
-  min-width: 0;     
+  max-width: calc(var(--sidebar-width, 290px) - 60px);
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
-  -webkit-font-smoothing: auto;
-  // letter-spacing: 0.1px;
+  font-family: var(--sb-font);
+  -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
   line-height: 1.4;
-  // letter-spacing: -0.01em;
-  font-weight: 500;
-  
-  // line-height: 1.1;
+  font-weight: 400;
   cursor: pointer;
-
-  .dark & {
-    color: #bcbab6;
-  }
-  // &:hover{
-  //   max-width: 144px;
-  // }
 }
 
 .page-expand-btn {

@@ -2,7 +2,7 @@
 .sb-footer {
   flex-shrink: 0;
   padding: 6px 10px 10px;
-  border-top: 1px solid var(--tt-border-color);
+  border-top: 1px solid var(--sb-divider);
 }
 
 .sb-footer__new.tiptap-button {
@@ -14,7 +14,8 @@
   color: var(--tt-text-secondary);
 
   .tiptap-button-text {
-    font-size: 13.5px;
+    font-family: var(--sb-font);
+    font-size: var(--sb-font-size);
     font-weight: 500;
   }
 

@@ -34,8 +34,7 @@ import { CustomizeSidebarPanel } from "./customize-sidebar-panel";
 import { CreateTeamspaceModal } from "../../workspace/teamspaces/create-teamspace-modal";
 import { useIsMobile } from "src/hooks/use-breakpoint";
 import { useNavigate } from "@tanstack/react-location";
-import { Button } from "src/components/tiptap-ui-primitive/button";
-import { Trash2 } from "lucide-react";
+import { TbTrash } from "react-icons/tb";
 import {
   Popover,
   PopoverContent,
@@ -43,7 +42,6 @@ import {
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
 import { TrashPanel } from "../../pages/trash/trash-panel";
-import { Separator } from "src/components/tiptap-ui-primitive/separator";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useCurrentSpace } from "src/hooks/use-current-space";
 import { useTeamspacePins } from "src/hooks/use-teamspace-pins";
@@ -59,6 +57,8 @@ import { ChatsPanel } from "../../chat/chats-panel";
 import { CreateRoomModal, NewDmModal } from "../../chat/chat-modals";
 import { TeamspacesPanel } from "../../workspace/teamspaces/teamspaces-panel/teamspaces-panel";
 import { TeamspaceMembersModal } from "../../workspace/teamspaces/teamspace-members/teamspace-members-modal";
+import { SidebarNavRow } from "./sidebar-nav-row";
+import { SB_ICON } from "./sidebar-icon";
 import "./sidebar-tabs.scss";
 
 const NOOP = () => {};
@@ -87,51 +87,26 @@ function Trash() {
   const navigate = useNavigate();
   const { onCollapsedChange } = useEditorLayout();
 
-  const handleTrashClick = () => {
-    if (isMobile) {
-      navigate({ to: "/trash" });
-      onCollapsedChange(isMobile);
-    }
-  };
+  const row = (
+    <SidebarNavRow
+      icon={<TbTrash {...SB_ICON} />}
+      label={t("sidebar.trash")}
+      onClick={
+        isMobile
+          ? () => {
+              navigate({ to: "/trash" });
+              onCollapsedChange(true);
+            }
+          : undefined
+      }
+    />
+  );
 
-  if (isMobile) {
-    return (
-      <Button
-        variant="ghost"
-        size="large"
-        style={{ width: "100%", justifyContent: "flex-start" }}
-        onClick={handleTrashClick}
-      >
-        <Trash2 className="tiptap-button-icon" />
-        <Spacer orientation="horizontal" size={2} />
-        <span
-          className="tiptap-button-text"
-          style={{ opacity: 1, display: "block" }}
-        >
-          {t("sidebar.trash")}
-        </span>
-      </Button>
-    );
-  }
+  if (isMobile) return row;
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="large"
-          style={{ width: "100%", justifyContent: "flex-start" }}
-        >
-          <Trash2 className="tiptap-button-icon" />
-          <Spacer orientation="horizontal" size={2} />
-          <span
-            className="tiptap-button-text"
-            style={{ opacity: 1, display: "block" }}
-          >
-            {t("sidebar.trash")}
-          </span>
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{row}</PopoverTrigger>
       <PopoverPortal container={document.getElementById("root")}>
         <PopoverContent
           side="right"
@@ -425,17 +400,11 @@ export const SidebarBody = memo(() => {
             </div>
 
             {!peeking && (
-              <>
-                <Spacer orientation="vertical" size={10} />
-                <Separator orientation="horizontal" style={{ height: 0.5 }} />
-                <Spacer orientation="vertical" size={10} />
+              <div className="sb-nav-bottom">
                 <LibraryPaletteTrigger />
-                <Spacer orientation="vertical" size={5} />
                 <TemplatePaletteTrigger />
-                <Spacer orientation="vertical" size={5} />
                 <Trash />
-                <Spacer orientation="vertical" size={25} />
-              </>
+              </div>
             )}
           </>
         );

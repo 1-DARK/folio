@@ -4,7 +4,8 @@ import { useNavigate } from "@tanstack/react-location";
 import { CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { PageItemIcon } from "./page-item-icon";
 import { PageItemOptions } from "./page-item-options";
-import { ArrowRight, Pin, PinOff, Plus } from "lucide-react";
+import { TbArrowRight, TbPin, TbPinnedOff, TbPlus } from "react-icons/tb";
+import { SB_ICON_SM } from "../../shell/sidebar/sidebar-icon";
 import type { ID, Page } from "src/types";
 
 import "./page-item.scss";
@@ -151,7 +152,7 @@ function PageItemView({
       <Spacer orientation="vertical" size={1.1} />
       <CardItemGroup
         orientation="horizontal"
-        className={`page-item ${isActive ? "active" : ""}`}
+        className={`page-item ${isActive ? "active" : ""} ${isTeamspaceRoot ? "teamspace-root" : ""}`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
         onClick={() => onSelect(page.id)}
         onMouseOver={() => setShouldShow(true)}
@@ -168,7 +169,7 @@ function PageItemView({
             }}
           />
         ) : (
-          <PageItemIcon cover={page.cover} />
+          <PageItemIcon cover={page.cover} variant="sidebar" />
         )}
 
         <Spacer orientation="horizontal" size={1} />
@@ -238,9 +239,9 @@ function PageItemView({
                 }}
               >
                 {pinned ? (
-                  <PinOff size={12} className="tiptap-button-icon" />
+                  <TbPinnedOff {...SB_ICON_SM} className="tiptap-button-icon" />
                 ) : (
-                  <Pin size={12} className="tiptap-button-icon" />
+                  <TbPin {...SB_ICON_SM} className="tiptap-button-icon" />
                 )}
               </Button>
             )}
@@ -263,7 +264,7 @@ function PageItemView({
                     setActivePageId(child.id);
                   }}
                 >
-                  <Plus size={12} className="tiptap-button-icon" />
+                  <TbPlus {...SB_ICON_SM} className="tiptap-button-icon" />
                 </Button>
               </>
             )}
@@ -284,7 +285,7 @@ function PageItemView({
                   enterTeamspace();
                 }}
               >
-                <ArrowRight size={12} className="tiptap-button-icon" />
+                <TbArrowRight {...SB_ICON_SM} className="tiptap-button-icon" />
               </Button>
             )}
           </CardItemGroup>

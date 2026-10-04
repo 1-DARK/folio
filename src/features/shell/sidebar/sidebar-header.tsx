@@ -1,4 +1,5 @@
-import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { TbChevronsLeft, TbChevronsRight } from "react-icons/tb";
+import { SB_ICON } from "./sidebar-icon";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "src/components/tiptap-ui-primitive/button";
@@ -49,17 +50,17 @@ export const SidebarHeader = memo(() => {
               }}
             >
               {collapsed ? (
-                <ChevronsRight className="tiptap-button-icon" />
+                <TbChevronsRight {...SB_ICON} className="tiptap-button-icon" />
               ) : (
-                <ChevronsLeft className="tiptap-button-icon" />
+                <TbChevronsLeft {...SB_ICON} className="tiptap-button-icon" />
               )}
             </Button>
           </span>
         </div>
 
-        <Spacer orientation="vertical" size={10} />
+        <Spacer orientation="vertical" size={8} />
         <SidebarTabs />
-        <Spacer orientation="vertical" size={6} />
+        <Spacer orientation="vertical" size={4} />
       </CardItemGroup>
     </CardHeader>
   );
