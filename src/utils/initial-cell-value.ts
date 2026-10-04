@@ -38,7 +38,8 @@ export function initialCellValue(property: DatabaseProperty): CellValue {
     case "checkbox":
       return false; // unchecked is a real, valid default
     case "number":
-      return 0;
+      // Empty until someone types a number (0 is a real value).
+      return null;
     case "text":
     case "title":
       return ""; // content-based, empty string

@@ -228,6 +228,7 @@ function CellImpl({
       const computed = evaluateFormula(config.expression, {
         properties: properties ?? [],
         cellValues: record.values as Record<string, CellValue>,
+        page: record,
       });
       return (
         <FormulaCell

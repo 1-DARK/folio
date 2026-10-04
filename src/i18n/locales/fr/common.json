@@ -945,6 +945,16 @@
       "none": "Aucune personne trouvée",
       "empty": "Vide"
     },
+    "rollup": {
+      "days_one": "{{count}} jour",
+      "days_other": "{{count}} jours"
+    },
+    "reminder": {
+      "title": "Rappel : {{property}}",
+      "today": "{{property}} de « {{title}} » : c'est aujourd'hui.",
+      "tomorrow": "{{property}} de « {{title}} » : c'est demain.",
+      "inDays": "{{property}} de « {{title}} » : dans {{count}} jours."
+    },
     "formulaHelp": {
       "functions": "Fonctions",
       "search": "Rechercher une fonction…",

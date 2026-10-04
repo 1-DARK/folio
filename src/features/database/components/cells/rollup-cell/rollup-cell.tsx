@@ -7,19 +7,29 @@ import type {
 } from "src/types";
 import { computeRollup } from "src/lib/compute-rollup";
 import { useRows } from "src/hooks/use-pages";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 function formatRollup(
   value: string | number | null,
   agg: AggregationFunction,
+  t: TFunction,
+  locale: string,
 ): string {
   if (value === null || value === "") return "";
   if (agg === "earliest_date" || agg === "latest_date") {
-    const d = new Date(value as string);
-    return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
+    const s = String(value);
+    // "YYYY-MM-DD" is a calendar day: build it in local time, not UTC.
+    const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    const d = day
+      ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]))
+      : new Date(s);
+    return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString(locale);
   }
-  if (agg === "date_range") return `${value} days`;
+  if (agg === "date_range")
+    return t("database.rollup.days", { count: Number(value) });
   if (agg.startsWith("percent_")) return `${value}%`;
-  if (typeof value === "number") return value.toLocaleString();
+  if (typeof value === "number") return value.toLocaleString(locale);
   return String(value);
 }
 
@@ -40,6 +50,7 @@ export function RollupCell({
   properties: DatabaseProperty[];
   className?: string;
 }) {
+  const { t, i18n } = useTranslation();
   const relationProp = properties.find(
     (p) => p.id === config.relationPropertyId,
   );
@@ -58,7 +69,7 @@ export function RollupCell({
   const { data: targetRows } = useRows(targetSourceId || "");
 
   const value = computeRollup({
-    record: { values: record.values! },
+    record: { id: record.id, values: record.values ?? {} },
     properties,
     targetSource,
     config,
@@ -80,7 +91,7 @@ export function RollupCell({
           whiteSpace: "nowrap",
         }}
       >
-        {formatRollup(value, config.aggregation)}
+        {formatRollup(value, config.aggregation, t, i18n.language)}
       </span>
     </div>
   );

@@ -19,6 +19,9 @@ import { DateCellDisplay } from "src/features/database/primitives/date-cell-disp
 import { EmailCellDisplay } from "src/features/database/primitives/email-cell-display";
 import { UrlCellDisplay } from "src/features/database/primitives/url-cell-display";
 import { PhoneCellDisplay } from "src/features/database/primitives/phone-cell-display";
+import { RelationCell } from "src/features/database/components/cells/relation-cell";
+import { RollupCell } from "src/features/database/components/cells/rollup-cell";
+import { evaluateFormula } from "src/features/database/components/formula-editor/formula-evaluator";
 import { PersonCellDisplay } from "src/features/database/primitives/person-cell-display";
 import {
   findPerson,
@@ -59,6 +62,7 @@ export function RecordPropertyPanel({ page }: { page: Page }) {
           page={page}
           value={values[prop.id]}
           onChange={(v) => updateCell(prop.id, v)}
+          allProperties={source.properties}
         />
       ))}
     </div>
@@ -70,11 +74,14 @@ function PropertyRow({
   page,
   value,
   onChange,
+  allProperties,
 }: {
   prop: DatabaseProperty;
   page: Page;
   value: CellValue;
   onChange: (v: CellValue) => void;
+  /** the whole schema — a rollup resolves its relation through it */
+  allProperties: DatabaseProperty[];
 }) {
   // PROPERTY_TYPE_ICONS holds Material Symbols NAME STRINGS now — not icon
   // components — so it's rendered through DynamicIcon rather than as <Icon />.
@@ -108,7 +115,7 @@ function PropertyRow({
       case "number":
         return (
           <NumberCellDisplay
-            value={(value as CellValueMap["number"]) ?? 0}
+            value={(value as CellValueMap["number"]) ?? null}
             format={prop.config.format}
             prefix={prop.config.prefix}
             suffix={prop.config.suffix}
@@ -226,8 +233,47 @@ function PropertyRow({
       case "edited_by":
         return personRef(page.editedBy ?? page.ownerId);
 
-      // Not implemented yet — formula, relation, rollup. Each needs its own display in the panel; falling through to
-      // null drops the whole row rather than showing a broken one.
+      // Both sides of a two-way relation are editable here too.
+      case "relation":
+        return (
+          <RelationCell
+            value={value as CellValueMap["relation"]}
+            config={prop.config}
+            onChange={(v) => onChange(v as CellValue)}
+            recordId={page.id}
+            unwrapped={false}
+            className="record-prop-panel__value"
+          />
+        );
+
+      case "rollup":
+        return (
+          <RollupCell
+            config={prop.config}
+            record={page}
+            properties={allProperties}
+            className="record-prop-panel__value"
+          />
+        );
+
+      case "formula": {
+        const result = evaluateFormula(prop.config.expression, {
+          properties: allProperties,
+          cellValues: page.values ?? {},
+          page,
+        });
+        return (
+          <span className="record-prop-panel__value record-prop-panel__value--text">
+            {typeof result === "boolean"
+              ? result
+                ? "☑"
+                : "☐"
+              : (result ?? "")}
+          </span>
+        );
+      }
+      // Anything else has no display in the panel yet; returning null drops
+      // the whole row rather than showing a broken one.
       default:
         return null;
     }

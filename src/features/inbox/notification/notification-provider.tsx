@@ -88,6 +88,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const personId = person?.id ?? null;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const notifiedKeys = useRef<Set<string>>(new Set());
+  // True once the first fetch has answered (or failed): reminders wait for it
+  // so they can tell which ones were already sent.
+  const [ready, setReady] = useState(false);
 
   const notificationsRef = useRef(notifications);
   useEffect(() => {
@@ -99,12 +102,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     fetchNotifications()
       .then((rows) => {
-        if (!cancelled)
-          setNotifications(
-            (rows as RecordWithRoom[]).map(recordToNotification),
-          );
+        if (cancelled) return;
+        // Remember what was already sent, so hasNotified() knows about
+        // notifications from earlier sessions too.
+        for (const r of rows) {
+          if (r.dedupKey) notifiedKeys.current.add(r.dedupKey);
+        }
+        setNotifications((rows as RecordWithRoom[]).map(recordToNotification));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -258,8 +267,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     () => ({
       notifications,
       unreadCount: notifications.filter((n) => !n.read).length,
+      ready,
     }),
-    [notifications],
+    [notifications, ready],
   );
 
   return (

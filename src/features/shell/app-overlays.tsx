@@ -3,6 +3,7 @@ import { useCurrentPerson } from "src/hooks/use-session";
 import { usePeople } from "src/hooks/use-people";
 import { useCurrentSpace } from "src/hooks/use-current-space";
 import { useChatRealtimeSync } from "src/hooks/use-chat";
+import { useDatabaseDateReminders } from "../database/hooks/use-database-date-reminders";
 import SearchPalette from "./search/search-palette";
 import { TemplatesGallery } from "../pages/templates/template-gallery";
 import { DiscussBlockHost } from "../chat/discuss-block-dialog";
@@ -14,6 +15,12 @@ import type { Page, Person } from "src/types";
 
 function ChatRealtimeSync() {
   useChatRealtimeSync();
+  return null;
+}
+
+// Date property reminders → the inbox (see useDatabaseDateReminders).
+function DatabaseDateReminders() {
+  useDatabaseDateReminders();
   return null;
 }
 
@@ -46,6 +53,7 @@ function AppOverlaysImpl() {
   return (
     <>
       <ChatRealtimeSync />
+      <DatabaseDateReminders />
       <DiscussBlockHost />
       {open && <SearchPalette />}
       {templatesGalleryOpen && (

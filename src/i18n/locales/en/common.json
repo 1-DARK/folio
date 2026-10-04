@@ -350,6 +350,20 @@
     },
     "newPage": "New Page"
   },
+    "recentlyVisited": "Recently visited",
+    "earlier": "Earlier",
+    "edited": "Edited {{time}}",
+    "emptyTitle": "Start your first page",
+    "emptyDesc": "Your recently opened pages will show up here.",
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "yesterday": "yesterday",
+      "daysAgo": "{{count}}d ago"
+    },
+    "newPage": "New Page"
+  },
   "trash.title": "Trash",
   "trash.empty": "Empty",
   "trash.restore": "Restore",
@@ -951,6 +965,16 @@
       "search": "Search for a person…",
       "none": "No people found",
       "empty": "Empty"
+    },
+    "rollup": {
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days"
+    },
+    "reminder": {
+      "title": "{{property}} reminder",
+      "today": "{{property}} of “{{title}}” is today.",
+      "tomorrow": "{{property}} of “{{title}}” is tomorrow.",
+      "inDays": "{{property}} of “{{title}}” is in {{count}} days."
     },
     "formulaHelp": {
       "functions": "Functions",
