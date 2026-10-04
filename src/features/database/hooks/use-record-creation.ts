@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { Editor } from "@tiptap/core";
 import type {
   DatabaseAttrs,
@@ -12,6 +12,8 @@ import type {
 } from "src/types";
 import { insertRecordNode } from "./use-database-seed";
 import { NONE_KEY, valueForGroupKey } from "../utils/group-records";
+import { canWriteGroupValue } from "../utils/group-key";
+import { useWorkspacePeople } from "./use-workspace-people";
 
 const EMPTY_TEMPLATES: RowTemplate[] = [];
 
@@ -39,6 +41,13 @@ export function useRecordCreation({
   ) => void;
   setEditingRecordId: (id: ID) => void;
 }) {
+  // A new row in a person group gets that person (with their name).
+  const people = useWorkspacePeople();
+  const personName = useMemo(() => {
+    const names = new Map(people.map((p) => [p.id, p.name] as const));
+    return (id: string) => names.get(id);
+  }, [people]);
+
   // Insert the freshly-created page's node into the editor, if the db is wired.
   const insertNode = useCallback(
     (page: Page) => {
@@ -75,18 +84,30 @@ export function useRecordCreation({
       addRecordAsync({ title: "" })
         .then((page) => {
           insertNode(page);
-          if (groupProp && groupKey !== NONE_KEY) {
+          // Computed groups (formula, rollup, created by…) can't be set.
+          if (
+            groupProp &&
+            groupKey !== NONE_KEY &&
+            canWriteGroupValue(groupProp)
+          ) {
             setCellValue(
               page.id,
               groupProp.id,
-              valueForGroupKey(groupKey, groupProp) as never,
+              valueForGroupKey(groupKey, groupProp, { personName }) as never,
             );
           }
           setEditingRecordId(page.id);
         })
         .catch(() => console.log("Failed to create page"));
     },
-    [addRecordAsync, insertNode, setCellValue, groupProp, setEditingRecordId],
+    [
+      addRecordAsync,
+      insertNode,
+      setCellValue,
+      groupProp,
+      setEditingRecordId,
+      personName,
+    ],
   );
 
   return { onNewRecord, onNewRecordInGroup };

@@ -12,6 +12,13 @@ import {
   columnKeyFor,
   NONE_COLUMN_ID,
 } from "../nodes/database-board-node-view/utils";
+import {
+  compareGroups,
+  groupCellValue,
+  groupLabelFor,
+} from "../utils/group-key";
+import { usePageTitles } from "./use-page-titles";
+import { useWorkspacePeople } from "./use-workspace-people";
 
 export interface BoardColumn {
   key: string;
@@ -51,6 +58,14 @@ export function useBoardLayout(
     [activeView],
   );
 
+  // Readable column names for relations and people.
+  const titleOf = usePageTitles();
+  const people = useWorkspacePeople();
+  const personName = useMemo(() => {
+    const names = new Map(people.map((p) => [p.id, p.name] as const));
+    return (id: string) => names.get(id);
+  }, [people]);
+
   const manualOrder = activeView?.manualOrder;
   const showEmptyGroups = activeView?.showEmptyGroups ?? false;
 
@@ -78,14 +93,22 @@ export function useBoardLayout(
         { id: string; label: string; value?: CellValue }
       >();
       for (const rec of sortedRecords) {
-        const raw = rec.values?.[groupProp.id] ?? null;
+        const raw = groupCellValue(rec, groupProp);
         const key = columnKeyFor(raw, groupProp);
         if (key === NONE_COLUMN_ID) continue;
         if (!seen.has(key)) {
-          seen.set(key, { id: key, label: key, value: raw as CellValue });
+          seen.set(key, {
+            id: key,
+            label: groupLabelFor(key, groupProp, { titleOf, personName }),
+            value: raw as CellValue,
+          });
         }
       }
-      base = [...seen.values()];
+      // Dates and numbers ascending, text A–Z.
+      const byValue = compareGroups(groupProp);
+      base = [...seen.values()].sort((a, b) =>
+        byValue({ key: a.id, label: a.label }, { key: b.id, label: b.label }),
+      );
     }
 
     const all = [
@@ -107,7 +130,7 @@ export function useBoardLayout(
     const byColumn = new Map<string, Page[]>();
     all.forEach((c) => byColumn.set(c.key, []));
     for (const rec of sortedRecords) {
-      const key = columnKeyFor(rec.values?.[groupProp.id], groupProp);
+      const key = columnKeyFor(groupCellValue(rec, groupProp), groupProp);
       if (byColumn.has(key)) byColumn.get(key)!.push(rec);
     }
 
@@ -160,6 +183,8 @@ export function useBoardLayout(
     manualOrder,
     showEmptyGroups,
     hiddenGroups,
+    titleOf,
+    personName,
   ]);
 
   return { boardLayout };
