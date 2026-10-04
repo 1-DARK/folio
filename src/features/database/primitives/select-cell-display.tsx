@@ -33,7 +33,11 @@ export function SelectCellDisplay({
   placeholder = "Empty",
 }: SelectCellDisplayProps) {
   const [open, setOpen] = useState(false);
-  const displayed = value ?? null;
+  // The property's current version of the option (renamed or recoloured
+  // since it was picked); the stored copy when it no longer exists.
+  const displayed = value
+    ? ((options ?? []).find((o) => o.id === value.id) ?? value)
+    : null;
 
   const trigger = displayed ? (
     <button

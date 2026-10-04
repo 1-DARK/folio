@@ -85,9 +85,14 @@ function getSnippets(prop: DatabaseProperty): string[] {
       return [p, `not(empty(${p}))`];
 
     case "person":
+      // A list of names.
+      return [p, `length(${p})`, `join(${p}, ", ")`];
+
+    case "relation":
+      return [p, `length(${p})`, `empty(${p})`];
+
     case "created_by":
     case "edited_by":
-    case "relation":
     case "rollup":
     case "formula":
       return [p];

@@ -18,7 +18,7 @@ export function NumberCell({
   return (
     <div className={className} data-wrap={unwrapped ? "false" : "true"}>
       <NumberCellDisplay
-        value={value ?? 0}
+        value={value ?? null}
         onChange={onChange}
         format={config.format}
         prefix={config.prefix}

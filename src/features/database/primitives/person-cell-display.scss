@@ -5,6 +5,7 @@
   gap: 4px;
   padding: 0;
   margin: auto 5px;
+  line-height: 1.5;
 }
 
 .db-person-empty {
@@ -38,7 +39,10 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 6px;
+  // Same height as a select pill (≈22px). The cell sets line-height: 34px,
+  // which the chip must not inherit or every row grows.
+  padding: 2px 8px 2px 2px;
+  line-height: 1.5;
   border-radius: var(--tt-radius-xl, 999px);
   background: var(--tt-gray-light-a-100);
   font-size: 14px;

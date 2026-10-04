@@ -6,6 +6,7 @@ import type {
   CellValue,
   PropertyType,
   CellValueMap,
+  Page,
 } from "src/types";
 
 // ─── mathjs instance ──────────────────────────────────────────────────────────
@@ -58,14 +59,41 @@ function substitutePropCalls(expression: string): string {
 
 // ─── cell value → formula value ───────────────────────────────────────────────
 
+// What prop("X") gives inside a formula. Values that live on the page itself
+// (title, created / edited time and person) come from `page` when the caller
+// passes it; a status is stored as an item id and becomes its name; a date
+// range gives its start; people give a list of names.
 function cellToFormulaValue(
-  type: PropertyType,
+  prop: DatabaseProperty,
   value: CellValue,
-): string | number | boolean | null {
-  if (value === null || value === undefined) return null;
+  page: Page | undefined,
+): string | number | boolean | unknown[] | null {
+  const type: PropertyType = prop.config.type;
 
   switch (type) {
     case "title":
+      return page ? (page.title ?? "") : ((value as string) ?? null);
+    case "created_time":
+      return page?.createdAt != null
+        ? new Date(page.createdAt).toISOString()
+        : null;
+    case "edited_time": {
+      const t = page?.updatedAt ?? page?.createdAt;
+      return t != null ? new Date(t).toISOString() : null;
+    }
+    case "created_by":
+      return page?.ownerId ?? null;
+    case "edited_by":
+      return (
+        (page as (Page & { editedBy?: string | null }) | undefined)?.editedBy ??
+        page?.ownerId ??
+        null
+      );
+  }
+
+  if (value === null || value === undefined) return null;
+
+  switch (type) {
     case "text":
     case "url":
     case "email":
@@ -78,10 +106,17 @@ function cellToFormulaValue(
     case "checkbox":
       return value as boolean;
 
-    case "select":
-    case "status": {
+    case "select": {
       const v = value as CellValueMap["select"];
       return v?.label ?? null;
+    }
+
+    case "status": {
+      if (prop.config.type !== "status") return null;
+      for (const g of prop.config.groups)
+        for (const item of g.items)
+          if (item.id === value || item.name === value) return item.name;
+      return null;
     }
 
     case "multi_select": {
@@ -89,10 +124,37 @@ function cellToFormulaValue(
       return v?.map((o) => o.label).join(", ") ?? "";
     }
 
-    case "date":
-    case "created_time":
-    case "edited_time":
-      return value as string;
+    case "date": {
+      if (typeof value === "string") return value;
+      const range = value as { start?: string };
+      return range?.start ?? null;
+    }
+
+    case "person":
+      return Array.isArray(value)
+        ? (value as { name?: string; id?: string }[]).map(
+            (p) => p?.name ?? p?.id ?? "",
+          )
+        : null;
+
+    case "relation":
+      // Linked rows' titles when cached on the value, else their ids — enough
+      // for length() and empty().
+      return Array.isArray(value)
+        ? (value as unknown[]).map((v) =>
+            typeof v === "string"
+              ? v
+              : String(
+                  (v as { title?: string; pageId?: string })?.title ??
+                    (v as { pageId?: string })?.pageId ??
+                    "",
+                ),
+          )
+        : null;
+
+    case "formula":
+      // Another formula's computed value (resolved before this one).
+      return typeof value === "object" ? null : (value as string);
 
     default:
       return null;
@@ -283,6 +345,9 @@ function castResult(result: unknown): string | number | boolean | null {
 export interface EvaluationContext {
   properties: DatabaseProperty[];
   cellValues: Record<string, CellValue>;
+  /** The row itself, for values stored on the page (title, created / edited
+   *  time and person). Without it those come out empty. */
+  page?: Page;
 }
 
 // Shared core. THROWS on any failure (parse error, unknown function, runtime).
@@ -299,7 +364,7 @@ function evaluateFormulaCore(
   for (const prop of ctx.properties) {
     const varName = sanitizePropName(prop.name);
     const raw = ctx.cellValues[prop.id] ?? null;
-    propScope[varName] = cellToFormulaValue(prop.config.type, raw);
+    propScope[varName] = cellToFormulaValue(prop, raw, ctx.page);
   }
 
   const substituted = preprocessExpression(substitutePropCalls(expression));

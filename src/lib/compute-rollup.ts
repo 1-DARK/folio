@@ -6,24 +6,9 @@ import type {
   DataSource,
   ID,
   Page,
-  RelationValue,
 } from "../types";
-
-// ── Relation value reader ─────────────────────────────────────────────────
-// Tolerates BOTH shapes: string[] (bare record ids) and RelationValue[]
-// ({ recordId, ... }). Returns a flat list of target record ids.
-function relationRecordIds(raw: unknown): ID[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((item) => {
-      if (typeof item === "string") return item;
-      if (item && typeof item === "object" && "recordId" in item) {
-        return String((item as RelationValue).pageId);
-      }
-      return null;
-    })
-    .filter((x): x is string => !!x);
-}
+import { linkedIds } from "./relation-ids";
+import { propertyValue } from "./property-value";
 
 // ── Value coercion helpers ─────────────────────────────────────────────────
 function isEmpty(v: unknown): boolean {
@@ -44,7 +29,13 @@ function toNumber(v: unknown): number | null {
   return null;
 }
 
+// Dates come as ISO strings, { start, end } ranges (the start counts) or, for
+// created / edited time, milliseconds.
 function toTime(v: unknown): number | null {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (v && typeof v === "object" && "start" in v) {
+    return toTime((v as { start: unknown }).start);
+  }
   if (typeof v !== "string" || !v) return null;
   const t = new Date(v).getTime();
   return Number.isNaN(t) ? null : t;
@@ -58,11 +49,14 @@ function valueToText(v: unknown): string {
   if (v == null) return "";
   if (typeof v === "string") return v;
   if (typeof v === "number" || typeof v === "boolean") return String(v);
-  // SelectOption-like { label }
-  if (typeof v === "object" && "label" in (v as object)) {
-    return String((v as { label: unknown }).label ?? "");
-  }
   if (Array.isArray(v)) return v.map(valueToText).filter(Boolean).join(", ");
+  if (typeof v === "object") {
+    const o = v as { label?: unknown; name?: unknown; start?: unknown };
+    // SelectOption { label }, person { name }, date range { start }
+    if (o.label != null) return String(o.label);
+    if (o.name != null) return String(o.name);
+    if (o.start != null) return String(o.start);
+  }
   return "";
 }
 
@@ -120,14 +114,29 @@ function aggregate(
     case "earliest_date":
     case "latest_date":
     case "date_range": {
-      const times = values.map(toTime).filter((n): n is number => n !== null);
-      if (!times.length) return null;
-      if (agg === "earliest_date")
-        return new Date(Math.min(...times)).toISOString();
-      if (agg === "latest_date")
-        return new Date(Math.max(...times)).toISOString();
-      // date_range → whole days between earliest and latest
-      return Math.round((Math.max(...times) - Math.min(...times)) / 86400000);
+      const dated = values
+        .map((v) => ({ v, t: toTime(v) }))
+        .filter((x): x is { v: unknown; t: number } => x.t !== null);
+      if (!dated.length) return null;
+      const times = dated.map((x) => x.t);
+      if (agg === "date_range") {
+        // whole days between earliest and latest
+        return Math.round((Math.max(...times) - Math.min(...times)) / 86400000);
+      }
+      const pick =
+        agg === "earliest_date"
+          ? dated.reduce((a, b) => (b.t < a.t ? b : a))
+          : dated.reduce((a, b) => (b.t > a.t ? b : a));
+      // A date without a time stays "YYYY-MM-DD", so it shows as the same day
+      // in every time zone (an ISO time at midnight UTC is the day before in
+      // the Americas).
+      const raw =
+        pick.v && typeof pick.v === "object" && "start" in pick.v
+          ? (pick.v as { start: unknown }).start
+          : pick.v;
+      if (typeof raw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw))
+        return raw;
+      return new Date(pick.t).toISOString();
     }
 
     case "checked":
@@ -155,16 +164,20 @@ function aggregate(
  * Compute a rollup value for one record.
  *
  * Follows the record's relation (config.relationPropertyId) to its linked
- * target records, reads config.targetPropertyId from each, and aggregates with
- * config.aggregation. Pure + read-only — recomputed on render like a formula.
+ * target records — either side of a two-way relation — reads
+ * config.targetPropertyId from each (title, created/edited fields, status
+ * names and formulas included), and aggregates with config.aggregation.
+ * Pure + read-only — recomputed on render like a formula.
  */
 export function computeRollup(args: {
-  record: { values: Record<ID, unknown> };
+  /** the row; `id` is needed when the relation is the mirror side */
+  record: { id?: ID; values: Record<ID, unknown> };
   /** the CURRENT database's schema (to resolve the relation property) */
   properties: DatabaseProperty[];
   /** the related database, loaded by the caller */
   targetSource: DataSource | undefined;
   config: ConfigOf<"rollup">;
+  /** pages to resolve links against (at least the related database's rows) */
   pages: Page[];
 }): CellValue<"rollup"> {
   const { record, properties, targetSource, config, pages } = args;
@@ -175,17 +188,24 @@ export function computeRollup(args: {
   );
   if (!relationProp || relationProp.config.type !== "relation") return null;
 
-  const ids = relationRecordIds(record.values[config.relationPropertyId]);
-
-  // "Count all" = number of linked records; doesn't need the target loaded.
-  if (config.aggregation === "count") return ids.length;
-
-  if (!targetSource || !config.targetPropertyId) return null;
-
+  const ids = linkedIds(record, relationProp, pages);
   const linked = ids
     .map((id) => pages.find((p) => p.id === id))
-    .filter((r): r is Page => !!r);
+    .filter((r): r is Page => !!r && r.deletedAt == null);
 
-  const values = linked.map((r) => r.values?.[config.targetPropertyId]);
+  // "Count all" = number of linked records. Before the related rows load,
+  // fall back to the number of stored links.
+  if (config.aggregation === "count")
+    return pages.length ? linked.length : ids.length;
+
+  if (!targetSource || !config.targetPropertyId) return null;
+  const targetProp = targetSource.properties.find(
+    (p) => p.id === config.targetPropertyId,
+  );
+  if (!targetProp) return null;
+
+  const values = linked.map((r) =>
+    propertyValue(r, targetProp, targetSource.properties),
+  );
   return aggregate(values, config.aggregation);
 }

@@ -8,26 +8,15 @@ import {
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
 import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
-import type { PageCover, CellValue, ID, RelationValue } from "src/types";
+import type { PageCover, CellValue, ID } from "src/types";
 import { useDataSource } from "../../../hooks/use-data-source";
 import { useRows } from "src/hooks/use-pages";
 import type { CellProps } from "../types";
 import "./relation-cell.scss";
 import { usePageView } from "src/features/pages/context/page-view-context";
-
-// Tolerates BOTH shapes: string[] (bare ids) and RelationValue[] ({ pageId }).
-function relationRecordIds(raw: unknown): ID[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((item) =>
-      typeof item === "string"
-        ? item
-        : item && typeof item === "object" && "pageId" in item
-          ? String((item as RelationValue).pageId)
-          : null,
-    )
-    .filter((x): x is string => !!x);
-}
+import { relationRecordIds } from "src/lib/relation-ids";
+import { usePatchPage } from "src/hooks/use-patch-page";
+import { patchPage as patchPageApi } from "src/api/pages";
 
 // A row IS a page, so its display name is page.title — the single source of
 // truth after the title-cell fix. Reading the title out of
@@ -44,7 +33,9 @@ function rowLabel(row: { title?: string | null }): string {
  * Mirror side (derived): when this property is the synced counterpart
  * (mirrorPropertyId set + showOnTarget false), its links are COMPUTED by
  * scanning the target source's rows whose synced relation points back at
- * this row. Read-only.
+ * this row. Editing it writes to those rows: linking a row adds this row to
+ * its stored relation, unlinking removes it — so both sides always agree and
+ * the stored side stays the single source of truth.
  *
  * Post-collapse: a row IS a page, so a linked id is directly the page id —
  * no record→page lookup.
@@ -56,7 +47,7 @@ export function RelationCell({
   readonly,
   unwrapped,
   recordId,
-  className
+  className,
 }: CellProps<"relation"> & { recordId?: ID }) {
   // Called for its side effect: ensures the target source is loaded. Its
   // schema is no longer read here (titles come off the rows directly).
@@ -67,7 +58,9 @@ export function RelationCell({
   const [query, setQuery] = useState("");
 
   const isMirror = !!config.mirrorPropertyId && !config.showOnTarget;
-  const effectiveReadonly = readonly || isMirror;
+  // The mirror edits the other side's rows, so it needs this row's id.
+  const effectiveReadonly = readonly || (isMirror && !recordId);
+  const patchRow = usePatchPage(({ id, patch }) => patchPageApi(id, patch));
 
   // Linked ids: derived for the mirror, stored for the origin.
   const ids = useMemo(() => {
@@ -103,10 +96,38 @@ export function RelationCell({
   const commit = (next: string[]) =>
     onChange?.(next as unknown as CellValue<"relation"> | null);
 
-  const toggle = (id: string) =>
-    commit(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
+  // Mirror side: link / unlink by editing the other row's stored relation.
+  const setMirrorLink = (rowId: string, linked: boolean) => {
+    const row = rowById(rowId);
+    const originPropId = config.mirrorPropertyId;
+    if (!row || !originPropId || !recordId) return;
+    const current = relationRecordIds(row.values?.[originPropId]);
+    const next = linked
+      ? current.includes(recordId)
+        ? current
+        : [...current, recordId]
+      : current.filter((x) => x !== recordId);
+    patchRow.mutate({
+      id: row.id,
+      patch: {
+        values: {
+          ...(row.values ?? {}),
+          // stored as bare ids, the same shape the origin cell writes
+          [originPropId]: next as unknown as CellValue<"relation">,
+        },
+      },
+    });
+  };
 
-  const remove = (id: string) => commit(ids.filter((x) => x !== id));
+  const toggle = (id: string) => {
+    if (isMirror) return setMirrorLink(id, !ids.includes(id));
+    commit(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
+  };
+
+  const remove = (id: string) => {
+    if (isMirror) return setMirrorLink(id, false);
+    commit(ids.filter((x) => x !== id));
+  };
 
   // linked id is the page id — open it directly
   const openPeek = (id: string) => setTarget({ pageId: id, view: "Peek" });
@@ -168,8 +189,9 @@ export function RelationCell({
     </div>
   );
 
-  // Mirror / readonly: just the chips, no picker.
-  if (effectiveReadonly || !onChange) return trigger;
+  // Readonly: just the chips, no picker. (The mirror edits through
+  // setMirrorLink, so it doesn't need onChange.)
+  if (effectiveReadonly || (!onChange && !isMirror)) return trigger;
 
   return (
     <Popover>

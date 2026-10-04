@@ -40,6 +40,7 @@ export function resolveRecordFormulas(
       values[prop.id] = evaluateFormula(config.expression, {
         properties,
         cellValues: values as Record<string, CellValue>,
+        page: row,
       });
     }
     return { ...row, values };

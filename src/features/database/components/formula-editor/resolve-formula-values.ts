@@ -37,6 +37,7 @@ export function resolveFormulaValues(
       const result = evaluateFormula(config.expression, {
         properties,
         cellValues,
+        page: record,
       }) as CellValue;
 
       if (record.values?.[prop.id] === result) continue; // skip if unchanged

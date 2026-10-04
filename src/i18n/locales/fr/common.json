@@ -27,7 +27,11 @@
     "noResults": "Aucun résultat",
     "summary_one": "{{count}} résultat dans {{pages}} pages",
     "summary_other": "{{count}} résultats dans {{pages}} pages",
-    "truncated": "premiers résultats affichés"
+    "truncated": "premiers résultats affichés",
+    "open": "Rechercher dans les pages",
+    "close": "Fermer la recherche",
+    "hint": "Tape pour rechercher dans tes pages",
+    "clear": "Effacer"
   },
   "chat": {
     "title": "Discussions",
@@ -93,7 +97,56 @@
       "entryRemoved": "Ce projet a été supprimé.",
       "replyToEntry": "Réponds à ce projet…",
       "noReplies": "Pas encore de retours — sois le premier."
-    }
+    },
+    "discussBlock": "Discuter de ce bloc",
+    "sendTo": "Envoyer vers",
+    "thisPageDiscussion": "La discussion de cette page",
+    "askAboutBlock": "Pose ta question sur ce bloc…",
+    "removeBlock": "Retirer le bloc",
+    "openBlock": "Ouvrir dans la page",
+    "blockOrFiles": "Retire le bloc pour joindre des fichiers : un message contient l'un ou l'autre.",
+    "thread": "Fil",
+    "openThread": "Ouvrir le bloc",
+    "sharedBy": "Partagé par {{name}}",
+    "replies_one": "{{count}} réponse",
+    "replies_other": "{{count}} réponses",
+    "noReplies": "Pas encore de réponse — lance le fil.",
+    "replyInThread": "Répondre sur ce bloc…",
+    "replyInThreadShort": "Répondre dans le fil",
+    "editedSinceShared": "Modifié depuis le partage.",
+    "sharedVersion": "La version partagée :",
+    "blockRemoved": "Ce bloc n'est plus sur la page — voici la version partagée.",
+    "enterTeamspace": "Entrer dans l'espace d'équipe",
+    "attach": "Joindre des fichiers",
+    "attachment": "Pièce jointe",
+    "uploading": "Envoi…",
+    "uploadFailed": "Échec de l'envoi",
+    "fileTooLarge": "Plus de 25 Mo",
+    "tooManyFiles": "10 fichiers maximum par message.",
+    "removeFile": "Retirer le fichier",
+    "download": "Télécharger",
+    "loadOlder": "Charger les messages précédents",
+    "loadingOlder": "Chargement des messages précédents…",
+    "originalEarlier": "Réponse à un message précédent",
+    "reply": "Répondre",
+    "react": "Ajouter une réaction",
+    "replyingTo": "En réponse à",
+    "cancelReply": "Annuler la réponse",
+    "originalDeleted": "Message d'origine supprimé",
+    "originalMissing": "Message d'origine non chargé",
+    "pageDiscussion": "Discussion",
+    "pageDiscussions": "Discussions de pages",
+    "pageStart": "Lance la discussion sur cette page.",
+    "messagePage": "Discuter de cette page…",
+    "pageReadOnly": "Tu peux lire cette discussion. Pour écrire, il faut un accès commentaire à la page.",
+    "pageNoAccess": "Tu n'as pas accès à la discussion de cette page.",
+    "openPage": "Ouvrir la page",
+    "mentionPeople": "Personnes",
+    "mentionPages": "Pages",
+    "mentionNone": "Aucun résultat",
+    "mentionedYou": "On t'a mentionné",
+    "privatePage": "Page privée",
+    "someone": "quelqu'un"
   },
   "comments": {
     "resolve": "Résoudre",
@@ -168,7 +221,9 @@
       "gallery": "Galerie",
       "board": "Tableau",
       "feed": "Fil"
-    }
+    },
+    "title": "Votre travail, exposé au grand jour",
+    "desc": "Le foyer de tout ce que vous créez — applications, designs, animations, films, présentations — et des événements qui les mettent en lumière."
   },
   "members": {
     "title": "Membres",
@@ -188,7 +243,8 @@
     "remove": "Retirer",
     "leave": "Quitter",
     "lastOwner": "Un espace d'équipe doit avoir au moins un propriétaire",
-    "lastOwnerLeave": "Nomme un autre propriétaire avant de partir"
+    "lastOwnerLeave": "Nomme un autre propriétaire avant de partir",
+    "manage": "Gérer les membres"
   },
   "study": {
     "start": "Lancer une session d'étude",
@@ -202,58 +258,6 @@
     "leave": "Quitter",
     "stop": "Arrêter la session"
   },
-  "chat": {
-    "discussBlock": "Discuter de ce bloc",
-    "sendTo": "Envoyer vers",
-    "thisPageDiscussion": "La discussion de cette page",
-    "askAboutBlock": "Pose ta question sur ce bloc…",
-    "removeBlock": "Retirer le bloc",
-    "openBlock": "Ouvrir dans la page",
-    "blockOrFiles": "Retire le bloc pour joindre des fichiers : un message contient l'un ou l'autre."
-  },
-  "thread": "Fil",
-  "openThread": "Ouvrir le bloc",
-  "sharedBy": "Partagé par {{name}}",
-  "replies_one": "{{count}} réponse",
-  "replies_other": "{{count}} réponses",
-  "noReplies": "Pas encore de réponse — lance le fil.",
-  "replyInThread": "Répondre sur ce bloc…",
-  "replyInThreadShort": "Répondre dans le fil",
-  "editedSinceShared": "Modifié depuis le partage.",
-  "sharedVersion": "La version partagée :",
-  "blockRemoved": "Ce bloc n'est plus sur la page — voici la version partagée.",
-  "enterTeamspace": "Entrer dans l'espace d'équipe",
-  "attach": "Joindre des fichiers",
-  "attachment": "Pièce jointe",
-  "uploading": "Envoi…",
-  "uploadFailed": "Échec de l'envoi",
-  "fileTooLarge": "Plus de 25 Mo",
-  "tooManyFiles": "10 fichiers maximum par message.",
-  "removeFile": "Retirer le fichier",
-  "download": "Télécharger",
-  "loadOlder": "Charger les messages précédents",
-  "loadingOlder": "Chargement des messages précédents…",
-  "originalEarlier": "Réponse à un message précédent",
-  "reply": "Répondre",
-  "react": "Ajouter une réaction",
-  "replyingTo": "En réponse à",
-  "cancelReply": "Annuler la réponse",
-  "originalDeleted": "Message d'origine supprimé",
-  "originalMissing": "Message d'origine non chargé",
-  "pageDiscussion": "Discussion",
-  "pageDiscussions": "Discussions de pages",
-  "pageStart": "Lance la discussion sur cette page.",
-  "messagePage": "Discuter de cette page…",
-  "pageReadOnly": "Tu peux lire cette discussion. Pour écrire, il faut un accès commentaire à la page.",
-  "pageNoAccess": "Tu n'as pas accès à la discussion de cette page.",
-  "openPage": "Ouvrir la page",
-  "mentionPeople": "Personnes",
-  "mentionPages": "Pages",
-  "mentionNone": "Aucun résultat",
-  "mentionedYou": "On t'a mentionné",
-  "privatePage": "Page privée",
-  "someone": "quelqu'un",
-  "manage": "Gérer les membres",
   "teamspacesPanel": {
     "invitations": "Invitations",
     "invitedBy": "Invité par {{name}}",
@@ -262,21 +266,9 @@
     "decline": "Refuser",
     "manageMembers": "Membres"
   },
-  "open": "Rechercher dans les pages",
-  "close": "Fermer la recherche",
-  "hint": "Tape pour rechercher dans tes pages",
-  "clear": "Effacer",
-  "quickOpen": { "placeholder": "Rechercher des pages…" },
-  "pinned": "Épinglés",
-  "templates": "Modèles",
-  "pin": "Épingler dans l'espace d'équipe",
-  "unpin": "Désépingler",
-  "teamspace": "Espace d'équipe",
-  "backTo": "Retour à {{name}}",
-  "sectionWorkspaces": "Espaces de travail",
-  "sectionTeamspaces": "Espaces d'équipe",
-  "newDefaultName": "Nouvel espace de travail",
-  "creating": "Création…",
+  "quickOpen": {
+    "placeholder": "Rechercher des pages…"
+  },
   "workspace": {
     "plan": {
       "free": "Plan gratuit"
@@ -289,7 +281,13 @@
     "addAccount": "Ajouter un compte",
     "comingSoon": "Bientôt disponible",
     "new": "Nouvel espace de travail",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "teamspace": "Espace d'équipe",
+    "backTo": "Retour à {{name}}",
+    "sectionWorkspaces": "Espaces de travail",
+    "sectionTeamspaces": "Espaces d'équipe",
+    "newDefaultName": "Nouvel espace de travail",
+    "creating": "Création…"
   },
   "activity": "Activité",
   "creadtedBy": "Créé par",
@@ -302,7 +300,6 @@
   "trash.emptyState": "La corbeille est vide",
   "trash.movedToast": "Page déplacée vers la corbeille",
   "trash.undo": "Annuler",
-
   "sidebar": {
     "home": "Accueil",
     "search": "Rechercher",
@@ -318,7 +315,10 @@
     "showcase": "Vitrine",
     "featureOfTheWeek": "Fonctionnalité de la semaine",
     "recents": "Récents",
-    "personalSpace": "Espace de {{name}}"
+    "personalSpace": "Espace de {{name}}",
+    "pinned": "Épinglés",
+    "pin": "Épingler dans l'espace d'équipe",
+    "unpin": "Désépingler"
   },
   "library": {
     "title": "Bibliothèque",
@@ -364,10 +364,6 @@
       "inPage": "Dans la page",
       "date": "Date"
     }
-  },
-  "showcase": {
-    "title": "Votre travail, exposé au grand jour",
-    "desc": "Le foyer de tout ce que vous créez — applications, designs, animations, films, présentations — et des événements qui les mettent en lumière."
   },
   "done": "Terminé",
   "recents": {
@@ -513,7 +509,6 @@
     "modalAria": "Paramètres de l’espace de travail",
     "closeAria": "Fermer",
     "getUnlimitedAi": "Passer à l’IA illimitée",
-
     "nav": {
       "account": "Compte",
       "workspace": "Espace de travail"
@@ -638,7 +633,6 @@
     "en": "English",
     "fr": "Français"
   },
-
   "colors": {
     "label": "Couleurs",
     "recent": "Couleurs récentes",
@@ -944,6 +938,16 @@
       "search": "Rechercher une personne…",
       "none": "Aucune personne trouvée",
       "empty": "Vide"
+    },
+    "rollup": {
+      "days_one": "{{count}} jour",
+      "days_other": "{{count}} jours"
+    },
+    "reminder": {
+      "title": "Rappel : {{property}}",
+      "today": "{{property}} de « {{title}} » : c'est aujourd'hui.",
+      "tomorrow": "{{property}} de « {{title}} » : c'est demain.",
+      "inDays": "{{property}} de « {{title}} » : dans {{count}} jours."
     },
     "formulaHelp": {
       "functions": "Fonctions",

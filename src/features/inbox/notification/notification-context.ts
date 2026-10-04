@@ -19,6 +19,8 @@ export interface NotificationActions {
 export interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
+  /** The first load of notifications has finished (successfully or not). */
+  ready: boolean;
 }
 
 export const NotificationActionsContext =

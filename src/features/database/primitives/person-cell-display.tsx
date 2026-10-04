@@ -102,7 +102,11 @@ export function PersonCellDisplay({
         background: "transparent",
         width: "100%",
         justifyContent: "flex-start",
-        minHeight: 32,
+        // As tall as its chips, like the select pill: the cell's own 34px
+        // minimum sets the row height, never this button.
+        height: "auto",
+        minHeight: 0,
+        lineHeight: 1.5,
         flexWrap: "wrap",
         padding: 0,
         gap: 4,
