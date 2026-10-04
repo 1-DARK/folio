@@ -4,6 +4,7 @@ import { useNavigate } from "@tanstack/react-location";
 import { CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { PageItemIcon } from "./page-item-icon";
 import { PageItemOptions } from "./page-item-options";
+import { TeamspaceBadge } from "./teamspace-badge";
 import { TbArrowRight, TbPin, TbPinnedOff, TbPlus } from "react-icons/tb";
 import { SB_ICON_SM } from "../../shell/sidebar/sidebar-icon";
 import type { ID, Page } from "src/types";
@@ -43,6 +44,12 @@ interface PageItemProps {
    * PageItem rendered outside the sidebar tree simply hides those actions.
    */
   canEditContent?: boolean;
+  /**
+   * Mark rows of teamspace pages with the teamspace's icon (TeamspaceBadge).
+   * The sidebar turns it on for top-level rows only: nested rows sit under
+   * a parent that already shows where they live.
+   */
+  showTeamspaceBadge?: boolean;
 }
 
 export const PageItem = memo(function PageItem(props: PageItemProps) {
@@ -67,6 +74,7 @@ function PageItemView({
   expanded = false,
   onToggleExpand,
   canEditContent = false,
+  showTeamspaceBadge = false,
 }: PageItemProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -92,6 +100,11 @@ function PageItemView({
   // A teamspace's root page carries its own id as teamspace_id — that's how
   // this row knows it IS a teamspace, and offers to enter it.
   const isTeamspaceRoot = page.teamspaceId === page.id;
+
+  // A page inside a teamspace (not the teamspace itself) gets a badge; the
+  // badge hides itself while you're in that teamspace.
+  const withBadge =
+    showTeamspaceBadge && page.teamspaceId != null && !isTeamspaceRoot;
 
   const isActive = activePageId === page.id && !disableActive;
   const title = page.title || "New Page";
@@ -152,7 +165,7 @@ function PageItemView({
       <Spacer orientation="vertical" size={1.1} />
       <CardItemGroup
         orientation="horizontal"
-        className={`page-item ${isActive ? "active" : ""} ${isTeamspaceRoot ? "teamspace-root" : ""}`}
+        className={`page-item ${isActive ? "active" : ""} ${isTeamspaceRoot ? 'teamspace-root' : ""}`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
         onClick={() => onSelect(page.id)}
         onMouseOver={() => setShouldShow(true)}
@@ -168,6 +181,11 @@ function PageItemView({
               onToggleExpand?.(page.id);
             }}
           />
+        ) : withBadge ? (
+          <span className="page-icon-wrap">
+            <PageItemIcon cover={page.cover} variant="sidebar" />
+            <TeamspaceBadge teamspaceId={page.teamspaceId!} />
+          </span>
         ) : (
           <PageItemIcon cover={page.cover} variant="sidebar" />
         )}

@@ -210,6 +210,7 @@ function TreeRow({
             expanded={isExpanded}
             onToggleExpand={onToggleExpand}
             canEditContent={canEdit(page)}
+            showTeamspaceBadge={depth === 0}
           />
         </div>
       </div>
@@ -428,6 +429,7 @@ function TreeSection({
             disableActive={false}
             showChevron={false}
             canEditContent={canEdit(node.page)}
+            showTeamspaceBadge
           />
         ))
       ) : flatten && rows.length === 0 ? (
