@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { SelectOption } from "src/types";
-import { Button } from "src/components/tiptap-ui-primitive/button";
 import {
   Popover,
   PopoverContent,
@@ -8,6 +7,8 @@ import {
 } from "src/components/tiptap-ui-primitive/popover";
 import { Card, CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { Check } from "lucide-react";
+import { pillClass } from "../utils/pill-colors";
+import "./select-cell-display.scss";
 
 interface MultiSelectCellDisplayProps {
   value: SelectOption[];
@@ -16,13 +17,12 @@ interface MultiSelectCellDisplayProps {
   readonly?: boolean;
 }
 
-interface MultiSelectCellDisplayProps {
-  value: SelectOption[];
-  options: SelectOption[];
-  onChange?: (value: SelectOption[]) => void;
-  readonly?: boolean;
-}
-
+/**
+ * Same pills as the select cell (pillClass → .select-badge--<color>), so an
+ * option looks the same in both. A picked option is drawn from the property's
+ * CURRENT options when it still exists there, so renaming or recolouring an
+ * option shows up in every cell; the stored copy is the fallback.
+ */
 export function MultiSelectCellDisplay({
   value,
   options,
@@ -30,6 +30,8 @@ export function MultiSelectCellDisplay({
   readonly = false,
 }: MultiSelectCellDisplayProps) {
   const [open, setOpen] = useState(false);
+
+  const shown = value.map((v) => options.find((o) => o.id === v.id) ?? v);
 
   function toggleOption(option: SelectOption) {
     if (!onChange) return;
@@ -50,28 +52,14 @@ export function MultiSelectCellDisplay({
         minHeight: 34,
         flexWrap: "nowrap",
         overflow: "hidden",
-        borderRadius: "var(--tt-radius-sm)",
-        fontFamily:
-          'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, Arial, sans-serif',
         fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 1.5,
       }}
     >
-      {value.length > 0 ? (
-        value.map((v) => (
-          <Button
-            key={v.id}
-            variant="ghost"
-            style={{
-              background: v.color,
-              minHeight: 18,
-              height: 20,
-              borderRadius: "var(--tt-radius-sm)",
-            }}
-          >
-            <span className="tiptap-button-text">{v.label}</span>
-          </Button>
+      {shown.length > 0 ? (
+        shown.map((v) => (
+          <span key={v.id} className={pillClass("select-badge", v.color)}>
+            <span className="select-badge__label">{v.label}</span>
+          </span>
         ))
       ) : (
         <span style={{ opacity: 0 }}>_</span>
@@ -104,7 +92,7 @@ export function MultiSelectCellDisplay({
   return (
     <Popover open onOpenChange={setOpen} defaultOpen>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent side="bottom" align="start" style={{ zIndex: "9999" }}>
+      <PopoverContent side="bottom" align="start" className="select-dropdown">
         <Card
           style={{
             minWidth: 180,
@@ -114,30 +102,35 @@ export function MultiSelectCellDisplay({
           }}
         >
           <CardItemGroup
-            style={{
-              width: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 5,
-            }}
+            orientation="vertical"
+            style={{ width: "100%", gap: 2, alignItems: "stretch" }}
           >
-            {(options ?? []).map((option) => {
+            {options.length === 0 && (
+              <span className="select-dropdown__empty">
+                No options yet — add some in the property's settings.
+              </span>
+            )}
+            {options.map((option) => {
               const isSelected = value.some((v) => v.id === option.id);
               return (
-                <Button
+                <button
                   key={option.id}
-                  variant="ghost"
-                  style={{
-                    background: option.color,
-                    minHeight: 18,
-                    height: 20,
-                    outline: isSelected ? "2px solid white" : "none",
-                  }}
+                  type="button"
+                  className="select-dropdown__option"
+                  aria-pressed={isSelected}
                   onClick={() => toggleOption(option)}
                 >
-                  {isSelected && <Check size={10} style={{ marginRight: 3 }} />}
-                  <span className="tiptap-button-text">{option.label}</span>
-                </Button>
+                  <span className={pillClass("select-badge", option.color)}>
+                    <span className="select-badge__label">{option.label}</span>
+                  </span>
+                  {isSelected && (
+                    <Check
+                      size={14}
+                      aria-hidden
+                      style={{ marginLeft: "auto", flex: "none" }}
+                    />
+                  )}
+                </button>
               );
             })}
           </CardItemGroup>

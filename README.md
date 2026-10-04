@@ -2,7 +2,7 @@
 
 A collaborative workspace for teams, schools and communities: a block editor, nested pages, inline databases, comments and chat, with real-time collaboration built in. Interface in English and French.
 
-![Folio demo](./demo.gif)
+![Folio screenshot](./demo.png)
 
 ## Why I'm building this
 

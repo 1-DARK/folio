@@ -73,10 +73,49 @@ export function AddPropertyPopover({ onAddProperty }: AddPropertyPopoverProps) {
     HTMLInputElement
   >(open);
 
+  // Focus the name input WITHOUT scrolling. autoFocus scrolls every ancestor
+  // to reveal the input, including the editor's overflow-hidden columns: at
+  // the far right of a wide table that slid the whole page sideways.
+  React.useLayoutEffect(() => {
+    if (open) targetRef.current?.focus({ preventScroll: true });
+  }, [open, targetRef]);
+
+  // The table must not move when the button is clicked: you already scrolled
+  // to it. The scroll position at the click is saved, and for the first
+  // 400ms after opening any scroll of the table (.db-node) is put straight
+  // back to it. Nothing else is scrolled.
+  const scrollAtClick = React.useRef<{ el: HTMLElement; left: number } | null>(
+    null,
+  );
+  const saveScroll = (target: HTMLElement) => {
+    const el = target.closest<HTMLElement>(".db-node");
+    scrollAtClick.current = el ? { el, left: el.scrollLeft } : null;
+  };
+  React.useLayoutEffect(() => {
+    if (!open) return;
+    const saved = scrollAtClick.current;
+    if (!saved) return;
+    const { el, left } = saved;
+    const keep = () => {
+      if (Math.abs(el.scrollLeft - left) > 1) el.scrollLeft = left;
+    };
+    keep();
+    el.addEventListener("scroll", keep);
+    const stop = window.setTimeout(
+      () => el.removeEventListener("scroll", keep),
+      400,
+    );
+    return () => {
+      clearTimeout(stop);
+      el.removeEventListener("scroll", keep);
+    };
+  }, [open]);
+
   const propertyLabel = (t: PropertyType) =>
     PROPERTY_TYPE_META.find((m) => m.type === t)?.label ?? t;
 
   const reset = () => {
+    scrollAtClick.current = null;
     setName("");
     setIcon(undefined);
     setIconColor(undefined);
@@ -113,8 +152,12 @@ export function AddPropertyPopover({ onAddProperty }: AddPropertyPopoverProps) {
         onMouseDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          saveScroll(e.currentTarget);
         }}
-        onClick={() => setOpen(true)}
+        onClick={(e) => {
+          if (!scrollAtClick.current) saveScroll(e.currentTarget);
+          setOpen(true);
+        }}
       >
         <Plus className="tiptap-button-icon" />
         <span className="tiptap-button-text" style={{ fontWeight: 400 }}>
@@ -172,7 +215,6 @@ export function AddPropertyPopover({ onAddProperty }: AddPropertyPopoverProps) {
 
           <Input
             ref={targetRef}
-            autoFocus
             value={name}
             placeholder="Type property name..."
             onChange={(e) => setName(e.target.value)}
@@ -198,6 +240,9 @@ export function AddPropertyPopover({ onAddProperty }: AddPropertyPopoverProps) {
         align="start"
         avoidCollisions
         collisionPadding={8}
+        // Stay inside the window even when the input it hangs from is partly
+        // off-screen (the far right of a wide table).
+        sticky="always"
         // Don't steal focus from the input when the grid opens.
         onOpenAutoFocus={(e) => e.preventDefault()}
         // Focusing the anchored input, or opening the nested icon picker

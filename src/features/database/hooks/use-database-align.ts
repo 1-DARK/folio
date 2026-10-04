@@ -10,13 +10,23 @@ export function useDatabaseAlign(containerSelector = ".simple-editor-center") {
       document.querySelectorAll<HTMLElement>(".db-node").forEach((node) => {
         const container = node.querySelector<HTMLElement>(".db-container");
         if (!container) return;
-        // Reset so each run measures from the un-padded position.
-        node.style.paddingLeft = "0px";
         container.style.marginLeft = "0px";
 
-        const gap = blockLeft - container.getBoundingClientRect().left;
+        // Where the database would start with no padding and no sideways
+        // scroll. Measured from the current position instead of resetting
+        // the padding to 0 first: that reset shrank the scroll width (the
+        // table jumped back to its start), and measuring while scrolled
+        // added the scroll distance to the padding (the toolbar and table
+        // slid right). Both happened whenever the table changed width, e.g.
+        // when Add Property opens.
+        const currentPad = parseFloat(getComputedStyle(node).paddingLeft) || 0;
+        const unpaddedLeft =
+          container.getBoundingClientRect().left - currentPad + node.scrollLeft;
         // Pad the SCROLLER — included in scrollWidth, so scroll reaches the end.
-        node.style.paddingLeft = `${Math.max(0, gap)}px`;
+        const pad = Math.max(0, blockLeft - unpaddedLeft);
+        if (Math.abs(pad - currentPad) > 0.5) {
+          node.style.paddingLeft = `${pad}px`;
+        }
       });
     };
 

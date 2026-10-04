@@ -24,6 +24,7 @@ import { DatabaseCalendarNodeView } from "../database-calendar-node-view";
 import { DatabaseTimelineNodeView } from "../database-timeline-node-view/database-timeline-node-view";
 import { DatabaseTableBody } from "../database-table-node";
 import { useDatabaseColumnLayout } from "../../hooks/use-database-column-layout";
+import { useDbVisibleWidth } from "../../hooks/use-db-visible-width";
 import { useDatabaseBridgePublish } from "../../hooks/use-database-bridge-publish";
 import {
   useDatabaseSeed,
@@ -282,6 +283,8 @@ export function DatabaseNodeView({
 
   // ── View switching (skeleton while a new view type mounts) ────────────────
   const { switchingTo, dbWithSwitch } = useViewSwitch(db, attrs.activeViewId);
+  // Keeps the toolbar as wide as the visible area.
+  const visibleWidthRef = useDbVisibleWidth();
 
   // ── View lifecycle  ────────────────────────────────────────────────
   useSyncViews({
@@ -395,12 +398,11 @@ export function DatabaseNodeView({
                 {attrs.views.length > 1 && !isOwnPage && <DatabaseTitleBar />}
               </CardItemGroup>
               <CardItemGroup className="db-container">
+                {/* Stays in place while the table scrolls sideways. */}
                 <div
-                  style={{
-                    maxWidth: "var(--db-editor-width)",
-                    paddingRight: 20,
-                    position: "relative",
-                  }}
+                  ref={visibleWidthRef}
+                  className="db-sticky-left"
+                  style={{ paddingRight: 20 }}
                 >
                   <DatabaseToolbar />
                   <ChipsRow />

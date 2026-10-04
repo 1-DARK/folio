@@ -591,3 +591,16 @@ body.db-row-dragselect {
   }
 }
 
+
+// ── Title bar and toolbar stay put while the table scrolls sideways ─────────
+// .db-node is the horizontal scroller (the whole database scrolls inside it).
+// These parts stick to its left edge and are capped at its visible width
+// (--db-visible-width, set by useDbVisibleWidth), so the view tabs and the
+// toolbar's buttons never slide out of view with the table.
+.db-sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  box-sizing: border-box;
+  max-width: min(var(--db-editor-width, 100%), var(--db-visible-width, 100%));
+}
