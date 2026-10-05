@@ -104,6 +104,7 @@ function DeleteWorkspaceRow({
   workspaceName: string;
 }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +122,7 @@ function DeleteWorkspaceRow({
       // recreates or reassigns a workspace for this person afterward, so
       // they will hit AuthGate's isMissingPerson/error screen on next
       // sign-in. This needs a real decision before shipping.
-      await signOut();
+      await signOut(queryClient);
     } catch (e) {
       setDeleting(false);
       setError(e instanceof Error ? e.message : "Failed to delete workspace");

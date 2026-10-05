@@ -98,9 +98,13 @@ export function markDocClean(personId: string, pageId: string): void {
   );
 }
 
-/** Drop every offline copy on this device — call on sign-out. */
-export function clearOfflineDocCache(): void {
-  request("readwrite", (s) => s.clear()).catch(() => {});
+/** Drop every offline copy on this device — call on sign-out. Resolves
+ *  once the wipe is written (so a reload right after can't interrupt it). */
+export function clearOfflineDocCache(): Promise<void> {
+  return request("readwrite", (s) => s.clear()).then(
+    () => {},
+    () => {},
+  );
 }
 
 /** True when some page on this device holds edits the server hasn't

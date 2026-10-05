@@ -1,8 +1,8 @@
 import { DynamicIcon } from "src/features/pages/cover/dynamic-icon";
 import type { Page } from "src/types";
 import type { CSSProperties } from "react";
-import { FileText, TbFileText } from "src/components/tiptap-icons";
-import { SB_ICON } from "src/features/shell/sidebar/sidebar-icon";
+import { FileText } from "src/components/tiptap-icons";
+import { TbFileText } from "src/components/tiptap-icons/tabler-icons";
 
 interface PageItemIconProps {
   cover: Page["cover"];
@@ -29,7 +29,13 @@ export function PageItemIcon({
         : undefined;
     return (
       <span className="page-icon" style={{ ...styles }} aria-hidden="true">
-        <TbFileText {...SB_ICON} style={tint ? { color: tint } : undefined} />
+        {/* A touch bigger than the nav icons and in the row's text colour,
+            so it holds its own next to emoji and custom icons. */}
+        <TbFileText
+          size={19}
+          strokeWidth={1.5}
+          style={{ color: tint ?? "var(--sb-row-color)" }}
+        />
       </span>
     );
   }

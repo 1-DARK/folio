@@ -1,23 +1,43 @@
+// The app's loading ring — deliberately identical to the boot ring in
+// index.html (#folio-boot), so the hand-off from "HTML is loading" to "the app
+// is checking your session / restoring data" is seamless: one ring, never a
+// different spinner or a blank screen in between.
 .auth-gate-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100vh;
+  background: #ffffff;
+
+  html.dark & {
+    background: #191919;
+  }
 
   &__ring {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    border: 2px solid
-      color-mix(in srgb, var(--tt-text-primary) 15%, transparent);
-    border-top-color: color-mix(in srgb, var(--tt-text-primary) 60%, transparent);
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: rgba(98, 41, 255, 1);
     animation: auth-gate-spin 0.7s linear infinite;
+
+    html.dark & {
+      border-color: rgba(255, 255, 255, 0.12);
+      border-top-color: rgba(98, 41, 255, 1);
+    }
   }
 }
 
 @keyframes auth-gate-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-gate-loading__ring {
+    animation-duration: 1.6s;
   }
 }

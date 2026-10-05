@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { TbTemplate } from "src/components/tiptap-icons";
+import { TbTemplate } from "src/components/tiptap-icons/tabler-icons";
 import { useTemplates } from "../../pages/templates/templates-context";
 import { useIsMobile } from "src/hooks/use-breakpoint";
 import { useEditorLayoutActions } from "../context/editor-layout-context";

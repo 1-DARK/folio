@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { TbEdit } from "src/components/tiptap-icons";
+import { TbEdit } from "src/components/tiptap-icons/tabler-icons";
 import { SB_ICON } from "./sidebar-icon";
 import { useCreatePageInSpace } from "src/api/use-create-page-in-space";
 import { useActivePageActions } from "../../pages/context/active-page-context";

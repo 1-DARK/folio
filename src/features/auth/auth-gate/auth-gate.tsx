@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { useIsRestoring } from "@tanstack/react-query";
 import { useAuthListener, useCurrentPerson } from "src/hooks/use-session";
 import "./auth-gate.scss";
 
@@ -33,6 +34,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // The app's one auth-event listener (sign-in, refresh, sign-out).
   useAuthListener();
   const { isAuthenticated, isLoading } = useCurrentPerson();
+  // While the saved cache is being restored, queries haven't started, so
+  // "no session yet" doesn't mean signed out — keep the ring up instead of
+  // flashing the landing / sign-in screen.
+  const isRestoring = useIsRestoring();
   const [path, setPath] = useState(() => window.location.pathname);
 
   useEffect(() => {
@@ -54,7 +59,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     setPath(SIGN_IN_PATH);
   };
 
-  if (isLoading || signedInOnSignInPage) return <GateLoading />;
+  if (isRestoring || isLoading || signedInOnSignInPage) return <GateLoading />;
 
   if (!isAuthenticated) {
     return (

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "src/api/supabase-client";
 import type { Person } from "src/types";
-import { clearOfflineData } from "src/lib/query-persistence";
+import { clearOfflineData, wipeAndReloadHome } from "src/lib/query-persistence";
 
 export const queryKeys = {
   session: ["session"] as const,
@@ -99,16 +99,18 @@ export function useAuthListener() {
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        // Signed out (or the session was revoked, or signed out in another
-        // tab): drop every offline copy on this device — saved queries and
-        // page docs — and record "no session" right away, so the gate goes
-        // straight to the landing page instead of flashing its spinner
-        // while it re-resolves.
+        // Signed out (here, in another tab, or the session was revoked):
+        // drop every offline copy on this device. If you were signed in,
+        // reload at the landing page — re-rendering in place doesn't work,
+        // because emptying the cache doesn't refresh the screens reading it.
         if (event === "SIGNED_OUT") {
-          clearOfflineData(() => {
-            queryClient.clear();
-            queryClient.setQueryData(queryKeys.session, null);
-          });
+          const wasSignedIn =
+            queryClient.getQueryData(queryKeys.session) != null;
+          if (wasSignedIn) {
+            void wipeAndReloadHome(() => queryClient.clear());
+          } else {
+            clearOfflineData(() => queryClient.clear());
+          }
           return;
         }
         // INITIAL_SESSION repeats what the session query already read.

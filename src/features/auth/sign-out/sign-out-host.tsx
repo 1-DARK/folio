@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "src/features/shell/confirm-dialog";
 import { signOut, subscribeSignOutConfirm } from "./sign-out";
@@ -7,6 +8,7 @@ import { signOut, subscribeSignOutConfirm } from "./sign-out";
 // (AppOverlays); requestSignOut() opens it.
 export function SignOutHost() {
   const { t } = useTranslation();
+  const qc = useQueryClient();
   const [open, setOpen] = useState(false);
 
   useEffect(() => subscribeSignOutConfirm(setOpen), []);
@@ -14,8 +16,8 @@ export function SignOutHost() {
   const cancel = useCallback(() => setOpen(false), []);
   const confirm = useCallback(() => {
     setOpen(false);
-    signOut().catch((e) => console.error("sign-out failed:", e));
-  }, []);
+    signOut(qc).catch((e) => console.error("sign-out failed:", e));
+  }, [qc]);
 
   return (
     <ConfirmDialog

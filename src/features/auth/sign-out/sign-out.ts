@@ -1,33 +1,28 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "src/api/supabase-client";
 import { hasDirtyDocs } from "src/lib/offline-doc-cache";
+import { wipeAndReloadHome } from "src/lib/query-persistence";
 
 // ONE way to sign out, used by every "Log out" button (user menu, workspace
 // switcher) and by deleting your workspace.
 //
-//   1. The address goes back to "/" first, so the next person who signs in
-//      on this device doesn't start on the previous person's page (and the
-//      sign-out lands on the landing page, not wherever the gate last was).
-//   2. A normal sign-out also revokes the session on the server. If that
+//   1. A normal sign-out also revokes the session on the server. If that
 //      fails — offline, or a network error — a local sign-out still ends
 //      the session on this device (no network needed) instead of silently
 //      leaving you signed in.
-//   3. Either way SIGNED_OUT fires; the auth listener (useAuthListener)
-//      wipes this device's offline data and the gate shows the landing page.
-export async function signOut(): Promise<void> {
-  if (window.location.pathname !== "/") {
-    window.history.replaceState(null, "", "/");
-    // The gate and router track the address themselves; tell them.
-    window.dispatchEvent(new PopStateEvent("popstate"));
-  }
-
+//   2. Then this device's offline data is wiped and the app reloads at "/",
+//      the landing page — so the next person who signs in here starts fresh,
+//      not on the previous person's page. (The auth listener does the same
+//      for sign-outs from another tab; it only ever runs once.)
+export async function signOut(qc: QueryClient): Promise<void> {
   const { error } = await supabase.auth.signOut();
-  if (!error) return;
-
-  const { error: localError } = await supabase.auth.signOut({
-    scope: "local",
-  });
-  if (localError) throw localError;
+  if (error) {
+    const { error: localError } = await supabase.auth.signOut({
+      scope: "local",
+    });
+    if (localError) throw localError;
+  }
+  await wipeAndReloadHome(() => qc.clear());
 }
 
 /** Changes that would be lost by signing out now: page edits not yet sent
@@ -63,5 +58,5 @@ export async function requestSignOut(qc: QueryClient): Promise<void> {
     listener(true);
     return;
   }
-  await signOut();
+  await signOut(qc);
 }

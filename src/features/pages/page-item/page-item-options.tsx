@@ -6,7 +6,7 @@ import {
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
 import { Plus, PencilIcon, Trash2 } from "lucide-react";
-import { TbDots } from "src/components/tiptap-icons";
+import { TbDots } from "src/components/tiptap-icons/tabler-icons";
 import { SB_ICON_SM } from "../../shell/sidebar/sidebar-icon";
 import type { Page } from "src/types";
 import { useActivePage } from "../context/active-page-context";

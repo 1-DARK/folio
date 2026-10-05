@@ -1,13 +1,7 @@
 import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-location";
-import {
-  TbHome,
-  TbInbox,
-  TbMessages,
-  TbSearch,
-  TbX,
-} from "src/components/tiptap-icons";
+import { TbHome, TbInbox, TbMessages, TbSearch, TbX } from "src/components/tiptap-icons/tabler-icons";
 import { useNotificationState } from "src/features/inbox/notification/notification-context";
 import { useUnreadCounts } from "src/hooks/use-chat";
 import { spaceHomePath, useCurrentSpace } from "src/hooks/use-current-space";

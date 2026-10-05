@@ -125,7 +125,7 @@ export function claimOfflineCache(
   if (previous && previous !== personId) {
     clearQueries();
     void queryPersister.removeClient();
-    clearOfflineDocCache();
+    void clearOfflineDocCache();
   }
   try {
     localStorage.setItem(OWNER_KEY, personId);
@@ -138,13 +138,39 @@ export function claimOfflineCache(
 export function clearOfflineData(clearQueries: () => void): void {
   clearQueries();
   void queryPersister.removeClient();
-  clearOfflineDocCache();
-  // The open editor saves its doc one last time as it unmounts, which can
-  // land just after the wipe above — wipe again once it has gone.
-  setTimeout(clearOfflineDocCache, 1500);
+  void clearOfflineDocCache();
   try {
     localStorage.removeItem(OWNER_KEY);
   } catch {
     /* storage blocked */
   }
+}
+
+let leaving = false;
+
+/**
+ * After signing out (here or in another tab): wipe this device's offline
+ * data — saved queries and page copies — then reload at "/", the landing
+ * page.
+ *
+ * A full reload rather than re-rendering in place: emptying the query cache
+ * doesn't re-render the screens reading it (the app just sat there), and a
+ * reload also closes every live connection and resets all in-memory state,
+ * so nothing of the previous account survives. Runs once even if called
+ * twice (sign-out + its auth event).
+ */
+export async function wipeAndReloadHome(clearQueries: () => void) {
+  if (leaving) return;
+  leaving = true;
+  clearQueries();
+  await Promise.allSettled([
+    queryPersister.removeClient(),
+    clearOfflineDocCache(),
+  ]);
+  try {
+    localStorage.removeItem(OWNER_KEY);
+  } catch {
+    /* storage blocked */
+  }
+  window.location.replace("/");
 }

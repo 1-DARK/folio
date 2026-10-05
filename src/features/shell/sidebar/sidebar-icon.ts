@@ -1,4 +1,4 @@
-// Shared look for the sidebar's Tabler icons (react-icons/tb): one size and
+// Shared look for the sidebar's Tabler icons (src/components/tiptap-icons/tabler-icons): one size and
 // one thin stroke everywhere, so every row's glyph has the same weight.
 //   <TbHome {...SB_ICON} />
 export const SB_ICON = { size: 17, strokeWidth: 1.6 } as const;
