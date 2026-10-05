@@ -22,7 +22,7 @@ import { ThemeToggle } from "src/features/shell/theme-toggle";
 import { NotificationBell } from "src/features/inbox/notification";
 import EditedTimeButton from "../pages/edited-time-button/edited-time-button";
 import { PageCategorySelect } from "../pages/page-category-select";
-import type { Page, PageCategory } from "src/types";
+import type { ID, Page, PageCategory } from "src/types";
 import { ShortcutsButton } from "src/components/tiptap-ui/shortcut-sheet";
 
 export function MorePopover({
@@ -41,6 +41,9 @@ export function MorePopover({
   category?: {
     value: PageCategory;
     onChange: (category: PageCategory) => void;
+    teamspaceId?: ID | null;
+    onMoveToTeamspace?: (teamspaceId: ID) => void;
+    locked?: boolean;
   };
 }) {
   const mutatePage = usePatchPage(({ id, patch }) => patchPage(id, patch));
@@ -134,12 +137,7 @@ export function MorePopover({
             {hasOverflow && (
               <>
                 <CardItemGroup className="more-item">
-                  {category && (
-                    <PageCategorySelect
-                      value={category.value}
-                      onChange={category.onChange}
-                    />
-                  )}
+                  {category && <PageCategorySelect {...category} />}
 
                   {editedPage && <EditedTimeButton page={editedPage} />}
 

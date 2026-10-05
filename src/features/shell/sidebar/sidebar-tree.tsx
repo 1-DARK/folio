@@ -117,6 +117,13 @@ export interface SidebarTreeProps {
   canReorganize?: (page: Page) => boolean;
 }
 
+/** A teamspace's own page: top level of the Teamspaces section. Pages can be
+ *  dropped INTO it; it isn't dragged into other pages (that broke the
+ *  teamspace — moving a teamspace to another workspace is done from
+ *  Settings → Teamspaces), and nothing else may sit beside it. */
+const isTeamspaceRoot = (page: Page) =>
+  page.parentId == null && page.category === "Teamspaces";
+
 function collectSubtreeIds(
   node: PageTreeNode,
   acc: Set<ID> = new Set(),
@@ -356,11 +363,13 @@ function TreeSection({
         {allowSectionPrefs && (
           <>
             <SectionMenuSeparator />
-            <SectionMenuItem
-              icon={<Pencil size={14} />}
-              label="Rename"
-              onClick={() => onRename?.(category)}
-            />
+            {onRename && (
+              <SectionMenuItem
+                icon={<Pencil size={14} />}
+                label="Rename"
+                onClick={() => onRename(category)}
+              />
+            )}
             <SectionMenuItem
               icon={<EyeOff size={14} />}
               label="Hide section"
@@ -372,12 +381,14 @@ function TreeSection({
               label="Customize sidebar"
               onClick={() => setCustomizeSidebarOpen?.(true)}
             />
-            <SectionMenuItem
-              danger
-              icon={<Trash2 size={14} />}
-              label="Delete"
-              onClick={() => onDelete?.(category)}
-            />
+            {onDelete && (
+              <SectionMenuItem
+                danger
+                icon={<Trash2 size={14} />}
+                label="Delete"
+                onClick={() => onDelete(category)}
+              />
+            )}
           </>
         )}
       </>
@@ -548,6 +559,12 @@ export const SidebarTree = memo(function SidebarTree({
     [canReorganize, personId],
   );
 
+  // What can be picked up: never a teamspace's own page.
+  const draggable = useCallback(
+    (page: Page) => !isTeamspaceRoot(page) && reorganize(page),
+    [reorganize],
+  );
+
   const flatSet = useMemo(
     () => new Set<PageCategory>(["Recent", ...(flatSections ?? [])]),
     [flatSections],
@@ -629,6 +646,28 @@ export const SidebarTree = memo(function SidebarTree({
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
 
+  // Refused drops: dragging a teamspace's own page, or putting a page at the
+  // top of "Teamspaces" beside the teamspaces (a fake teamspace). Dropping a
+  // page ONTO a teamspace moves it into that teamspace. Inside a teamspace
+  // the section is flattened, so a drop on it means "into this teamspace".
+  const isAllowedDrop = useCallback(
+    (activePageId: ID, target: DropTarget): boolean => {
+      if (!target) return false;
+      const moving = nodeById.get(activePageId)?.page;
+      if (moving && isTeamspaceRoot(moving)) return false;
+      if (target.kind === "section") {
+        return (
+          target.category !== "Teamspaces" ||
+          (flattenRootsOf?.includes("Teamspaces") ?? false)
+        );
+      }
+      if (target.zone === "inside") return true;
+      const over = nodeById.get(target.pageId)?.page;
+      return !(over && isTeamspaceRoot(over));
+    },
+    [nodeById, flattenRootsOf],
+  );
+
   const onDragStart = (e: DragStartEvent) => {
     setActiveId(String(e.active.id));
   };
@@ -644,15 +683,17 @@ export const SidebarTree = memo(function SidebarTree({
 
     if (activeIdStr.startsWith(SECTION_DRAG_PREFIX)) return;
 
+    // Show a drop indicator only where the drop will be accepted.
+    const offer = (next: DropTarget) =>
+      setDropTarget(next && isAllowedDrop(activeIdStr, next) ? next : null);
+
     if (typeof overId === "string" && isSectionId(overId)) {
       const category = (
         overId.startsWith("section:")
           ? overId.slice("section:".length)
           : overId.slice("section-header:".length)
       ) as PageCategory;
-      setDropTarget(
-        flatSet.has(category) ? null : { kind: "section", category },
-      );
+      offer(flatSet.has(category) ? null : { kind: "section", category });
       return;
     }
 
@@ -669,7 +710,7 @@ export const SidebarTree = memo(function SidebarTree({
           overNode.page.parentId == null &&
           !flatSet.has(overNode.page.category)
         ) {
-          setDropTarget({ kind: "section", category: overNode.page.category });
+          offer({ kind: "section", category: overNode.page.category });
         } else {
           setDropTarget(null);
         }
@@ -690,7 +731,7 @@ export const SidebarTree = memo(function SidebarTree({
     else if (offset > rect.height - third) zone = "after";
     else zone = "inside";
 
-    setDropTarget({ kind: "page", pageId: overPageId, zone });
+    offer({ kind: "page", pageId: overPageId, zone });
   };
 
   const persistOrderIfCustom = useCallback(
@@ -747,9 +788,8 @@ export const SidebarTree = memo(function SidebarTree({
     }
 
     const target = dropTarget;
-    if (!target) return;
-
     const pageId = activeIdStr;
+    if (!target || !isAllowedDrop(pageId, target)) return;
 
     if (target.kind === "section") {
       if (flatSet.has(target.category)) return;
@@ -797,7 +837,9 @@ export const SidebarTree = memo(function SidebarTree({
     }
 
     if (target.zone === "inside") {
-      if (!reorganize(overPage)) return;
+      // Into your own pages, or into any teamspace you can see (members can
+      // move pages into their teamspaces, not only its creator).
+      if (!reorganize(overPage) && !isTeamspaceRoot(overPage)) return;
       onMovePage({ pageId, newParentId: target.pageId });
       const destCategory = categoryByPageId.get(target.pageId);
       if (destCategory) {
@@ -959,7 +1001,7 @@ export const SidebarTree = memo(function SidebarTree({
         flatten={flattenRootsOf?.includes(key) ?? false}
         flat={flatSet.has(key)}
         allowSectionPrefs={!fixedSections}
-        reorganize={reorganize}
+        reorganize={draggable}
       />
     );
 

@@ -353,6 +353,11 @@
   "trash.restore": "Restore",
   "trash.deleteForever": "Delete permanently",
   "trash.emptyState": "Trash is empty",
+  "trash.confirmDelete": "Permanently delete {{title}}?",
+  "trash.confirmEmpty_one": "Permanently delete {{count}} page in the trash?",
+  "trash.confirmEmpty_other": "Permanently delete all {{count}} pages in the trash?",
+  "trash.confirmNote": "This can't be undone.",
+  "trash.ownOnlyNote": "Pages other members created stay in the trash; only they can delete them.",
   "trash.movedToast": "Page moved to Trash",
   "trash.undo": "Undo",
   "sidebar": {
@@ -503,10 +508,23 @@
       "guest": "Guest"
     }
   },
+  "pageLocation": {
+    "noTeamspaces": "No teamspaces yet",
+    "teamspaceRoot": "This is a teamspace. Move it to another workspace from Settings → Teamspaces."
+  },
   "teamspaces": {
     "searchPlaceholder": "Search teamspaces...",
     "createTeamspace": "Create teamspace",
     "empty": "No teamspaces yet",
+    "deleteConfirmTitle": "Delete {{name}}?",
+    "deleteConfirmBody": "All of its pages, databases and comments are deleted for every member. This can't be undone.",
+    "deleteConfirmAction": "Delete teamspace",
+    "deleted": "Teamspace deleted",
+    "deleteFailed": "Couldn't delete the teamspace. Try again.",
+    "moveToWorkspace": "Move to workspace",
+    "noOtherWorkspaces": "You don't own another workspace. Create one from the workspace menu first.",
+    "moved": "Teamspace moved to {{name}}",
+    "moveFailed": "Couldn't move the teamspace. Try again.",
     "untitled": "Untitled",
     "members": "Members",
     "groups": "Groups",
@@ -881,6 +899,30 @@
       "database": {
         "title": "Inline Database",
         "description": "Insert a table, board, or list."
+      },
+      "tableView": {
+        "title": "Table view",
+        "description": "A table of pages to sort and filter."
+      },
+      "boardView": {
+        "title": "Board view",
+        "description": "Track pages in columns, like a kanban."
+      },
+      "galleryView": {
+        "title": "Gallery view",
+        "description": "Show pages as cards with covers."
+      },
+      "listView": {
+        "title": "List view",
+        "description": "A simple list of pages."
+      },
+      "calendarView": {
+        "title": "Calendar view",
+        "description": "See pages on a calendar by date."
+      },
+      "timelineView": {
+        "title": "Timeline view",
+        "description": "Plan pages over time."
       }
     },
     "colors": {
@@ -1047,6 +1089,21 @@
         "unique": "The list without repeated items.",
         "includes": "True when the list contains the value."
       }
+    },
+    "picker": {
+      "noSource": "No data source",
+      "selectFor": {
+        "table": "Select a data source for this table",
+        "board": "Select a data source for this board",
+        "gallery": "Select a data source for this gallery",
+        "list": "Select a data source for this list",
+        "calendar": "Select a data source for this calendar",
+        "timeline": "Select a data source for this timeline"
+      },
+      "search": "Link or create a database…",
+      "loading": "Loading…",
+      "none": "No data sources",
+      "newDatabase": "New database"
     }
   }
 }

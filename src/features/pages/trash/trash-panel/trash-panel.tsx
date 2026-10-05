@@ -5,6 +5,7 @@ import {
   useRestorePage,
   useDeletePagePermanently,
   useEmptyTrash,
+  useTrashScope,
 } from "src/hooks/use-trash";
 import "./trash-panel.scss";
 import { PageItemIcon } from "../../page-item/page-item-icon";
@@ -21,6 +22,7 @@ export function TrashPanel() {
   const restore = useRestorePage();
   const purge = useDeletePagePermanently();
   const emptyAll = useEmptyTrash();
+  const { canPurge } = useTrashScope();
 
   // Show only trashed ROOTS (a trashed child is covered by its trashed parent).
   const trashedIds = new Set((trashed as Page[]).map((p) => p.id));
@@ -28,14 +30,24 @@ export function TrashPanel() {
     (p) => !p.parentId || !trashedIds.has(p.parentId),
   );
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pageId, setPageId] = useState<ID | null>(null);
-  const handleConfirmDelete = () => {
-    if (pageId) purge.mutate(pageId);
-    setConfirmOpen(false);
+  // Inside a teamspace you can only hard-delete your own pages; the server
+  // would silently skip the others, so their button isn't offered.
+  const purgeable = roots.filter(canPurge);
+  const someNotPurgeable = purgeable.length < roots.length;
+
+  // One dialog for both actions: a single page, or emptying the trash.
+  const [confirm, setConfirm] = useState<
+    { kind: "page"; id: ID } | { kind: "empty" } | null
+  >(null);
+  const handleConfirm = () => {
+    if (confirm?.kind === "page") purge.mutate(confirm.id);
+    if (confirm?.kind === "empty") emptyAll.mutate();
+    setConfirm(null);
   };
-  const pendingPage = roots.find((p) => p.id === pageId);
-  const onCancel = useCallback(() => setConfirmOpen(false), []);
+  const pendingPage =
+    confirm?.kind === "page" ? roots.find((p) => p.id === confirm.id) : null;
+  const onCancel = useCallback(() => setConfirm(null), []);
+  const untitled = t("page.untitled", "Untitled");
 
   return (
     <>
@@ -49,12 +61,12 @@ export function TrashPanel() {
               </>
             )}
           </span>
-          {roots.length > 0 && (
+          {purgeable.length > 0 && (
             <Button
               type="button"
               size="small"
               className="trash-panel__empty"
-              onClick={() => emptyAll.mutate()}
+              onClick={() => setConfirm({ kind: "empty" })}
             >
               <Trash2 className="tiptap-button-icon" size={13} />
               <span className="tiptap-button-text">
@@ -93,19 +105,23 @@ export function TrashPanel() {
                   >
                     <RotateCcw className="tiptap-button-icon" size={14} />
                   </Button>
-                  <Button
-                    type="button"
-                    size="small"
-                    className="trash-item__btn trash-item__btn--danger"
-                    tooltip={t("trash.deleteForever", "Delete permanently")}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPageId(page.id);
-                      requestAnimationFrame(() => setConfirmOpen(true));
-                    }}
-                  >
-                    <Trash2 className="tiptap-button-icon" size={14} />
-                  </Button>
+                  {canPurge(page) && (
+                    <Button
+                      type="button"
+                      size="small"
+                      className="trash-item__btn trash-item__btn--danger"
+                      tooltip={t("trash.deleteForever", "Delete permanently")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const id = page.id;
+                        requestAnimationFrame(() =>
+                          setConfirm({ kind: "page", id }),
+                        );
+                      }}
+                    >
+                      <Trash2 className="tiptap-button-icon" size={14} />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))
@@ -114,21 +130,26 @@ export function TrashPanel() {
       </div>
 
       <ConfirmDialog
-        open={confirmOpen}
+        open={confirm != null}
         message={
           <>
-            Are you sure you want to permanently delete{" "}
-            <strong
-              style={{ color: "var(--tt-brand-color-400)", fontWeight: 600 }}
-            >
-              {pendingPage?.title || t("page.untitled", "Untitled")}
-            </strong>
-            ?
+            {confirm?.kind === "empty"
+              ? t("trash.confirmEmpty", { count: purgeable.length })
+              : t("trash.confirmDelete", {
+                  title: pendingPage?.title || untitled,
+                })}
+            <br />
+            <span style={{ fontSize: 13, opacity: 0.7 }}>
+              {confirm?.kind === "empty" && someNotPurgeable
+                ? t("trash.ownOnlyNote")
+                : t("trash.confirmNote")}
+            </span>
           </>
         }
-        confirmLabel="Permanently delete"
+        confirmLabel={t("trash.deleteForever", "Delete permanently")}
+        cancelLabel={t("actions.cancel", "Cancel")}
         onCancel={onCancel}
-        onConfirm={handleConfirmDelete}
+        onConfirm={handleConfirm}
       />
     </>
   );

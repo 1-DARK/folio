@@ -12,7 +12,7 @@ import { HighlighterIcon } from "src/components/tiptap-icons/highlighter-icon";
 import { LinkIcon } from "src/components/tiptap-icons/link-icon";
 import { MorePopover } from "./more-popover";
 import { useActivePageState } from "../pages/context/active-page-context";
-import type { View } from "src/types";
+import type { ID, PageCategory, View } from "src/types";
 import { Home, LibraryBig, Menu, MessageSquareText } from "lucide-react";
 import { PageCategorySelect } from "../pages/page-category-select";
 import { Breadcrumbs } from "./breadcrumbs";
@@ -196,11 +196,46 @@ type SimpleEditorToolbarProps = {
 };
 
 // ============================================================
+// Where the open page lives — the category dropdown's props, shared by the
+// desktop bar and the mobile ••• menu.
+//   • Favorites / Shared / Private: a page inside a teamspace moves out of it
+//     to the top of that section; otherwise only the category changes.
+//   • A teamspace: the page moves into it (top level of the teamspace).
+//   • A teamspace's own page can't be moved from here.
+// ============================================================
+function usePageLocation() {
+  const { activePage, activePageId } = useActivePageState();
+  const { mutateAsync } = usePatchPage(({ id, patch }) => patchPage(id, patch));
+  if (!activePage || !activePageId) return null;
+
+  const isTeamspaceRoot =
+    activePage.parentId == null && activePage.category === "Teamspaces";
+
+  return {
+    value: activePage.category,
+    teamspaceId: activePage.teamspaceId ?? null,
+    locked: isTeamspaceRoot,
+    onChange: (category: PageCategory) =>
+      mutateAsync({
+        id: activePageId,
+        patch: activePage.teamspaceId
+          ? { category, parentId: null }
+          : { category },
+      }),
+    onMoveToTeamspace: (teamspaceId: ID) =>
+      mutateAsync({
+        id: activePageId,
+        patch: { parentId: teamspaceId, category: "Teamspaces" },
+      }),
+  };
+}
+
+// ============================================================
 // Shared left group — title / category / breadcrumbs
 // ============================================================
 function TitleGroup({ view }: { view: View }) {
   const { activePage, activePageId } = useActivePageState();
-  const { mutateAsync } = usePatchPage(({ id, patch }) => patchPage(id, patch));
+  const pageLocation = usePageLocation();
   const { t } = useTranslation();
   const { collapsed } = useEditorLayoutState();
 
@@ -228,15 +263,11 @@ function TitleGroup({ view }: { view: View }) {
       )}
       <Breadcrumbs pageId={activePageId} />
 
-      {view !== "home" && activePage && canEditContent && !isLoading && (
-        <PageCategorySelect
-          value={activePage.category}
-          onChange={(category) => {
-            if (activePageId)
-              mutateAsync({ id: activePageId, patch: { category } });
-          }}
-        />
-      )}
+      {view !== "home" &&
+        activePage &&
+        pageLocation &&
+        canEditContent &&
+        !isLoading && <PageCategorySelect {...pageLocation} />}
       <OfflineIndicator />
     </ToolbarGroup>
   );
@@ -328,7 +359,7 @@ export const TabletToolbarContent = ({ view }: ContentProps) => {
 // ============================================================
 export const MobileToolbarContent = ({ view }: ContentProps) => {
   const { activePage, activePageId } = useActivePageState();
-  const { mutateAsync } = usePatchPage(({ id, patch }) => patchPage(id, patch));
+  const pageLocation = usePageLocation();
   const { collapsed } = useEditorLayoutState();
 
   return (
@@ -348,16 +379,7 @@ export const MobileToolbarContent = ({ view }: ContentProps) => {
               includeUndoRedo
               includeNotifications
               editedPage={activePage}
-              category={
-                activePage
-                  ? {
-                      value: activePage.category,
-                      onChange: (category) =>
-                        activePageId &&
-                        mutateAsync({ id: activePageId, patch: { category } }),
-                    }
-                  : undefined
-              }
+              category={pageLocation ?? undefined}
             />
           </>
         )}

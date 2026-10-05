@@ -1,6 +1,6 @@
 import { memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TbSelector } from "react-icons/tb";
+import { TbSelector } from "src/components/tiptap-icons";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useCurrentSpace } from "src/hooks/use-current-space";

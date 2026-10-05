@@ -1,4 +1,4 @@
-import { TbChevronsLeft, TbChevronsRight } from "react-icons/tb";
+import { TbChevronsLeft, TbChevronsRight} from "src/components/tiptap-icons";
 import { SB_ICON } from "./sidebar-icon";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";

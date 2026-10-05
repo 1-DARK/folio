@@ -11,7 +11,11 @@ import { patchPage } from "../api/pages";
 import { usePeopleBase } from "./use-people";
 import { usePatchTeamspace } from "./use-patch-teamspace";
 import { usePatchPage } from "./use-patch-page";
-import { useDeleteTeamspace } from "./use-delete-teamspace";
+import {
+  useDeleteTeamspace,
+  useDeleteTeamspaceAndPages,
+  useMoveTeamspaceToWorkspace,
+} from "./use-delete-teamspace";
 import { useCreateTeamspace } from "./use-create-teamspace";
 import { useCreatePage } from "./use-create-page";
 import { buildTeamspacePair } from "./use-create-teamspace-with-page";
@@ -108,6 +112,8 @@ export function useManageTeamspaces() {
   const patch = usePatchTeamspace(({ id, patch }) => patchTeamspace(id, patch));
   const patchPageMut = usePatchPage(({ id, patch }) => patchPage(id, patch));
   const del = useDeleteTeamspace();
+  const delWithPages = useDeleteTeamspaceAndPages();
+  const moveToWorkspace = useMoveTeamspaceToWorkspace();
   const createRecord = useCreateTeamspace();
   const createPageMut = useCreatePage();
   const addMember = useAddTeamspaceMember();
@@ -160,7 +166,12 @@ export function useManageTeamspaces() {
     setDescriptionAsync: (id: ID, description: string | null) =>
       patch.mutateAsync({ id, patch: { description } }),
 
-    deleteTeamspaceAsync: (id: ID) => del.mutateAsync(id),
+    // The teamspace and everything in it (server-side, owners only).
+    deleteTeamspaceAsync: (id: ID) => delWithPages.mutateAsync(id),
+
+    // To another workspace the caller owns (server-side, owners only).
+    moveTeamspaceAsync: (id: ID, workspaceId: ID) =>
+      moveToWorkspace.mutateAsync({ id, workspaceId }),
 
     // Membership → RPCs (owner-checked server-side).
     addMemberAsync: (id: ID, personId: ID) => {

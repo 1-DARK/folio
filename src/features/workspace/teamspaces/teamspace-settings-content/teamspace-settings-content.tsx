@@ -1,7 +1,10 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-location";
 import { useTranslation } from "react-i18next";
 import {
+  ArrowRightLeft,
   Check,
+  ChevronLeft,
   ChevronRight,
   MoreHorizontal,
   Plus,
@@ -31,8 +34,16 @@ import {
   type Page,
   type Teamspace,
   type TeamspaceAccess,
+  type Workspace,
 } from "src/types";
 import { memberCount, type Group } from "src/types";
+import { ConfirmDialog } from "src/features/shell/confirm-dialog";
+import { useToast } from "src/features/shell/toast";
+import { useCurrentSpace } from "src/hooks/use-current-space";
+import {
+  useCurrentWorkspace,
+  useOwnedWorkspaces,
+} from "src/hooks/use-workspaces";
 import "./teamspace-settings-content.scss";
 
 // Popovers here open inside the workspace settings modal (z-index 701) —
@@ -241,6 +252,8 @@ function TeamspaceRow({
   onRename,
   onSetAccess,
   onDelete,
+  moveTargets,
+  onMove,
   onAttachGroup,
   onDetachGroup,
 }: {
@@ -249,14 +262,21 @@ function TeamspaceRow({
   groups: Group[];
   onRename: (id: string, name: string) => void;
   onSetAccess: (id: string, a: TeamspaceAccess) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void | Promise<void>;
+  /** Other workspaces you own — where this teamspace can be moved. */
+  moveTargets: Workspace[];
+  onMove: (id: string, workspace: Workspace) => void | Promise<void>;
   onAttachGroup: (id: string, groupId: string) => void;
   onDetachGroup: (id: string, groupId: string) => void;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The ••• menu's second page: the workspaces to move to.
+  const [menuView, setMenuView] = useState<"main" | "move">("main");
   const [renaming, setRenaming] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const closeConfirm = useCallback(() => setConfirmDelete(false), []);
   const name = nameOf(page, t("teamspaces.untitled"));
   const [draft, setDraft] = useState(name);
 
@@ -329,7 +349,13 @@ function TeamspaceRow({
           })}
         </span>
 
-        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+        <Popover
+          open={menuOpen}
+          onOpenChange={(open) => {
+            setMenuOpen(open);
+            if (!open) setMenuView("main");
+          }}
+        >
           <PopoverTrigger asChild>
             <button
               type="button"
@@ -344,37 +370,99 @@ function TeamspaceRow({
             align="end"
             style={{ zIndex: POPOVER_Z }}
           >
-            <Card style={{ padding: 4, minWidth: 180 }}>
-              <Button
-                variant="ghost"
-                style={{ justifyContent: "flex-start", width: "100%" }}
-                onClick={() => {
-                  setMenuOpen(false);
-                  setDraft(name);
-                  setRenaming(true);
-                }}
-              >
-                <span className="tiptap-button-text">
-                  {t("actions.rename")}
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                style={{
-                  justifyContent: "flex-start",
-                  width: "100%",
-                  color: "var(--tt-danger-color, #e5484d)",
-                }}
-                onClick={() => {
-                  setMenuOpen(false);
-                  onDelete(ts.id);
-                }}
-              >
-                <Trash2 className="tiptap-button-icon" size={14} />
-                <span className="tiptap-button-text">
-                  {t("actions.delete")}
-                </span>
-              </Button>
+            <Card style={{ padding: 4, minWidth: 200 }}>
+              {menuView === "move" ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    style={{ justifyContent: "flex-start", width: "100%" }}
+                    onClick={() => setMenuView("main")}
+                  >
+                    <ChevronLeft className="tiptap-button-icon" size={14} />
+                    <span className="tiptap-button-text">
+                      {t("teamspaces.moveToWorkspace")}
+                    </span>
+                  </Button>
+                  {moveTargets.length === 0 ? (
+                    <div
+                      style={{
+                        padding: "6px 10px 8px",
+                        fontSize: 12.5,
+                        maxWidth: 220,
+                        color:
+                          "color-mix(in srgb, var(--tt-text-primary) 55%, transparent)",
+                      }}
+                    >
+                      {t("teamspaces.noOtherWorkspaces")}
+                    </div>
+                  ) : (
+                    moveTargets.map((w) => (
+                      <Button
+                        key={w.id}
+                        variant="ghost"
+                        style={{ justifyContent: "flex-start", width: "100%" }}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setMenuView("main");
+                          void onMove(ts.id, w);
+                        }}
+                      >
+                        <span className="tiptap-button-text">
+                          {w.name || t("teamspaces.untitled")}
+                        </span>
+                      </Button>
+                    ))
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    style={{ justifyContent: "flex-start", width: "100%" }}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setDraft(name);
+                      setRenaming(true);
+                    }}
+                  >
+                    <span className="tiptap-button-text">
+                      {t("actions.rename")}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    style={{ justifyContent: "flex-start", width: "100%" }}
+                    onClick={() => setMenuView("move")}
+                  >
+                    <ArrowRightLeft className="tiptap-button-icon" size={14} />
+                    <span className="tiptap-button-text">
+                      {t("teamspaces.moveToWorkspace")}
+                    </span>
+                    <ChevronRight
+                      className="tiptap-button-icon"
+                      size={14}
+                      style={{ marginLeft: "auto" }}
+                    />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    style={{
+                      justifyContent: "flex-start",
+                      width: "100%",
+                      color: "var(--tt-danger-color, #e5484d)",
+                    }}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setConfirmDelete(true);
+                    }}
+                  >
+                    <Trash2 className="tiptap-button-icon" size={14} />
+                    <span className="tiptap-button-text">
+                      {t("actions.delete")}
+                    </span>
+                  </Button>
+                </>
+              )}
             </Card>
           </PopoverContent>
         </Popover>
@@ -421,6 +509,26 @@ function TeamspaceRow({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        message={
+          <>
+            {t("teamspaces.deleteConfirmTitle", { name })}
+            <br />
+            <span style={{ fontSize: 13, opacity: 0.7 }}>
+              {t("teamspaces.deleteConfirmBody")}
+            </span>
+          </>
+        }
+        confirmLabel={t("teamspaces.deleteConfirmAction")}
+        cancelLabel={t("actions.cancel", "Cancel")}
+        onCancel={closeConfirm}
+        onConfirm={() => {
+          setConfirmDelete(false);
+          void onDelete(ts.id);
+        }}
+      />
     </>
   );
 }
@@ -434,11 +542,55 @@ export function TeamspacesSettingsContent() {
     renameTeamspaceAsync,
     setAccessAsync,
     deleteTeamspaceAsync,
+    moveTeamspaceAsync,
     attachGroupAsync,
     detachGroupAsync,
   } = useManageTeamspaces();
 
   const [createOpen, setCreateOpen] = useState(false);
+  const space = useCurrentSpace();
+  const navigate = useNavigate();
+  const { show } = useToast();
+  const { workspaceId } = useCurrentWorkspace();
+  const { workspaces: owned } = useOwnedWorkspaces();
+  const moveTargets = useMemo(
+    () => (owned as Workspace[]).filter((w) => w.id !== workspaceId),
+    [owned, workspaceId],
+  );
+
+  // After the move the teamspace belongs to the other workspace, so it
+  // leaves this one; step out of it first if we're inside.
+  const handleMove = async (id: string, target: Workspace) => {
+    if (space.kind === "teamspace" && space.id === id) navigate({ to: "/" });
+    try {
+      await moveTeamspaceAsync(id, target.id);
+      show(t("teamspaces.moved", { name: target.name }), "success");
+    } catch (err) {
+      show(
+        err instanceof Error && err.message
+          ? err.message
+          : t("teamspaces.moveFailed"),
+        "error",
+      );
+    }
+  };
+
+  // Leave the teamspace first if we're in it, so nothing renders from a
+  // teamspace that's about to disappear.
+  const handleDelete = async (id: string) => {
+    if (space.kind === "teamspace" && space.id === id) navigate({ to: "/" });
+    try {
+      await deleteTeamspaceAsync(id);
+      show(t("teamspaces.deleted"), "success");
+    } catch (err) {
+      show(
+        err instanceof Error && err.message
+          ? err.message
+          : t("teamspaces.deleteFailed"),
+        "error",
+      );
+    }
+  };
 
   const pagesById = useMemo(() => {
     const m = new Map<string, Page>();
@@ -495,7 +647,9 @@ export function TeamspacesSettingsContent() {
               groups={groups as Group[]}
               onRename={renameTeamspaceAsync}
               onSetAccess={setAccessAsync}
-              onDelete={deleteTeamspaceAsync}
+              onDelete={handleDelete}
+              moveTargets={moveTargets}
+              onMove={handleMove}
               onAttachGroup={attachGroupAsync}
               onDetachGroup={detachGroupAsync}
             />

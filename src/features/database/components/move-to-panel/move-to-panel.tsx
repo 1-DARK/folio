@@ -74,9 +74,13 @@ export function MoveToPanel({
 
   const destinations = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (pages ?? [])
-      .filter((p) => !excluded.has(p.id))
-      .filter((p) => (q ? (p.title ?? "").toLowerCase().includes(q) : true));
+    return (
+      (pages ?? [])
+        .filter((p) => !excluded.has(p.id))
+        // Not into the trash or a template.
+        .filter((p) => p.deletedAt == null && p.category !== "Template")
+        .filter((p) => (q ? (p.title ?? "").toLowerCase().includes(q) : true))
+    );
   }, [pages, excluded, query]);
 
   return (

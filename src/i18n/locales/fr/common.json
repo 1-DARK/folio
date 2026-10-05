@@ -298,6 +298,11 @@
   "trash.restore": "Restaurer",
   "trash.deleteForever": "Supprimer définitivement",
   "trash.emptyState": "La corbeille est vide",
+  "trash.confirmDelete": "Supprimer définitivement {{title}} ?",
+  "trash.confirmEmpty_one": "Supprimer définitivement {{count}} page de la corbeille ?",
+  "trash.confirmEmpty_other": "Supprimer définitivement les {{count}} pages de la corbeille ?",
+  "trash.confirmNote": "Cette action est irréversible.",
+  "trash.ownOnlyNote": "Les pages créées par d’autres membres restent dans la corbeille ; eux seuls peuvent les supprimer.",
   "trash.movedToast": "Page déplacée vers la corbeille",
   "trash.undo": "Annuler",
   "sidebar": {
@@ -448,10 +453,23 @@
       "guest": "Invité"
     }
   },
+  "pageLocation": {
+    "noTeamspaces": "Aucun espace d’équipe pour l’instant",
+    "teamspaceRoot": "Ceci est un espace d’équipe. Déplace-le vers un autre espace de travail depuis Paramètres → Espaces d’équipe."
+  },
   "teamspaces": {
     "searchPlaceholder": "Rechercher des espaces d’équipe...",
     "createTeamspace": "Créer un espace d’équipe",
     "empty": "Aucun espace d’équipe pour l’instant",
+    "deleteConfirmTitle": "Supprimer {{name}} ?",
+    "deleteConfirmBody": "Toutes ses pages, bases de données et commentaires seront supprimés pour tous les membres. Cette action est irréversible.",
+    "deleteConfirmAction": "Supprimer l’espace",
+    "deleted": "Espace d’équipe supprimé",
+    "deleteFailed": "Impossible de supprimer l’espace d’équipe. Réessaie.",
+    "moveToWorkspace": "Déplacer vers un espace de travail",
+    "noOtherWorkspaces": "Tu ne possèdes pas d’autre espace de travail. Crée-en un depuis le menu des espaces de travail.",
+    "moved": "Espace d’équipe déplacé vers {{name}}",
+    "moveFailed": "Impossible de déplacer l’espace d’équipe. Réessaie.",
     "untitled": "Sans titre",
     "members": "Membres",
     "groups": "Groupes",
@@ -872,6 +890,30 @@
       "database": {
         "title": "Base de données en ligne",
         "description": "Insérer un tableau, un tableau Kanban ou une liste."
+      },
+      "tableView": {
+        "title": "Vue tableau",
+        "description": "Un tableau de pages à trier et filtrer."
+      },
+      "boardView": {
+        "title": "Vue Kanban",
+        "description": "Suivez les pages en colonnes, comme un Kanban."
+      },
+      "galleryView": {
+        "title": "Vue galerie",
+        "description": "Affichez les pages en cartes avec couverture."
+      },
+      "listView": {
+        "title": "Vue liste",
+        "description": "Une simple liste de pages."
+      },
+      "calendarView": {
+        "title": "Vue calendrier",
+        "description": "Voyez les pages sur un calendrier."
+      },
+      "timelineView": {
+        "title": "Vue chronologie",
+        "description": "Planifiez les pages dans le temps."
       }
     },
     "colors": {
@@ -1038,6 +1080,21 @@
         "unique": "La liste sans éléments répétés.",
         "includes": "Vrai si la liste contient la valeur."
       }
+    },
+    "picker": {
+      "noSource": "Aucune source de données",
+      "selectFor": {
+        "table": "Choisissez une source de données pour ce tableau",
+        "board": "Choisissez une source de données pour ce Kanban",
+        "gallery": "Choisissez une source de données pour cette galerie",
+        "list": "Choisissez une source de données pour cette liste",
+        "calendar": "Choisissez une source de données pour ce calendrier",
+        "timeline": "Choisissez une source de données pour cette chronologie"
+      },
+      "search": "Lier ou créer une base de données…",
+      "loading": "Chargement…",
+      "none": "Aucune source de données",
+      "newDatabase": "Nouvelle base de données"
     }
   }
 }

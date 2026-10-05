@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-location";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { TbBooks } from "react-icons/tb";
+import { TbBooks } from "src/components/tiptap-icons";
 import { SidebarNavRow } from "./sidebar-nav-row";
 import { SB_ICON } from "./sidebar-icon";
 

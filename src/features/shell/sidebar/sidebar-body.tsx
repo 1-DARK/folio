@@ -34,7 +34,7 @@ import { CustomizeSidebarPanel } from "./customize-sidebar-panel";
 import { CreateTeamspaceModal } from "../../workspace/teamspaces/create-teamspace-modal";
 import { useIsMobile } from "src/hooks/use-breakpoint";
 import { useNavigate } from "@tanstack/react-location";
-import { TbTrash } from "react-icons/tb";
+import { TbTrash } from "src/components/tiptap-icons/tabler-icons";
 import {
   Popover,
   PopoverContent,
@@ -61,7 +61,6 @@ import { SidebarNavRow } from "./sidebar-nav-row";
 import { SB_ICON } from "./sidebar-icon";
 import "./sidebar-tabs.scss";
 
-const NOOP = () => {};
 const EMPTY_TEAMSPACES: Teamspace[] = [];
 const EMPTY_GROUPS: Group[] = [];
 const RECENT_LIMIT = 6;
@@ -386,8 +385,6 @@ export const SidebarBody = memo(() => {
                   groups={groups as Group[]}
                   onMovePage={handleMovePage}
                   onAddPageToSection={handleAddPageToSection}
-                  onRenameSection={NOOP}
-                  onDeleteSection={NOOP}
                   onAddRoom={openNewRoom}
                   isLoading={isPending || isLoading}
                   sections={teamspaceId ? TEAMSPACE_SECTIONS : undefined}

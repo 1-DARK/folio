@@ -1,8 +1,7 @@
 import { DynamicIcon } from "src/features/pages/cover/dynamic-icon";
 import type { Page } from "src/types";
 import type { CSSProperties } from "react";
-import { FileText } from "src/components/tiptap-icons";
-import { TbFileText } from "react-icons/tb";
+import { FileText, TbFileText } from "src/components/tiptap-icons";
 import { SB_ICON } from "src/features/shell/sidebar/sidebar-icon";
 
 interface PageItemIconProps {

@@ -16,7 +16,7 @@ import {
   TbChevronRight,
   TbDots,
   TbPlus,
-} from "react-icons/tb";
+} from "src/components/tiptap-icons";
 import { SB_ICON_SM } from "../sidebar-icon";
 
 import { readStorage, writeStorage } from "src/lib/local-storage";
