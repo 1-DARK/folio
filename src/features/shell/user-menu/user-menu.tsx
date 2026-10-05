@@ -12,7 +12,8 @@ import { LogOut, UserCircle } from "lucide-react";
 import { Button } from "src/components/tiptap-ui-primitive/button";
 import { Avatar } from "src/components/tiptap-ui-primitive/avatar";
 import { useCurrentPerson } from "src/hooks/use-session";
-import { supabase } from "src/api/supabase-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { requestSignOut } from "src/features/auth/sign-out";
 import { WorkspaceSettingsContext } from "../../workspace/context/workspace-settings-context";
 import "./user-menu.scss";
 
@@ -35,6 +36,7 @@ export function UserMenu() {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const queryClient = useQueryClient();
 
   const close = useCallback((restoreFocus = true) => {
     setOpen(false);
@@ -110,17 +112,19 @@ export function UserMenu() {
     settings?.openTo("my-account");
   };
 
+  // Shared sign-out (see features/auth/sign-out): falls back to a local
+  // sign-out offline, and asks first if something hasn't synced yet.
   const logOut = async () => {
     if (signingOut) return;
     setSigningOut(true);
-    // A normal sign-out also revokes the session on the server. Offline (or
-    // if that call fails) fall back to a local sign-out: it needs no network
-    // and still fires SIGNED_OUT, which clears the offline data and sends the
-    // app back to the landing / sign-in screen.
-    const { error } = await supabase.auth.signOut();
-    if (error) await supabase.auth.signOut({ scope: "local" });
-    setSigningOut(false);
     setOpen(false);
+    try {
+      await requestSignOut(queryClient);
+    } catch (e) {
+      console.error("sign-out failed:", e);
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   if (!person) return null;

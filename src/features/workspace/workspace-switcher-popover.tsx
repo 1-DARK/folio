@@ -24,7 +24,8 @@ import { usePeople } from "src/hooks/use-people";
 import { useGroups } from "src/hooks/use-groups";
 import { useCurrentSpace } from "src/hooks/use-current-space";
 import { useWorkspaceSettings as useWorkspaceSettingsModal } from "./context/workspace-settings-context";
-import { supabase } from "src/api/supabase-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { requestSignOut } from "src/features/auth/sign-out";
 import "./workspace-switcher-popover.scss";
 import {
   effectiveMemberCount,
@@ -111,6 +112,7 @@ export function WorkspaceSwitcherPopover({
   const { onOpenChange, setActiveId } = useWorkspaceSettingsModal();
 
   const switchWorkspace = useSwitchWorkspace();
+  const queryClient = useQueryClient();
   const createWorkspace = useCreateWorkspace();
 
   const ref = useRef<HTMLDivElement>(null);
@@ -196,9 +198,15 @@ export function WorkspaceSwitcherPopover({
     });
   };
 
+  // Shared sign-out: same as the user menu (local fallback when offline,
+  // asks first if something hasn't synced yet).
   const logout = async () => {
     onClose();
-    await supabase.auth.signOut();
+    try {
+      await requestSignOut(queryClient);
+    } catch (e) {
+      console.error("sign-out failed:", e);
+    }
   };
 
   const header =

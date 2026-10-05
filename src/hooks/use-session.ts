@@ -49,8 +49,7 @@ function readStoredSession(): Session | null {
       const raw = localStorage.getItem(key);
       if (!raw) continue;
       const parsed = JSON.parse(raw) as
-        | (Session & { currentSession?: Session })
-        | null;
+        (Session & { currentSession?: Session }) | null;
       // Older SDK versions nested it under currentSession.
       const stored = parsed?.currentSession ?? parsed;
       if (stored?.user?.id && stored.refresh_token) return stored;
@@ -73,8 +72,6 @@ function readStoredSession(): Session | null {
  * back, and everything keyed on the token reconnects.
  */
 export function useSession() {
-  const queryClient = useQueryClient();
-
   const { data: session, isLoading: loading } = useQuery({
     queryKey: queryKeys.session,
     queryFn: async (): Promise<Session | null> => {
@@ -88,24 +85,40 @@ export function useSession() {
     networkMode: "always",
   });
 
+  return { session: session ?? null, loading };
+}
+
+/**
+ * Keeps the session entry in sync with Supabase auth events. Call ONCE, at
+ * the app root (AuthGate) — useSession runs in dozens of components, and a
+ * listener in each made every sign-out clear the cache dozens of times.
+ */
+export function useAuthListener() {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        // Signed out (or the session was revoked): drop every offline copy
-        // on this device — saved queries and page docs. This also clears
-        // the session entry, so the gate re-resolves to the sign-in screen.
+        // Signed out (or the session was revoked, or signed out in another
+        // tab): drop every offline copy on this device — saved queries and
+        // page docs — and record "no session" right away, so the gate goes
+        // straight to the landing page instead of flashing its spinner
+        // while it re-resolves.
         if (event === "SIGNED_OUT") {
-          clearOfflineData(() => queryClient.clear());
+          clearOfflineData(() => {
+            queryClient.clear();
+            queryClient.setQueryData(queryKeys.session, null);
+          });
           return;
         }
+        // INITIAL_SESSION repeats what the session query already read.
+        if (event === "INITIAL_SESSION") return;
         queryClient.setQueryData(queryKeys.session, newSession);
         queryClient.invalidateQueries({ queryKey: queryKeys.currentPerson });
       },
     );
     return () => listener.subscription.unsubscribe();
   }, [queryClient]);
-
-  return { session: session ?? null, loading };
 }
 
 /**

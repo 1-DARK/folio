@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "src/lib/queryKeys";
 import { patchPerson } from "src/api/people";
 import { deleteWorkspace } from "src/api/workspaces";
-import { supabase } from "src/api/supabase-client";
+import { signOut } from "src/features/auth/sign-out";
 import { uploadFile } from "src/api/uploads";
 import { useFileUpload } from "src/components/tiptap-node/image-upload-node/use-file-upload";
 import { ConfirmDialog } from "../../shell/confirm-dialog";
@@ -121,7 +121,7 @@ function DeleteWorkspaceRow({
       // recreates or reassigns a workspace for this person afterward, so
       // they will hit AuthGate's isMissingPerson/error screen on next
       // sign-in. This needs a real decision before shipping.
-      await supabase.auth.signOut();
+      await signOut();
     } catch (e) {
       setDeleting(false);
       setError(e instanceof Error ? e.message : "Failed to delete workspace");

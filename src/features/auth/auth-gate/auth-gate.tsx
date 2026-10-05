@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
-import { useCurrentPerson } from "src/hooks/use-session";
+import { useAuthListener, useCurrentPerson } from "src/hooks/use-session";
 import "./auth-gate.scss";
 
 // Signed-out screens, each its own chunk: a signed-in person never downloads
@@ -30,6 +30,8 @@ const isLandingPath = (path: string) => path === "/" || path === "";
  * returns to the landing page.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
+  // The app's one auth-event listener (sign-in, refresh, sign-out).
+  useAuthListener();
   const { isAuthenticated, isLoading } = useCurrentPerson();
   const [path, setPath] = useState(() => window.location.pathname);
 

@@ -55,7 +55,7 @@ export const User = memo(() => {
   if (inTeamspace) {
     name = space.page?.title || t("teamspaces.untitled");
     meta = [
-      workspace?.name,
+      //      workspace?.name,
       space.teamspace
         ? t("workspace.memberCount", {
             count: effectiveMemberCount(space.teamspace, groups as Group[]),
@@ -121,7 +121,7 @@ export const User = memo(() => {
         </span>
         <span className="sb-ws__text">
           <span className="sb-ws__name">{name}</span>
-          {meta && <span className="sb-ws__meta">{meta}</span>}
+          {meta && inTeamspace && <span className="sb-ws__meta">{meta}</span>}
         </span>
         <TbSelector
           size={15}

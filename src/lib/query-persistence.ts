@@ -139,6 +139,9 @@ export function clearOfflineData(clearQueries: () => void): void {
   clearQueries();
   void queryPersister.removeClient();
   clearOfflineDocCache();
+  // The open editor saves its doc one last time as it unmounts, which can
+  // land just after the wipe above — wipe again once it has gone.
+  setTimeout(clearOfflineDocCache, 1500);
   try {
     localStorage.removeItem(OWNER_KEY);
   } catch {

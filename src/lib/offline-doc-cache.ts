@@ -102,3 +102,16 @@ export function markDocClean(personId: string, pageId: string): void {
 export function clearOfflineDocCache(): void {
   request("readwrite", (s) => s.clear()).catch(() => {});
 }
+
+/** True when some page on this device holds edits the server hasn't
+ *  received yet (checked before signing out, which would discard them). */
+export async function hasDirtyDocs(): Promise<boolean> {
+  try {
+    const keys = await request<IDBValidKey[]>("readonly", (s) =>
+      s.getAllKeys(),
+    );
+    return keys.some((k) => typeof k === "string" && k.startsWith("dirty:"));
+  } catch {
+    return false;
+  }
+}
