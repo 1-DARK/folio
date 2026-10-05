@@ -2,6 +2,7 @@
   "name": "tiptap-sandbox",
   "private": true,
   "version": "0.0.0",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"node server.js\" \"node server/upload-server.js\"",

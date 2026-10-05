@@ -96,6 +96,7 @@ These rules come from real bugs:
 - Give the pull request a Conventional Commit style title.
 - In the description, say what changed and why, how you tested it, and anything you couldn't test. Add a screenshot or a short recording for visual changes.
 - Link the issue it closes (`Closes #12`).
+- Sign off every commit (`git commit -s`). See [Licence and contributor terms](#licence-and-contributor-terms).
 - Expect review comments. They're about the code, not you.
 
 ## Reporting a bug
@@ -108,6 +109,13 @@ Open an issue with:
 
 For a security problem (someone could see or change data they shouldn't), don't open a public issue: contact the maintainer directly through their GitHub profile.
 
-## Licence
+## Licence and contributor terms
 
-There's no licence file yet. Ask the maintainer before reusing the code outside this project.
+Folio is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
+
+By opening a pull request, you agree to two things:
+
+1. **Sign-off.** The contribution is your own work, or you have the right to submit it, and you submit it under the AGPL-3.0. You confirm this by signing off each commit with `git commit -s`, which adds a `Signed-off-by: Your Name <you@example.com>` line. That line means you agree to the [Developer Certificate of Origin 1.1](https://developercertificate.org).
+2. **Relicensing.** You give Jule, the maintainer, a permanent, worldwide, non-exclusive, royalty-free and irrevocable licence to use, change, sublicense and distribute your contribution, including under licences other than the AGPL-3.0 (for example, a commercial licence). You keep the copyright to your contribution.
+
+Why the second point: it keeps the option open to offer Folio under other terms later (for example, to a company that wants to build it into a closed-source product), while everything in this repository stays available under the AGPL-3.0.
