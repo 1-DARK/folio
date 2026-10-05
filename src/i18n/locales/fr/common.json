@@ -305,6 +305,12 @@
   "trash.ownOnlyNote": "Les pages créées par d’autres membres restent dans la corbeille ; eux seuls peuvent les supprimer.",
   "trash.movedToast": "Page déplacée vers la corbeille",
   "trash.undo": "Annuler",
+  "inbox.markAllRead": "Tout marquer comme lu",
+  "inbox.empty": "Aucune notification",
+  "inbox.otherWorkspaces": "Dans tes autres espaces de travail",
+  "inbox.pageInTrash": "Cette page est dans la corbeille. Restaure-la depuis la corbeille pour l’ouvrir.",
+  "inbox.unavailable": "Cette page ou ce chat n’est plus disponible.",
+  "inbox.switchFailed": "Impossible de changer d’espace de travail. Réessaie.",
   "sidebar": {
     "home": "Accueil",
     "search": "Rechercher",

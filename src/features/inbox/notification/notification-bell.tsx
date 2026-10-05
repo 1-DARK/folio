@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { Notification, NotificationType } from "src/types";
 
 import "./notification-bell.scss";
@@ -16,8 +16,8 @@ import {
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
 import { Bell } from "lucide-react";
-import { useActivePageActions } from "src/features/pages/context/active-page-context";
 import { useNotifications } from "./notification-context";
+import { useOpenNotification } from "../inbox-panel/use-open-notification";
 
 // ── Icons (inline SVG, no extra dep) ──────────────────────────────────────
 function BellIcon() {
@@ -125,58 +125,20 @@ function relativeTime(date: Date): string {
 // ── Component ─────────────────────────────────────────────────────────────
 
 export function NotificationBell() {
-  const {
-    notifications,
-    unreadCount,
-    markAllRead,
-    markRead,
-    dismiss,
-    dismissAll,
-  } = useNotifications();
+  // Already scoped to this workspace and to your notification settings.
+  const { notifications, unreadCount, markAllRead, dismiss, dismissAll } =
+    useNotifications();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const { setActivePageId } = useActivePageActions();
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  // Same handler as the inbox; closes the popover once it navigates.
+  const openNotification = useOpenNotification(() => setOpen(false));
 
-  const handleBellClick = () => setOpen((v) => !v);
-
-  const handleNotificationClick = (notification: Notification) => {
-    markRead(notification.id);
-    if (notification.sourcePageId !== undefined) {
-      setActivePageId(notification.sourcePageId as string);
-    }
-    // scroll after page has switched and content has rendered
-    if (notification.targetNodeId) {
-      setTimeout(() => {
-        const el = document.querySelector(
-          `[data-node-id="${notification.targetNodeId}"]`,
-        );
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.classList.add("notification-highlight");
-          setTimeout(() => el.classList.remove("notification-highlight"), 2000);
-        }
-      }, 300); // give page switch time to settle
-    }
-  };
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <div className="notif-bell-root">
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
             className="notif-bell-btn"
-            onClick={handleBellClick}
             aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
           >
             <Bell className="tiptap-button-icon" />
@@ -198,12 +160,18 @@ export function NotificationBell() {
               <h3>Notifications</h3>
               <div className="notif-header-actions">
                 {unreadCount > 0 && (
-                  <button className="notif-action-btn" onClick={markAllRead}>
+                  <button
+                    className="notif-action-btn"
+                    onClick={() => markAllRead()}
+                  >
                     Mark all read
                   </button>
                 )}
                 {notifications.length > 0 && (
-                  <button className="notif-action-btn" onClick={dismissAll}>
+                  <button
+                    className="notif-action-btn"
+                    onClick={() => dismissAll()}
+                  >
                     Clear all
                   </button>
                 )}
@@ -224,7 +192,7 @@ export function NotificationBell() {
                     orientation="horizontal"
                     className={`notif-item${n.read ? "" : " unread"}`}
                     role="listitem"
-                    onClick={() => handleNotificationClick(n)}
+                    onClick={() => void openNotification(n)}
                   >
                     {/* Type icon */}
                     <div className={`notif-icon type-${n.type}`}>

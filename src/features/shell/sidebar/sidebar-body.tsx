@@ -350,7 +350,7 @@ export const SidebarBody = memo(() => {
       case "inbox":
         return (
           <div className="sb-tab-panel">
-            <InboxPanel />
+            <InboxPanel onOpened={closeDrawerOnMobile} />
           </div>
         );
       case "chats":

@@ -360,6 +360,12 @@
   "trash.ownOnlyNote": "Pages other members created stay in the trash; only they can delete them.",
   "trash.movedToast": "Page moved to Trash",
   "trash.undo": "Undo",
+  "inbox.markAllRead": "Mark all read",
+  "inbox.empty": "No notifications",
+  "inbox.otherWorkspaces": "In your other workspaces",
+  "inbox.pageInTrash": "This page is in the trash. Restore it from Trash to open it.",
+  "inbox.unavailable": "This page or chat isn't available anymore.",
+  "inbox.switchFailed": "Couldn't switch workspace. Try again.",
   "sidebar": {
     "home": "Home",
     "search": "Search",

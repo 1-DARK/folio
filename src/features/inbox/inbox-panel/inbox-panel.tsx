@@ -1,75 +1,50 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "@tanstack/react-location";
 import {
   Inbox as InboxIcon,
   AtSign,
   Calendar,
   Link2,
   Check,
+  ChevronRight,
   MessagesSquare,
 } from "lucide-react";
 import { useNotifications } from "src/features/inbox/notification/notification-context";
-import { useCurrentPerson } from "src/hooks/use-session";
-import { useChatRooms } from "src/hooks/use-chat";
 import type { Notification, NotificationType } from "src/types";
-import { useActivePageActions } from "../../pages/context/active-page-context";
-import { chatPath, useOpenChatRoom } from "../../chat/chat-utils";
-import { setPendingScrollTarget } from "./pending-scroll-target";
+import { useOpenNotification } from "./use-open-notification";
 import "./inbox-panel.scss";
 
-export function InboxPanel() {
+export function InboxPanel({ onOpened }: { onOpened?: () => void } = {}) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { notifications, markRead, markAllRead } = useNotifications();
-  const { person } = useCurrentPerson();
-  const { setActivePageId } = useActivePageActions();
-  const { all: rooms } = useChatRooms();
-  const openRoom = useOpenChatRoom();
+  // Already scoped to this workspace and to your notification settings.
+  const {
+    notifications,
+    unreadCount,
+    elsewhere,
+    elsewhereUnreadCount,
+    markAllRead,
+  } = useNotifications();
+  const open = useOpenNotification(onOpened);
+  const [showElsewhere, setShowElsewhere] = useState(false);
 
-  const settings = person?.notificationSettings ?? {};
-  const visibleNotifications = notifications.filter(
-    (n) => settings[n.type] ?? true,
+  const item = (n: Notification) => (
+    <button
+      type="button"
+      key={n.id}
+      className={`inbox-item${n.read ? "" : " is-unread"}`}
+      onClick={() => void open(n)}
+    >
+      <span className="inbox-item__icon">
+        <NotifIcon type={n.type} />
+      </span>
+      <span className="inbox-item__text">
+        <span className="inbox-item__title">{n.title}</span>
+        <span className="inbox-item__message">{n.message}</span>
+        <span className="inbox-item__time">{n.timestamp.toLocaleString()}</span>
+      </span>
+      {!n.read && <span className="inbox-item__dot" />}
+    </button>
   );
-  const unreadCount = visibleNotifications.filter((n) => !n.read).length;
-
-  const handleClick = (n: Notification) => {
-    markRead(n.id);
-
-    if (n.type === "chat-mention") {
-      // Land on the exact message: the room view consumes this target (keyed
-      // by room id) once its messages are rendered.
-      if (n.sourceRoomId && n.targetNodeId) {
-        setPendingScrollTarget({
-          pageId: n.sourceRoomId,
-          targetNodeId: n.targetNodeId,
-          type: "chat-message",
-        });
-      }
-
-      // Old page-discussion mention (page discussions were removed) → the page.
-      if (n.sourcePageId) {
-        setActivePageId(String(n.sourcePageId));
-        return;
-      }
-      // Room or DM → the room, in the right space.
-      if (n.sourceRoomId) {
-        const room = rooms.find((r) => r.id === n.sourceRoomId);
-        if (room) openRoom(room);
-        else navigate({ to: chatPath(null, n.sourceRoomId) });
-      }
-      return;
-    }
-
-    if (n.sourcePageId != null) {
-      const pageId = String(n.sourcePageId);
-      setPendingScrollTarget({
-        pageId,
-        targetNodeId: n.targetNodeId,
-        type: n.type,
-      });
-      setActivePageId(pageId);
-    }
-  };
 
   return (
     <div className="inbox-panel">
@@ -86,7 +61,7 @@ export function InboxPanel() {
           <button
             type="button"
             className="inbox-panel__mark-all"
-            onClick={markAllRead}
+            onClick={() => markAllRead()}
           >
             <Check size={13} />
             <span>{t("inbox.markAllRead", "Mark all read")}</span>
@@ -95,32 +70,41 @@ export function InboxPanel() {
       </div>
 
       <div className="inbox-panel__body">
-        {visibleNotifications.length === 0 ? (
+        {notifications.length === 0 && elsewhere.length === 0 ? (
           <div className="inbox-panel__empty">
             <InboxIcon size={26} strokeWidth={1.5} />
             <p>{t("inbox.empty", "No notifications")}</p>
           </div>
         ) : (
-          visibleNotifications.map((n) => (
-            <button
-              type="button"
-              key={n.id}
-              className={`inbox-item${n.read ? "" : " is-unread"}`}
-              onClick={() => handleClick(n)}
-            >
-              <span className="inbox-item__icon">
-                <NotifIcon type={n.type} />
-              </span>
-              <span className="inbox-item__text">
-                <span className="inbox-item__title">{n.title}</span>
-                <span className="inbox-item__message">{n.message}</span>
-                <span className="inbox-item__time">
-                  {n.timestamp.toLocaleString()}
-                </span>
-              </span>
-              {!n.read && <span className="inbox-item__dot" />}
-            </button>
-          ))
+          <>
+            {notifications.map(item)}
+
+            {elsewhere.length > 0 && (
+              <div className="inbox-panel__elsewhere">
+                <button
+                  type="button"
+                  className="inbox-panel__elsewhere-toggle"
+                  aria-expanded={showElsewhere}
+                  onClick={() => setShowElsewhere((v) => !v)}
+                >
+                  <ChevronRight
+                    size={13}
+                    style={{
+                      transform: showElsewhere ? "rotate(90deg)" : "none",
+                      transition: "transform 150ms ease",
+                    }}
+                  />
+                  <span>{t("inbox.otherWorkspaces")}</span>
+                  {elsewhereUnreadCount > 0 && (
+                    <span className="inbox-panel__count">
+                      {elsewhereUnreadCount}
+                    </span>
+                  )}
+                </button>
+                {showElsewhere && elsewhere.map(item)}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

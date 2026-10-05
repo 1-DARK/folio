@@ -133,3 +133,33 @@
     background-color: transparent;
   }
 }
+
+// Notifications for your other workspaces — folded under the current ones.
+.inbox-panel__elsewhere {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--tt-border-color);
+}
+
+.inbox-panel__elsewhere-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--tt-radius-sm, 4px);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tt-text-color-subtle, color-mix(in srgb, var(--tt-text-color) 60%, transparent));
+  cursor: pointer;
+
+  &:hover {
+    color: var(--tt-text-primary);
+    background: var(--tt-gray-light-a-100);
+    .dark & {
+      background: var(--tt-gray-dark-a-100);
+    }
+  }
+}

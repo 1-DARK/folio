@@ -1,6 +1,21 @@
 import type { ID } from "src/types";
 import { http } from "./client";
 import { newId } from "src/lib/id";
+import { supabase } from "./supabase-client";
+
+// Which of the caller's OWN workspaces a page / chat room lives in, or null
+// (not yours to switch into, trashed, or gone). See migration 038.
+export async function fetchNotificationTargetWorkspace(
+  pageId: ID | null,
+  roomId: ID | null,
+): Promise<ID | null> {
+  const { data, error } = await supabase.rpc("notification_target_workspace", {
+    p_page: pageId,
+    p_room: roomId,
+  });
+  if (error) throw new Error(error.message);
+  return (data as ID | null) ?? null;
+}
 
 // Matches the json-server dialect your client shim maps to PostgREST, exactly
 // like threads.ts. Requires TABLE.notifications and COLUMN.recipientId added to

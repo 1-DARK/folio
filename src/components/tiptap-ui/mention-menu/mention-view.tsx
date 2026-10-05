@@ -99,7 +99,7 @@ export function MentionView({ node, updateAttributes }: ReactNodeViewProps) {
     mentionLabel: mentionItem?.label ?? node.attrs.label ?? "",
     isUserMention,
     date: remind ? date : undefined,
-    sourcePageId: Number(activePage?.id),
+    sourcePageId: activePage?.id,
     sourcePageTitle: activePage?.title || "New Page",
     targetNodeId: node.attrs.nodeId,
     remind,

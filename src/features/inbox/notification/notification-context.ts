@@ -9,16 +9,25 @@ export interface NotificationActions {
     },
   ) => void;
   markRead: (id: string) => void;
-  markAllRead: () => void;
+  /** Marks these as read — by default, everything in the current workspace's
+   *  inbox. */
+  markAllRead: (ids?: string[]) => void;
   dismiss: (id: string) => void;
-  dismissAll: () => void;
+  /** Removes these — by default, everything in the current workspace's inbox. */
+  dismissAll: (ids?: string[]) => void;
   hasNotified: (key: string) => boolean;
   registerNotified: (key: string) => void;
 }
 
 export interface NotificationState {
+  /** The current workspace's inbox, newest first, without the types turned
+   *  off in notification settings. */
   notifications: Notification[];
+  /** Unread in `notifications` — what every badge shows. */
   unreadCount: number;
+  /** For pages/rooms in your other workspaces (or no longer reachable). */
+  elsewhere: Notification[];
+  elsewhereUnreadCount: number;
   /** The first load of notifications has finished (successfully or not). */
   ready: boolean;
 }

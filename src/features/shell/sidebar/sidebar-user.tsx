@@ -1,6 +1,6 @@
 import { memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TbSelector } from "src/components/tiptap-icons";
+import { TbSelector } from "src/components/tiptap-icons/tabler-icons";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useCurrentSpace } from "src/hooks/use-current-space";
@@ -38,7 +38,8 @@ export const User = memo(() => {
   const space = useCurrentSpace();
   const { data: people = [] } = usePeople();
   const { data: groups = [] } = useGroups();
-  const { unreadCount } = useNotificationState();
+  // The dot also covers your other workspaces, so it hints where to switch.
+  const { unreadCount, elsewhereUnreadCount } = useNotificationState();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -54,6 +55,7 @@ export const User = memo(() => {
   if (inTeamspace) {
     name = space.page?.title || t("teamspaces.untitled");
     meta = [
+      workspace?.name,
       space.teamspace
         ? t("workspace.memberCount", {
             count: effectiveMemberCount(space.teamspace, groups as Group[]),
@@ -113,11 +115,13 @@ export const User = memo(() => {
       >
         <span className={`sb-ws__tile sb-ws__tile--${tileKind}`}>
           {tile}
-          {unreadCount > 0 && <span className="workspace-notification-badge" />}
+          {(unreadCount > 0 || elsewhereUnreadCount > 0) && (
+            <span className="workspace-notification-badge" />
+          )}
         </span>
         <span className="sb-ws__text">
           <span className="sb-ws__name">{name}</span>
-          {meta && inTeamspace && <span className="sb-ws__meta">{meta}</span>}
+          {meta && <span className="sb-ws__meta">{meta}</span>}
         </span>
         <TbSelector
           size={15}
