@@ -71,6 +71,75 @@
   }
 }
 
+// Invite by email: email + role + button, then the invites not answered yet.
+.ps-invite__email-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ps-invite__email {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--tt-text-primary);
+  background: transparent;
+  border: 0.5px solid var(--tt-border-color);
+  border-radius: var(--tt-radius-md);
+  outline: none;
+
+  &:focus {
+    border-color: var(--tt-brand-color-500, #2b7fff);
+  }
+}
+
+.ps-invite__role {
+  padding: 6px 8px;
+  font-size: 12.5px;
+  color: var(--tt-text-primary);
+  background: transparent;
+  border: 0.5px solid var(--tt-border-color);
+  border-radius: var(--tt-radius-md);
+}
+
+.ps-invite__pending {
+  margin-top: 12px;
+}
+
+.ps-invite__pending-label {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--tt-text-primary) 55%, transparent);
+}
+
+.ps-invite__pending-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 12.5px;
+
+  .ps-invite__regen {
+    margin-top: 0;
+  }
+}
+
+.ps-invite__pending-email {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tt-text-primary);
+}
+
+.ps-invite__pending-role {
+  color: color-mix(in srgb, var(--tt-text-primary) 55%, transparent);
+}
+
 // ── Toggle switch ───────────────────────────────────────────────────────────
 .ps-switch {
   position: relative;
@@ -223,6 +292,43 @@
   font-size: 12px;
   text-transform: capitalize;
   color: color-mix(in srgb, var(--tt-text-primary) 55%, transparent);
+
+  // Owners: the role opens a menu (change role, remove).
+  &.is-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    background: transparent;
+    border: none;
+    border-radius: var(--tt-radius-sm);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--tt-text-primary);
+      background: color-mix(in srgb, var(--tt-text-primary) 7%, transparent);
+    }
+  }
+}
+
+.ps-person-row__you {
+  color: color-mix(in srgb, var(--tt-text-primary) 50%, transparent);
+}
+
+.ps-person-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ps-person-row__leave {
+  padding: 3px 8px;
+  font-size: 12px;
+  color: var(--tt-danger-color, #e5484d);
+  background: transparent;
+  border: 0.5px solid var(--tt-border-color);
+  border-radius: var(--tt-radius-sm);
+  cursor: pointer;
 }
 
 // ── Groups table ────────────────────────────────────────────────────────────

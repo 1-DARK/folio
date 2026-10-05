@@ -1,8 +1,16 @@
 import type { ID, Person } from "src/types";
-import { http } from "./client";
+import { http, keysToCamel } from "./client";
+import { supabase } from "./supabase-client";
 
-export const fetchPeople = (workspaceId: ID) =>
-  http<Person[]>(`/people?workspace_id=eq.${workspaceId}`);
+/** Everyone in a workspace — every member, not only the ones currently
+ *  switched into it — with their role in THAT workspace (migration 041). */
+export async function fetchPeople(workspaceId: ID): Promise<Person[]> {
+  const { data, error } = await supabase.rpc("workspace_people", {
+    ws: workspaceId,
+  });
+  if (error) throw new Error(error.message);
+  return keysToCamel(data ?? []) as Person[];
+}
 
 export const fetchPerson = (id: ID) => http<Person>(`/people/${id}`);
 

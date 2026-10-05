@@ -11,10 +11,7 @@ import {
   ArrowUpCircle,
   UserPlus,
 } from "lucide-react";
-import {
-  useCurrentWorkspace,
-  useOwnedWorkspaces,
-} from "src/hooks/use-workspaces";
+import { useCurrentWorkspace, useMyWorkspaces } from "src/hooks/use-workspaces";
 import {
   useCreateWorkspace,
   useSwitchWorkspace,
@@ -104,7 +101,8 @@ export function WorkspaceSwitcherPopover({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { workspace } = useCurrentWorkspace();
-  const { workspaces: ownedWorkspaces } = useOwnedWorkspaces();
+  // Your own workspaces and the ones you've joined.
+  const { workspaces: myWorkspaces } = useMyWorkspaces();
   const { person } = useCurrentPerson();
   const { data: people = [] } = usePeople();
   const { data: groups = [] } = useGroups();
@@ -314,7 +312,7 @@ export function WorkspaceSwitcherPopover({
       <div className="ws-switch__section-label">
         {t("workspace.sectionWorkspaces", "Workspaces")}
       </div>
-      {ownedWorkspaces.map((ws) => (
+      {myWorkspaces.map((ws) => (
         <Row
           key={ws.id}
           icon={

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Check,
@@ -35,9 +35,22 @@ import {
   type Person,
   type ID,
 } from "src/types";
-import { useWorkspaceSettings } from "src/hooks/use-workspace-settings";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
+import {
+  useInviteToWorkspace,
+  useRegenerateInviteLink,
+  useRemoveMember,
+  useRevokeWorkspaceInvite,
+  useSentWorkspaceInvites,
+  useSetInviteLinkEnabled,
+  useSetMemberRole,
+  useWorkspaceInviteLink,
+} from "src/hooks/use-workspace-members";
+import { inviteLinkUrl } from "src/api/workspace-members";
+import type { MemberRole } from "src/types";
+import { ConfirmDialog } from "src/features/shell/confirm-dialog";
+import { useToast } from "src/features/shell/toast";
 import "./people-settings-content.scss";
 
 type Tab = "members" | "guests" | "groups";
@@ -61,18 +74,262 @@ function Avatar({ person, size = 24 }: { person: Person; size?: number }) {
   );
 }
 
-function PersonRow({ person }: { person: Person }) {
+const ROLES: MemberRole[] = ["owner", "member", "guest"];
+
+// One person in the workspace. Owners change roles and remove people from a
+// menu on the role; anyone else can leave. The workspace's creator always
+// stays an owner and can't be removed.
+function PersonRow({
+  person,
+  isSelf,
+  isCreator,
+  canManage,
+  onSetRole,
+  onRemove,
+}: {
+  person: Person;
+  isSelf: boolean;
+  isCreator: boolean;
+  canManage: boolean;
+  onSetRole: (personId: string, role: MemberRole) => void;
+  onRemove: (person: Person) => void;
+}) {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const roleLabel = t(`people.roles.${person.role}`, person.role);
+  const editable = canManage && !isCreator;
+
   return (
     <div className="ps-person-row">
       <Avatar person={person} />
       <div className="ps-person-row__text">
-        <span className="ps-person-row__name">{person.name}</span>
+        <span className="ps-person-row__name">
+          {person.name}
+          {isSelf && (
+            <span className="ps-person-row__you"> {t("people.you")}</span>
+          )}
+        </span>
         <span className="ps-person-row__email">{person.email}</span>
       </div>
-      <span className="ps-person-row__role">
-        {t(`people.roles.${person.role}`, person.role)}
-      </span>
+
+      {editable ? (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button type="button" className="ps-person-row__role is-button">
+              {roleLabel}
+              <ChevronRight size={12} style={{ transform: "rotate(90deg)" }} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="bottom" align="end">
+            <Card style={{ padding: 4, minWidth: 200 }}>
+              {ROLES.map((r) => (
+                <Button
+                  key={r}
+                  variant="ghost"
+                  style={{ justifyContent: "flex-start", width: "100%" }}
+                  onClick={() => {
+                    setOpen(false);
+                    if (r !== person.role) onSetRole(person.id, r);
+                  }}
+                >
+                  <span className="tiptap-button-text">
+                    {t(`people.roles.${r}`, r)}
+                  </span>
+                  {r === person.role && (
+                    <Check size={14} style={{ marginLeft: "auto" }} />
+                  )}
+                </Button>
+              ))}
+              <Button
+                variant="ghost"
+                style={{
+                  justifyContent: "flex-start",
+                  width: "100%",
+                  color: "var(--tt-danger-color, #e5484d)",
+                }}
+                onClick={() => {
+                  setOpen(false);
+                  onRemove(person);
+                }}
+              >
+                <Trash2 className="tiptap-button-icon" size={14} />
+                <span className="tiptap-button-text">
+                  {isSelf
+                    ? t("people.leaveWorkspace")
+                    : t("people.removeFromWorkspace")}
+                </span>
+              </Button>
+            </Card>
+          </PopoverContent>
+        </Popover>
+      ) : isSelf && !isCreator ? (
+        <span className="ps-person-row__actions">
+          <span className="ps-person-row__role">{roleLabel}</span>
+          <button
+            type="button"
+            className="ps-person-row__leave"
+            onClick={() => onRemove(person)}
+          >
+            {t("people.leave")}
+          </button>
+        </span>
+      ) : (
+        <span className="ps-person-row__role">{roleLabel}</span>
+      )}
+    </div>
+  );
+}
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+// Owners: invite by email (as a member or a guest) and see who hasn't
+// answered yet. The invite shows up in their Folio inbox when they sign in
+// with that email.
+function InviteByEmail() {
+  const { t } = useTranslation();
+  const { show } = useToast();
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"member" | "guest">("member");
+  const invite = useInviteToWorkspace();
+  const revoke = useRevokeWorkspaceInvite();
+  const { data: pending = [] } = useSentWorkspaceInvites();
+
+  const valid = EMAIL_RE.test(email.trim());
+
+  const submit = () => {
+    if (!valid || invite.isPending) return;
+    const to = email.trim();
+    invite.mutate(
+      { email: to, role },
+      {
+        onSuccess: () => {
+          setEmail("");
+          show(t("people.inviteSent", { email: to }), "success");
+        },
+        onError: (e) =>
+          show(
+            e instanceof Error ? e.message : t("people.inviteFailed"),
+            "error",
+          ),
+      },
+    );
+  };
+
+  return (
+    <div className="ps-invite">
+      <div className="ps-invite__title">{t("people.inviteByEmail")}</div>
+      <div className="ps-invite__desc">{t("people.inviteByEmailDesc")}</div>
+      <div className="ps-invite__email-row">
+        <input
+          className="ps-invite__email"
+          type="email"
+          value={email}
+          placeholder={t("people.emailPlaceholder")}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") submit();
+          }}
+        />
+        <select
+          className="ps-invite__role"
+          value={role}
+          aria-label={t("people.inviteAs")}
+          onChange={(e) => setRole(e.target.value as "member" | "guest")}
+        >
+          <option value="member">{t("people.roles.member", "Member")}</option>
+          <option value="guest">{t("people.roles.guest", "Guest")}</option>
+        </select>
+        <Button onClick={submit} disabled={!valid || invite.isPending}>
+          <span className="tiptap-button-text">{t("people.invite")}</span>
+        </Button>
+      </div>
+
+      {pending.length > 0 && (
+        <div className="ps-invite__pending">
+          <div className="ps-invite__pending-label">
+            {t("people.pendingInvites")}
+          </div>
+          {pending.map((inv) => (
+            <div key={inv.id} className="ps-invite__pending-row">
+              <span className="ps-invite__pending-email">{inv.email}</span>
+              <span className="ps-invite__pending-role">
+                {t(`people.roles.${inv.role}`, inv.role)}
+              </span>
+              <button
+                type="button"
+                className="ps-invite__regen"
+                onClick={() => revoke.mutate(inv.id)}
+              >
+                {t("people.cancelInvite")}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Owners: the workspace's invite link — on/off, copy, replace.
+function InviteLinkSection() {
+  const { t } = useTranslation();
+  const { show } = useToast();
+  const { data: link } = useWorkspaceInviteLink();
+  const setEnabled = useSetInviteLinkEnabled();
+  const regenerate = useRegenerateInviteLink();
+  const enabled = link?.enabled ?? false;
+  const url = link?.token ? inviteLinkUrl(link.token) : "";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      show(t("people.linkCopied"), "success");
+    } catch {
+      show(url, "info");
+    }
+  };
+
+  return (
+    <div className="ps-invite">
+      <div className="ps-invite__head">
+        <div>
+          <div className="ps-invite__title">{t("people.inviteLink")}</div>
+          <div className="ps-invite__desc">{t("people.inviteLinkDesc")}</div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label={t("people.inviteLink")}
+          className={`ps-switch${enabled ? " is-on" : ""}`}
+          disabled={!link || setEnabled.isPending}
+          onClick={() => setEnabled.mutate(!enabled)}
+        >
+          <span className="ps-switch__knob" />
+        </button>
+      </div>
+
+      {enabled && url && (
+        <>
+          <div className="ps-invite__link-row">
+            <div className="ps-invite__url">{url}</div>
+            <Button variant="ghost" onClick={copy}>
+              <span className="tiptap-button-text">{t("people.copyLink")}</span>
+            </Button>
+          </div>
+          <button
+            type="button"
+            className="ps-invite__regen"
+            onClick={() =>
+              regenerate.mutate(undefined, {
+                onSuccess: () => show(t("people.newLinkReady"), "success"),
+              })
+            }
+          >
+            {t("people.generateNewLink")}
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -168,10 +425,13 @@ function GroupRow({
   onCreateTeamspace,
   onAddMember,
   onRemoveMember,
+  startRenaming = false,
 }: {
   group: Group;
   people: Person[];
   teamspaces: Teamspace[];
+  /** A group that was just created opens with its name ready to type. */
+  startRenaming?: boolean;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
   onCreateTeamspace: (id: string) => void;
@@ -181,8 +441,14 @@ function GroupRow({
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [renaming, setRenaming] = useState(false);
+  const [renaming, setRenaming] = useState(startRenaming);
   const [draft, setDraft] = useState(group.name);
+  // The row shows (optimistically) before the save returns; switch to
+  // renaming once it's known to be the new one.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (startRenaming) setRenaming(true);
+  }, [startRenaming]);
 
   const members = useMemo(() => membersOf(group, people), [group, people]);
 
@@ -369,11 +635,37 @@ export function PeopleSettingsContent() {
   const [tab, setTab] = useState<Tab>("members");
   const [query, setQuery] = useState("");
 
-  // Invite link — workspace-level setting, persisted via useWorkspaceSettings.
-  const { inviteLink, setInviteEnabledAsync, regenerateInviteAsync } =
-    useWorkspaceSettings();
-  const inviteEnabled = inviteLink.enabled;
-  const inviteUrl = inviteLink.url;
+  // Only owners invite, manage members and edit groups (the server enforces
+  // the same rules).
+  const isOwner = me?.role === "owner";
+  const { workspace } = useCurrentWorkspace();
+  const creatorId = workspace?.ownerId ?? null;
+  const { show } = useToast();
+  const setRole = useSetMemberRole();
+  const removeMember = useRemoveMember();
+  const [removing, setRemoving] = useState<Person | null>(null);
+  // The group just created — it opens in rename mode.
+  const [newGroupId, setNewGroupId] = useState<string | null>(null);
+  const closeRemove = useCallback(() => setRemoving(null), []);
+
+  const fail = (e: unknown) =>
+    show(e instanceof Error ? e.message : t("people.saveFailed"), "error");
+
+  const onSetRole = (personId: string, role: MemberRole) =>
+    setRole.mutate({ personId, role }, { onError: fail });
+
+  const confirmRemove = () => {
+    const target = removing;
+    setRemoving(null);
+    if (!target) return;
+    removeMember.mutate(target.id, {
+      onError: fail,
+      // Leaving moves you to another of your workspaces — reload there.
+      onSuccess: () => {
+        if (target.id === me?.id) window.location.replace("/");
+      },
+    });
+  };
 
   const q = query.trim().toLowerCase();
   const filterPeople = (list: Person[]) =>
@@ -389,8 +681,6 @@ export function PeopleSettingsContent() {
       ? groups
       : (groups as Group[]).filter((g) => g.name.toLowerCase().includes(q))
   ) as Group[];
-
-  const copyInvite = () => navigator.clipboard?.writeText(inviteUrl);
 
   // Create a teamspace (page + record, shared id) seeded with this group
   // attached — the group's members gain access via effective membership. The
@@ -423,45 +713,17 @@ export function PeopleSettingsContent() {
 
   return (
     <div className="people-settings">
-      {/* ── Invite link ──────────────────────────────────────────────── */}
-      <div className="ps-invite">
-        <div className="ps-invite__head">
-          <div>
-            <div className="ps-invite__title">{t("people.inviteLink")}</div>
-            <div className="ps-invite__desc">{t("people.inviteLinkDesc")}</div>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={inviteEnabled}
-            aria-label={t("people.inviteLink")}
-            className={`ps-switch${inviteEnabled ? " is-on" : ""}`}
-            onClick={() => setInviteEnabledAsync(!inviteEnabled)}
-          >
-            <span className="ps-switch__knob" />
-          </button>
+      {/* ── Inviting (owners) ────────────────────────────────────────── */}
+      {isOwner ? (
+        <>
+          <InviteByEmail />
+          <InviteLinkSection />
+        </>
+      ) : (
+        <div className="ps-invite">
+          <div className="ps-invite__desc">{t("people.ownersInvite")}</div>
         </div>
-
-        {inviteEnabled && (
-          <>
-            <div className="ps-invite__link-row">
-              <div className="ps-invite__url">{inviteUrl}</div>
-              <Button variant="ghost" onClick={copyInvite}>
-                <span className="tiptap-button-text">
-                  {t("people.copyLink")}
-                </span>
-              </Button>
-            </div>
-            <button
-              type="button"
-              className="ps-invite__regen"
-              onClick={() => regenerateInviteAsync()}
-            >
-              {t("people.generateNewLink")}
-            </button>
-          </>
-        )}
-      </div>
+      )}
 
       {/* ── Tabs + search + create ───────────────────────────────────── */}
       <div className="ps-toolbar">
@@ -501,9 +763,13 @@ export function PeopleSettingsContent() {
           />
         </div>
 
-        {tab === "groups" && (
+        {tab === "groups" && isOwner && (
           <Button
-            onClick={() => addGroupAsync({ name: t("people.newGroup") })}
+            onClick={() =>
+              addGroupAsync({ name: t("people.newGroup") })
+                .then((g) => setNewGroupId(g.id))
+                .catch(fail)
+            }
             style={{ flexShrink: 0 }}
           >
             <Plus className="tiptap-button-icon" size={14} />
@@ -518,7 +784,15 @@ export function PeopleSettingsContent() {
       {tab !== "groups" ? (
         <div className="ps-people-list">
           {filterPeople(tab === "members" ? members : guests).map((p) => (
-            <PersonRow key={p.id} person={p} />
+            <PersonRow
+              key={p.id}
+              person={p}
+              isSelf={p.id === me?.id}
+              isCreator={p.id === creatorId}
+              canManage={isOwner}
+              onSetRole={onSetRole}
+              onRemove={setRemoving}
+            />
           ))}
         </div>
       ) : (
@@ -545,6 +819,7 @@ export function PeopleSettingsContent() {
               onDelete={deleteGroupAsync}
               onAddMember={addMemberAsync}
               onRemoveMember={removeMemberAsync}
+              startRenaming={g.id === newGroupId}
               onCreateTeamspace={(id) => {
                 const grp = (groups as Group[]).find((x) => x.id === id);
                 createFromGroupAsync(grp?.name ?? t("people.newTeamspace"), id);
@@ -553,6 +828,26 @@ export function PeopleSettingsContent() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={removing != null}
+        message={
+          removing?.id === me?.id
+            ? t("people.confirmLeave", { workspace: workspace?.name ?? "" })
+            : t("people.confirmRemove", {
+                name: removing?.name ?? "",
+                workspace: workspace?.name ?? "",
+              })
+        }
+        confirmLabel={
+          removing?.id === me?.id
+            ? t("people.leaveWorkspace")
+            : t("people.removeFromWorkspace")
+        }
+        cancelLabel={t("actions.cancel", "Cancel")}
+        onCancel={closeRemove}
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }

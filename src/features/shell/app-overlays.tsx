@@ -12,7 +12,20 @@ import { useTemplates } from "../pages/templates/templates-context";
 import { useTemplates as useTemplatesApi } from "src/hooks/use-templates";
 import { WorkspaceSettings } from "../workspace/settings";
 import { SignOutHost } from "../auth/sign-out";
+import { takePendingInvite } from "../workspace/join/pending-invite";
+import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-location";
 import type { Page, Person } from "src/types";
+
+// An invite link opened while signed out → open it now that you're in.
+function PendingInviteRedirect() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = takePendingInvite();
+    if (token) navigate({ to: `/invite/${token}` });
+  }, [navigate]);
+  return null;
+}
 
 function ChatRealtimeSync() {
   useChatRealtimeSync();
@@ -86,6 +99,7 @@ function AppOverlaysImpl() {
 
       <WorkspaceSettings />
       <SignOutHost />
+      <PendingInviteRedirect />
     </>
   );
 }

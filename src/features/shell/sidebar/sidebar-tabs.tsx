@@ -1,8 +1,15 @@
 import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-location";
-import { TbHome, TbInbox, TbMessages, TbSearch, TbX } from "src/components/tiptap-icons/tabler-icons";
+import {
+  TbHome,
+  TbInbox,
+  TbMessages,
+  TbSearch,
+  TbX,
+} from "src/components/tiptap-icons/tabler-icons";
 import { useNotificationState } from "src/features/inbox/notification/notification-context";
+import { useMyWorkspaceInvites } from "src/hooks/use-workspace-members";
 import { useUnreadCounts } from "src/hooks/use-chat";
 import { spaceHomePath, useCurrentSpace } from "src/hooks/use-current-space";
 import { useIsMobile } from "src/hooks/use-breakpoint";
@@ -30,6 +37,8 @@ export const SidebarTabs = memo(() => {
   const { sidebarView, setSidebarView, onCollapsedChange } = useEditorLayout();
 
   const { unreadCount } = useNotificationState();
+  // Workspace invitations count as something waiting in the inbox.
+  const { data: invites = [] } = useMyWorkspaceInvites();
   const { data: chatUnread = {} } = useUnreadCounts();
   const chatTotal = useMemo(
     () => Object.values(chatUnread).reduce((a, b) => a + b, 0),
@@ -106,7 +115,7 @@ export const SidebarTabs = memo(() => {
         label={t("sidebar.inbox", "Inbox")}
         active={!isSearching && active === "inbox"}
         onClick={() => selectTab("inbox")}
-        trailing={<SidebarNavCount value={unreadCount} />}
+        trailing={<SidebarNavCount value={unreadCount + invites.length} />}
       />
       <SidebarNavRow
         icon={<TbMessages {...SB_ICON} />}

@@ -5,7 +5,12 @@ import { CardItemGroup } from "src/components/tiptap-ui-primitive/card";
 import { PageItemIcon } from "./page-item-icon";
 import { PageItemOptions } from "./page-item-options";
 import { TeamspaceBadge } from "./teamspace-badge";
-import { TbArrowRight, TbPin, TbPinnedOff, TbPlus } from "src/components/tiptap-icons/tabler-icons";
+import {
+  TbArrowRight,
+  TbPin,
+  TbPinnedOff,
+  TbPlus,
+} from "src/components/tiptap-icons/tabler-icons";
 import { SB_ICON_SM } from "../../shell/sidebar/sidebar-icon";
 import type { ID, Page } from "src/types";
 
@@ -165,7 +170,8 @@ function PageItemView({
       <Spacer orientation="vertical" size={1.1} />
       <CardItemGroup
         orientation="horizontal"
-        className={`page-item ${isActive ? "active" : ""}`}
+        className={`page-item ${isActive ? "active" : ""} ${isTeamspaceRoot ? "is-teamspace-root" : ""}`}
+        data-is-teamspace-root={isTeamspaceRoot ? "true" : "false"}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
         onClick={() => onSelect(page.id)}
         onMouseOver={() => setShouldShow(true)}

@@ -124,3 +124,14 @@ export function useOwnedWorkspaces() {
     isPending: query.isPending,
   };
 }
+
+// Every workspace you belong to — your own and the ones you've joined — for
+// the switcher. The workspaces SELECT policy returns exactly those
+// (owner or member, migration 041).
+export function useMyWorkspaces() {
+  const query = useWorkspacesBase((list: Workspace[]) => list);
+  return {
+    workspaces: query.data ?? [],
+    isPending: query.isPending,
+  };
+}

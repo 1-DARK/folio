@@ -1,6 +1,10 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useIsRestoring } from "@tanstack/react-query";
 import { useAuthListener, useCurrentPerson } from "src/hooks/use-session";
+import {
+  rememberPendingInvite,
+  tokenFromInvitePath,
+} from "src/features/workspace/join/pending-invite";
 import "./auth-gate.scss";
 
 // Signed-out screens, each its own chunk: a signed-in person never downloads
@@ -62,6 +66,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (isRestoring || isLoading || signedInOnSignInPage) return <GateLoading />;
 
   if (!isAuthenticated) {
+    // An invite link opened while signed out: finish it after sign-in.
+    const inviteToken = tokenFromInvitePath(path);
+    if (inviteToken) rememberPendingInvite(inviteToken);
     return (
       <Suspense fallback={<GateLoading />}>
         {isLandingPath(path) ? (

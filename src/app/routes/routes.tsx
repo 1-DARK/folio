@@ -1,5 +1,6 @@
 import { ReactLocation } from "@tanstack/react-location";
 import { SimpleEditor } from "../../features/shell/simple-editor";
+import { JoinWorkspacePage } from "../../features/workspace/join";
 
 export const location = new ReactLocation();
 
@@ -45,4 +46,6 @@ export const routes = [
     element: <SimpleEditor view="chat" />,
   },
   { path: "resources", element: <SimpleEditor view="resources" /> },
+  // Workspace invite links.
+  { path: "invite/:token", element: <JoinWorkspacePage /> },
 ];

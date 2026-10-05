@@ -12,6 +12,8 @@ import {
 import { useNotifications } from "src/features/inbox/notification/notification-context";
 import type { Notification, NotificationType } from "src/types";
 import { useOpenNotification } from "./use-open-notification";
+import { WorkspaceInvites } from "./workspace-invites";
+import { useMyWorkspaceInvites } from "src/hooks/use-workspace-members";
 import "./inbox-panel.scss";
 
 export function InboxPanel({ onOpened }: { onOpened?: () => void } = {}) {
@@ -25,6 +27,7 @@ export function InboxPanel({ onOpened }: { onOpened?: () => void } = {}) {
     markAllRead,
   } = useNotifications();
   const open = useOpenNotification(onOpened);
+  const { data: invites = [] } = useMyWorkspaceInvites();
   const [showElsewhere, setShowElsewhere] = useState(false);
 
   const item = (n: Notification) => (
@@ -70,7 +73,10 @@ export function InboxPanel({ onOpened }: { onOpened?: () => void } = {}) {
       </div>
 
       <div className="inbox-panel__body">
-        {notifications.length === 0 && elsewhere.length === 0 ? (
+        <WorkspaceInvites onDone={onOpened} />
+        {notifications.length === 0 &&
+        elsewhere.length === 0 &&
+        invites.length === 0 ? (
           <div className="inbox-panel__empty">
             <InboxIcon size={26} strokeWidth={1.5} />
             <p>{t("inbox.empty", "No notifications")}</p>
