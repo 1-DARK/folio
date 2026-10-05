@@ -23,6 +23,13 @@ export function useApplyTheme(theme: Theme) {
     const apply = () =>
       document.documentElement.classList.toggle("dark", resolveDark(theme));
     apply();
+    // index.html reads this before the app loads, so the first paint (and
+    // the loading spinner) already match the workspace theme.
+    try {
+      localStorage.setItem(THEME_KEY, theme === "system" ? "" : theme);
+    } catch {
+      /* storage blocked */
+    }
 
     if (theme === "system") {
       const mq = window.matchMedia("(prefers-color-scheme: dark)");

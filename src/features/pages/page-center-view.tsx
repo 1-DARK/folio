@@ -1,7 +1,9 @@
-import { usePeekEditorExtensions } from "../editor/hooks/use-peek-editor-extensions";
+import { usePeekCollab } from "../editor/hooks/use-peek-collab";
+import { useSyncDocTitle } from "../editor/utils/doc-title";
+import { usePageCapabilities } from "src/hooks/use-page-role";
 import { useActivePageActions } from "./context/active-page-context";
 import type { Page } from "src/types";
-import { Editor, useEditor, type JSONContent } from "@tiptap/react";
+import { Editor, useEditor, type Extensions } from "@tiptap/react";
 import {
   Card,
   CardBody,
@@ -17,10 +19,7 @@ import { FloatingMenu } from "@tiptap/react/menus";
 import { FloatingActions } from "../shell/floating-actions";
 import { CoverHeader } from "src/features/pages/cover";
 import { usePageView, usePageViewActions } from "./context/page-view-context";
-import {
-  stripPropertyPanels,
-  useRecordPropertyPanel,
-} from "../database/record-property-panel/use-record-property-panel";
+import { useRecordPropertyPanel } from "../database/record-property-panel/use-record-property-panel";
 import type { Transaction } from "@tiptap/pm/state";
 import { usePage } from "src/hooks/use-pages";
 import { usePatchPage } from "src/hooks/use-patch-page";
@@ -124,12 +123,11 @@ function getTitleChange(
 }
 
 // ── Gate ──────────────────────────────────────────────────────────────────────
-// The editor MUST NOT be created until the page (and its content) is loaded.
-// useEditor reads `content` once at init; if it inits while page is still
-// loading, it starts EMPTY and the debounced save then overwrites the real
-// content with empty — the template-page data loss. Gating here guarantees the
-// editor is only ever created with real content, and keying by page.id remounts
-// it (fresh content) when navigating to a different page.
+// The editor opens the page's live (Yjs) document, like the full page — so
+// edits made here are the same edits everyone sees, and nothing is lost when
+// the page is opened full-size. It's created only once that document has
+// synced (or opened from the offline copy); keying by page.id gives each
+// page its own editor.
 export function PageCenterView({
   onClose,
   onCreated,
@@ -143,7 +141,7 @@ export function PageCenterView({
   if (isLoading || !page) return <PageCenterSkeleton onClose={onClose} />;
 
   return (
-    <PageCenterEditor
+    <PageCenterCollab
       key={page.id}
       page={page}
       onClose={onClose}
@@ -152,19 +150,41 @@ export function PageCenterView({
   );
 }
 
-// ── Editor (only mounts once page is loaded) ───────────────────────────────────
+function PageCenterCollab({
+  page,
+  onClose,
+  onCreated,
+}: {
+  page: Page;
+  onClose?: () => void;
+  onCreated?: (page: Page) => void;
+}) {
+  const { extensions, ready } = usePeekCollab(page);
+  if (!ready || !extensions) return <PageCenterSkeleton onClose={onClose} />;
+  return (
+    <PageCenterEditor
+      page={page}
+      extensions={extensions}
+      onClose={onClose}
+      onCreated={onCreated}
+    />
+  );
+}
+
+// ── Editor (only mounts once the live document is ready) ───────────────────────
 function PageCenterEditor({
   page,
+  extensions,
   onClose,
 }: {
   page: Page;
+  extensions: Extensions;
   onClose?: () => void;
   onCreated?: (page: Page) => void;
 }) {
   const { setTarget: setViewTarget } = usePageViewActions();
   const { mutateAsync } = usePatchPage(({ id, patch }) => patchPage(id, patch));
   const { setActivePageId } = useActivePageActions();
-  const { extensions } = usePeekEditorExtensions(setActivePageId);
 
   const floatingRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -179,15 +199,22 @@ function PageCenterEditor({
 
   const latestTitleRef = useRef<string | null>(null);
 
-  // content is the REAL page content — the editor never inits empty now.
+  // No `content`: Collaboration reads it from the live document.
   const editor = useEditor({
     extensions,
-    content: page.content ?? {
-      type: "doc",
-      content: [{ type: "title", content: [] }],
-    },
     autofocus: "start",
   });
+
+  // Read-only for people who can only view or comment.
+  const { canEditContent, isLoading: roleLoading } = usePageCapabilities(
+    page.id,
+  );
+  useEffect(() => {
+    editor?.setEditable(canEditContent && !roleLoading);
+  }, [editor, canEditContent, roleLoading]);
+
+  // Renamed elsewhere (the sidebar) since it was last open → title block too.
+  useSyncDocTitle(editor, page, canEditContent, roleLoading);
 
   const [templateDismissed, setTemplateDismissed] = useState(false);
   const [bodyEmpty, setBodyEmpty] = useState(true);
@@ -202,21 +229,17 @@ function PageCenterEditor({
     };
   }, [editor]);
 
+  // Autosave — the TITLE only (it's also a column, for lists and search).
+  // The content saves itself through the live document.
   const saveActivePage = useDebouncedCallback(
     () => {
       const current = pageRef.current;
-      if (!current || !editor) return;
-
-      const titleOverride = latestTitleRef.current;
+      const title = latestTitleRef.current;
+      if (!current || title == null) return;
       latestTitleRef.current = null;
-
       mutateAsync({
         id: current.id,
-        patch: {
-          ...(titleOverride != null ? { title: titleOverride } : {}),
-          content: stripPropertyPanels(editor.getJSON()) as JSONContent,
-          updatedAt: Date.now(),
-        },
+        patch: { title, updatedAt: Date.now() },
       });
     },
     800,
@@ -242,8 +265,8 @@ function PageCenterEditor({
       if (!transaction.docChanged) return;
 
       const { changed, text } = getTitleChange(editor, transaction);
-      if (changed) latestTitleRef.current = text;
-
+      if (!changed) return;
+      latestTitleRef.current = text;
       saveRef.current();
     };
 

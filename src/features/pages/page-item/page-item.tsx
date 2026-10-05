@@ -31,6 +31,8 @@ import { usePageCapabilities } from "src/hooks/use-page-role";
 import { useIsMobile } from "src/hooks/use-breakpoint";
 import { useEditorLayoutActions } from "../../shell/context/editor-layout-context";
 import { usePinControl } from "../../workspace/context/teamspace-pin-context";
+import { getActiveEditor } from "../../editor/context/active-editor-store";
+import { setEditorTitle } from "../../editor/utils/doc-title";
 
 interface PageItemProps {
   page: Page;
@@ -130,6 +132,10 @@ function PageItemView({
     const trimmed = draft.trim();
     if (trimmed && trimmed !== page.title) {
       await mutateAsyncRef.current({ id: page.id, patch: { title: trimmed } });
+      // Open right now → rename its title block too (otherwise the next
+      // keystroke in the title would save the old name back).
+      const editor = getActiveEditor();
+      if (editor && activePageId === page.id) setEditorTitle(editor, trimmed);
     } else {
       setDraft(page.title);
     }
@@ -171,7 +177,6 @@ function PageItemView({
       <CardItemGroup
         orientation="horizontal"
         className={`page-item ${isActive ? "active" : ""} ${isTeamspaceRoot ? "is-teamspace-root" : ""}`}
-        data-is-teamspace-root={isTeamspaceRoot ? "true" : "false"}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
         onClick={() => onSelect(page.id)}
         onMouseOver={() => setShouldShow(true)}

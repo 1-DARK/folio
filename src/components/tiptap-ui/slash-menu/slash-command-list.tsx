@@ -68,7 +68,6 @@ export default function SlashList(props: Props) {
     },
     onClose() {
       onClose?.();
-      console.log("closed");
     },
   });
 

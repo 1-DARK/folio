@@ -23,8 +23,12 @@ export function usePagesBase<T>(select?: (pages: Page[]) => T) {
 
 // ─── the lenses ──────────────────────────────────────────────────────────────
 
+// Pages people can pick or open (search, library, mentions, move to…):
+// never database rows or pages in the trash.
 export function usePages() {
-  return usePagesBase((pages) => pages.filter((p) => p.sourceId == null));
+  return usePagesBase((pages) =>
+    pages.filter((p) => p.sourceId == null && p.deletedAt == null),
+  );
 }
 
 export function usePagesByCategory(category: PageCategory) {
@@ -37,7 +41,9 @@ export function usePagesByCategory(category: PageCategory) {
 }
 
 export function useChildPages(parentId: ID) {
-  return usePagesBase((pages) => pages.filter((p) => p.parentId === parentId));
+  return usePagesBase((pages) =>
+    pages.filter((p) => p.parentId === parentId && p.deletedAt == null),
+  );
 }
 
 export function useRows(sourceId: ID) {

@@ -32,8 +32,7 @@ import { useCurrentSpace } from "src/hooks/use-current-space";
 import { useCreatePageInSpace } from "src/api/use-create-page-in-space";
 
 export type LibraryTab =
-  | Exclude<PageCategory, "Template" | "Recent">
-  | "Recents";
+  Exclude<PageCategory, "Template" | "Recent"> | "Recents";
 
 // Inside a teamspace only two tabs make sense: its recents, and its pages
 // (the "Teamspaces" tab, relabelled). Favorites / Shared / Private are
@@ -156,7 +155,9 @@ function RecentRow({
 
   const owner = page.ownerId ? peopleById.get(page.ownerId) : undefined;
   const ownerDisplayName =
-    page.ownerId === currentPersonId ? "You" : (owner?.name ?? "Unknown");
+    page.ownerId === currentPersonId
+      ? t("ui.you")
+      : (owner?.name ?? t("templates.unknown"));
   const ownerOnline = page.ownerId ? onlineIds.has(page.ownerId) : false;
 
   return (

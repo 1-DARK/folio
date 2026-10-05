@@ -64,9 +64,10 @@ export function ActivePageProvider({ children }: { children: ReactNode }) {
   // workspace's list, so wait for its own fetch before deciding.
   useEffect(() => {
     if (activePageId == null || allPages == null || isLoading) return;
+    // Moved to the trash counts as gone (also when a parent was trashed).
     const stillExists =
-      allPages.some((p) => p.id === activePageId) ||
-      activePage?.id === activePageId;
+      allPages.some((p) => p.id === activePageId && p.deletedAt == null) ||
+      (activePage?.id === activePageId && activePage.deletedAt == null);
     if (stillExists) return;
     const fallback = recentPages?.find((p) => p.id !== activePageId);
     setActivePageId(fallback ? fallback.id : null);

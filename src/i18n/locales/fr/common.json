@@ -550,6 +550,21 @@
     "invalidText": "Il a peut-être été désactivé ou remplacé. Demande un nouveau lien à la personne qui te l’a envoyé.",
     "goHome": "Aller sur Folio"
   },
+  "ui": {
+    "addIcon": "Ajouter une icône",
+    "addCover": "Ajouter une couverture",
+    "addPageInside": "Ajouter une page à l’intérieur",
+    "moveToTrash": "Mettre à la corbeille",
+    "you": "Toi",
+    "orderBy": "Trier par",
+    "sortRecent": "Récent",
+    "sortCustom": "Personnalisé (glisser pour organiser)",
+    "hideSection": "Masquer la section",
+    "customizeSidebar": "Personnaliser la barre latérale",
+    "noPagesInside": "Aucune page à l’intérieur",
+    "newPageIn": "Nouvelle page dans {{section}}",
+    "sectionOptions": "Options de {{section}}"
+  },
   "pageLocation": {
     "noTeamspaces": "Aucun espace d’équipe pour l’instant",
     "teamspaceRoot": "Ceci est un espace d’équipe. Déplace-le vers un autre espace de travail depuis Paramètres → Espaces d’équipe."
@@ -563,6 +578,7 @@
     "deleteConfirmAction": "Supprimer l’espace",
     "deleted": "Espace d’équipe supprimé",
     "deleteFailed": "Impossible de supprimer l’espace d’équipe. Réessaie.",
+    "noLongerAvailable": "Cet espace d’équipe ne t’est plus accessible.",
     "moveToWorkspace": "Déplacer vers un espace de travail",
     "noOtherWorkspaces": "Tu ne possèdes pas d’autre espace de travail. Crée-en un depuis le menu des espaces de travail.",
     "moved": "Espace d’équipe déplacé vers {{name}}",

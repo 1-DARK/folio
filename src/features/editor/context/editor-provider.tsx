@@ -27,6 +27,8 @@ import { makePage } from "src/utils/make-page";
 import { useScrollToPendingTarget } from "../../inbox/inbox-panel";
 import { usePageCapabilities } from "src/hooks/use-page-role";
 import { CollabProviderContext } from "./collab-provider-context";
+import { colorForPersonId } from "src/lib/person-color";
+import { useSyncDocTitle } from "../utils/doc-title";
 import { clearActiveEditor, setActiveEditor } from "./active-editor-store";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 
@@ -86,25 +88,6 @@ const EDITOR_ATTRIBUTES = {
   "aria-label": "Main content area, start typing to enter text.",
   class: "simple-editor",
 };
-
-// Small deterministic name->color mapping for collaboration carets. Swap for
-// something nicer (a fixed per-person color stored on the Person record)
-// whenever that becomes worth doing — this is just "not literally random".
-const CARET_COLORS = [
-  "#f87171",
-  "#fb923c",
-  "#fbbf24",
-  "#a3e635",
-  "#34d399",
-  "#22d3ee",
-  "#818cf8",
-  "#e879f9",
-];
-function colorForPersonId(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  return CARET_COLORS[Math.abs(hash) % CARET_COLORS.length];
-}
 
 // ── Inner instance — one per page, remounted via `key` on page change ─────
 // Owns the actual useEditor() call. Recreated from scratch whenever the
@@ -196,6 +179,9 @@ function EditorInstance({
     editor.setEditable(canEditContent && !isLoading);
   }, [editor, canEditContent, isLoading]);
 
+  // Renamed elsewhere (the sidebar) since it was last open → title block too.
+  useSyncDocTitle(editor, page, canEditContent, isLoading);
+
   useScrollToPendingTarget(editor, page.id);
 
   const { mutateAsync: createPage } = useCreatePage();
@@ -255,6 +241,10 @@ function EditorInstance({
     1500,
     { maxWait: 2500 },
   );
+
+  // Leaving the page with a title change still waiting → save it now, so
+  // the column isn't left behind (it'd bring the old name back next time).
+  useEffect(() => () => saveTitle.flush(), [saveTitle]);
 
   useEffect(() => {
     if (!editor) return;

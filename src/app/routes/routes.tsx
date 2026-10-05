@@ -1,6 +1,7 @@
 import { ReactLocation } from "@tanstack/react-location";
 import { SimpleEditor } from "../../features/shell/simple-editor";
 import { JoinWorkspacePage } from "../../features/workspace/join";
+import { RedirectHome } from "./redirect-home";
 
 export const location = new ReactLocation();
 
@@ -45,7 +46,8 @@ export const routes = [
     path: "chat/:roomId",
     element: <SimpleEditor view="chat" />,
   },
-  { path: "resources", element: <SimpleEditor view="resources" /> },
   // Workspace invite links.
   { path: "invite/:token", element: <JoinWorkspacePage /> },
+  // Anything else (an old or mistyped address) → Home. Must stay last.
+  { element: <RedirectHome /> },
 ];

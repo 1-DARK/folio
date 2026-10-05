@@ -605,6 +605,21 @@
     "invalidText": "It may have been turned off or replaced. Ask the person who sent it for a new one.",
     "goHome": "Go to Folio"
   },
+  "ui": {
+    "addIcon": "Add icon",
+    "addCover": "Add cover",
+    "addPageInside": "Add page inside",
+    "moveToTrash": "Move to trash",
+    "you": "You",
+    "orderBy": "Order by",
+    "sortRecent": "Recent",
+    "sortCustom": "Custom (drag to arrange)",
+    "hideSection": "Hide section",
+    "customizeSidebar": "Customize sidebar",
+    "noPagesInside": "No pages inside",
+    "newPageIn": "New page in {{section}}",
+    "sectionOptions": "{{section}} options"
+  },
   "pageLocation": {
     "noTeamspaces": "No teamspaces yet",
     "teamspaceRoot": "This is a teamspace. Move it to another workspace from Settings → Teamspaces."
@@ -618,6 +633,7 @@
     "deleteConfirmAction": "Delete teamspace",
     "deleted": "Teamspace deleted",
     "deleteFailed": "Couldn't delete the teamspace. Try again.",
+    "noLongerAvailable": "That teamspace isn't available to you anymore.",
     "moveToWorkspace": "Move to workspace",
     "noOtherWorkspaces": "You don't own another workspace. Create one from the workspace menu first.",
     "moved": "Teamspace moved to {{name}}",

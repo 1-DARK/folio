@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button, ButtonGroup } from "src/components/tiptap-ui-primitive/button";
 import { Card } from "src/components/tiptap-ui-primitive/card";
 import {
@@ -31,6 +32,7 @@ export function PageItemOptions({
   onOpenChange,
   shouldShow,
 }: PageItemOptionsProps) {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const { setActivePageId, activePageId } = useActivePage();
   const createPage = useCreatePage();
@@ -115,7 +117,9 @@ export function PageItemOptions({
                 }}
               >
                 <PencilIcon className="tiptap-button-icon" />
-                <span className="tiptap-button-text">Rename</span>
+                <span className="tiptap-button-text">
+                  {t("actions.rename")}
+                </span>
               </Button>
 
               <Button
@@ -127,13 +131,15 @@ export function PageItemOptions({
                 }}
                 onClick={async (e) => {
                   e.stopPropagation();
-                  const child = makeChildPage(page);
+                  const child = makeChildPage(page, t("page.newPage"));
                   createPage.mutate(child);
                   setActivePageId(child.id);
                 }}
               >
                 <Plus className="tiptap-button-icon" />
-                <span className="tiptap-button-text">Add page</span>
+                <span className="tiptap-button-text">
+                  {t("ui.addPageInside")}
+                </span>
               </Button>
 
               <Button
@@ -151,7 +157,9 @@ export function PageItemOptions({
                 }}
               >
                 <Trash2 className="tiptap-button-icon" />
-                <span className="tiptap-button-text">Delete page</span>
+                <span className="tiptap-button-text">
+                  {t("ui.moveToTrash")}
+                </span>
               </Button>
             </ButtonGroup>
           </Card>

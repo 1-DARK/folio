@@ -155,6 +155,7 @@ function TreeRow({
   canEdit: (page: Page) => boolean;
   reorganize: (page: Page) => boolean;
 }) {
+  const { t } = useTranslation();
   const page = node.page;
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedIds.has(page.id);
@@ -252,7 +253,7 @@ function TreeRow({
                 userSelect: "none",
               }}
             >
-              No pages inside
+              {t("ui.noPagesInside")}
             </div>
           )}
         </div>
@@ -347,15 +348,15 @@ function TreeSection({
     if (flat) return undefined;
     return (
       <>
-        <SectionMenuLabel>Order by</SectionMenuLabel>
+        <SectionMenuLabel>{t("ui.orderBy")}</SectionMenuLabel>
         <SectionMenuItem
-          label="Recent"
+          label={t("ui.sortRecent")}
           selected={sortMode === "recent"}
           closeOnClick={false}
           onClick={() => onSetSortMode(category, "recent")}
         />
         <SectionMenuItem
-          label="Custom (drag to arrange)"
+          label={t("ui.sortCustom")}
           selected={sortMode === "custom"}
           closeOnClick={false}
           onClick={() => onSetSortMode(category, "custom")}
@@ -366,26 +367,26 @@ function TreeSection({
             {onRename && (
               <SectionMenuItem
                 icon={<Pencil size={14} />}
-                label="Rename"
+                label={t("actions.rename")}
                 onClick={() => onRename(category)}
               />
             )}
             <SectionMenuItem
               icon={<EyeOff size={14} />}
-              label="Hide section"
+              label={t("ui.hideSection")}
               onClick={() => onHide?.(category)}
             />
             <SectionMenuSeparator />
             <SectionMenuItem
               icon={<Layout size={14} />}
-              label="Customize sidebar"
+              label={t("ui.customizeSidebar")}
               onClick={() => setCustomizeSidebarOpen?.(true)}
             />
             {onDelete && (
               <SectionMenuItem
                 danger
                 icon={<Trash2 size={14} />}
-                label="Delete"
+                label={t("actions.delete")}
                 onClick={() => onDelete(category)}
               />
             )}
@@ -394,6 +395,7 @@ function TreeSection({
       </>
     );
   }, [
+    t,
     flat,
     sortMode,
     category,
@@ -421,8 +423,12 @@ function TreeSection({
       bodyRef={setBodyRef}
       dropActive={isSectionDrop}
       onAddClick={onAddClick}
-      addLabel={`New page in ${labelOverride ?? category}`}
-      menuLabel={`${labelOverride ?? category} options`}
+      addLabel={t("ui.newPageIn", {
+        section: labelOverride ?? t(CATEGORY_TRANSLATION_MAP[category]),
+      })}
+      menuLabel={t("ui.sectionOptions", {
+        section: labelOverride ?? t(CATEGORY_TRANSLATION_MAP[category]),
+      })}
       hasLibrary={true}
       onLibraryClick={onLibraryClick}
       menu={menu}

@@ -1,51 +1,52 @@
+import { useEffect, useState } from "react";
 import { Button } from "src/components/tiptap-ui-primitive/button";
-
-// --- Icons ---
 import { MoonStarIcon } from "src/components/tiptap-icons/moon-star-icon";
 import { SunIcon } from "src/components/tiptap-icons/sun-icon";
-import { useEffect, useState } from "react";
+import {
+  useCurrentWorkspace,
+  useManageWorkspace,
+} from "src/hooks/use-workspaces";
+import { useCurrentPerson } from "src/hooks/use-session";
 
-const THEME_KEY = "folio-theme";
+const isDark = () => document.documentElement.classList.contains("dark");
 
-function getInitialDarkMode(): boolean {
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored === "dark") return true;
-  if (stored === "light") return false;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
+// Light / dark switch (••• menu on smaller screens). The theme belongs to the
+// workspace (workspace.settings.defaultTheme, applied by useApplyTheme), so
+// owners change it there. Other members just switch this window — it used to
+// re-apply an old per-person setting from browser storage the moment the
+// menu opened, flipping the theme.
 export function ThemeToggle() {
-  // reads localStorage synchronously on first render
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialDarkMode);
+  const { workspace } = useCurrentWorkspace();
+  const { person } = useCurrentPerson();
+  const { setSettingAsync } = useManageWorkspace();
+  const [dark, setDark] = useState(isDark);
 
-  // writes on every toggle
-  const toggleDarkMode = () =>
-    setIsDarkMode((isDark) => {
-      const next = !isDark;
-      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
-      return next;
-    });
-
-  // Follow OS changes only while the user hasn't set an explicit preference
+  // Follow the workspace theme when it changes (or the OS, for "system").
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      if (!localStorage.getItem(THEME_KEY)) {
-        setIsDarkMode(mediaQuery.matches);
-      }
-    };
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    const observer = new MutationObserver(() => setDark(isDark()));
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDarkMode);
-  }, [isDarkMode]);
+  const toggle = () => {
+    const next = !dark;
+    document.documentElement.classList.toggle("dark", next);
+    if (workspace && person?.role === "owner") {
+      void setSettingAsync(
+        workspace.id,
+        "defaultTheme",
+        next ? "dark" : "light",
+      );
+    }
+  };
 
   return (
     <Button
-      onClick={toggleDarkMode}
-      aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+      onClick={toggle}
+      aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
       variant="ghost"
       size="large"
       style={{
@@ -55,7 +56,7 @@ export function ThemeToggle() {
         minHeight: "1.25rem",
       }}
     >
-      {isDarkMode ? (
+      {dark ? (
         <MoonStarIcon
           className="tiptap-button-icon"
           style={{ color: "var(--tt-text-primary)" }}

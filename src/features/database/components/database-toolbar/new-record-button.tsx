@@ -208,7 +208,6 @@ export function NewRecordButton({
                             onClick={(e) => {
                               e.stopPropagation();
                               if (!tpl.pageId) return;
-                              console.log("pageId", tpl.pageId);
                               onOpenTemplate(tpl.pageId);
                             }}
                           >

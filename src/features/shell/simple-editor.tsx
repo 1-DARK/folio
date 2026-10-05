@@ -23,6 +23,32 @@ import { useApplyTheme } from "src/hooks/use-apply-theme";
 import { useApplyLanguage } from "src/hooks/use-apply-language";
 import { ChatRoomView } from "../chat/chat-room-view";
 import { ShortcutSheet } from "src/components/tiptap-ui/shortcut-sheet";
+import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-location";
+import { useTranslation } from "react-i18next";
+import { useCurrentSpace } from "src/hooks/use-current-space";
+import { useTeamspaces } from "src/hooks/use-teamspaces";
+import { useToast } from "./toast";
+
+// A /t/:id address for a teamspace you're not in any more (you left, were
+// removed, or it was deleted) → back to the workspace instead of an empty
+// screen.
+function useLeaveMissingTeamspace() {
+  const space = useCurrentSpace();
+  const { isSuccess: teamspacesLoaded } = useTeamspaces();
+  const navigate = useNavigate();
+  const { show } = useToast();
+  const { t } = useTranslation();
+  const missing =
+    space.kind === "teamspace" && teamspacesLoaded && !space.teamspace;
+
+  useEffect(() => {
+    if (!missing) return;
+    navigate({ to: "/", replace: true });
+    show(t("teamspaces.noLongerAvailable"), "info");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missing]);
+}
 
 function SimpleEditorMain({ view }: { view: View }) {
   return (
@@ -47,6 +73,7 @@ function SimpleEditorMain({ view }: { view: View }) {
 export function SimpleEditor({ view }: { view: View }) {
   const capitalized = view.charAt(0).toUpperCase() + view.slice(1);
   usePageBrowserTab("Folio", capitalized);
+  useLeaveMissingTeamspace();
   const { workspace } = useCurrentWorkspace();
 
   // Theme and language are both per-workspace: applied straight from

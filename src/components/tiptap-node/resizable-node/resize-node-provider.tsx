@@ -236,7 +236,6 @@ export function ResizableNodeProvider({
         //     shouldPreserveAspectRatio,
         //   );
         if (nodeRef.current) {
-          console.log("constrained.width", constrained.width);
           nodeRef.current.style.setProperty(
             "width",
             `${constrained.width}px`,

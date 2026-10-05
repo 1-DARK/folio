@@ -29,3 +29,8 @@ const subscribe = (l: () => void) => {
 export function useActiveEditor(): Editor | null {
   return useSyncExternalStore(subscribe, () => active);
 }
+
+/** The open page editor right now, outside React (e.g. in an event handler). */
+export function getActiveEditor(): Editor | null {
+  return active;
+}

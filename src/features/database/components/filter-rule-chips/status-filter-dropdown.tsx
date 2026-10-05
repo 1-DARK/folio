@@ -33,7 +33,6 @@ export function StatusFilterDropdown({
 
   const selectedIds = useMemo(() => new Set(rule.value ?? []), [rule.value]);
 
-  console.log("SELECTED IDS", selectedIds);
 
   // Rebuild value[] + the derived labels[] from a new id set. labels is display-
   // only and always derived from ids, so the two can never drift apart.
@@ -44,7 +43,6 @@ export function StatusFilterDropdown({
       .map((id) => allItems.find((it) => it.id === id))
       .filter((it): it is StatusItem => it != null);
 
-    console.log("NEXT IDS", nextIds);
 
     onUpdate(rule.id, {
       value: resolved.map((it) => it.id),

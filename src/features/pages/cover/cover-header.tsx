@@ -135,7 +135,7 @@ const IconButton = memo(function IconButton({
           </PopoverTrigger>
           <PopoverPortal container={document.getElementById("root")}>
             <PopoverContent
-              style={{ position: "fixed", zIndex: 999 }}
+              style={{ position: "fixed", zIndex: 1100 }}
               side="bottom"
               align="start"
             >
@@ -255,7 +255,6 @@ export function CoverHeader({
   const hasCoverImage = !!page.cover.coverImage;
   const hasGradient = !!page.cover.gradient;
 
-  console.log("isMobile", isMobile);
   return (
     <div
       className="cover-header-wrapper"

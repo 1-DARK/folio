@@ -38,7 +38,6 @@ export function useDatabase(
     if (prev.updatePropertiesAsync !== updatePropertiesAsync)
       changed.push("updatePropertiesAsync");
     if (prev.source !== source) changed.push("source");
-    if (changed.length) console.log("[useDatabase] changed:", changed);
     _dbg.current = {
       prop,
       ui,

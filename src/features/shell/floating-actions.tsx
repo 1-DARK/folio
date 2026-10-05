@@ -6,6 +6,7 @@ import {
   PopoverTrigger,
 } from "src/components/tiptap-ui-primitive/popover";
 import { Image, MessageSquareText, Smile } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Target } from "src/features/pages/cover/types";
 import { IconPickerCard } from "src/features/pages/cover/icon-picker-card";
 import { Button } from "src/components/tiptap-ui-primitive/button";
@@ -39,6 +40,7 @@ export function FloatingActions({
   const hasCover = !!page?.cover.coverImage;
 
   const { canComment } = usePageCapabilities(activePageId);
+  const { t } = useTranslation();
 
   return (
     <div
@@ -50,7 +52,7 @@ export function FloatingActions({
           <PopoverTrigger asChild>
             <Button variant="ghost">
               <Smile className="tiptap-button-icon" />
-              <span>Add icon</span>
+              <span>{t("ui.addIcon")}</span>
             </Button>
           </PopoverTrigger>
           <PopoverPortal container={document.getElementById("modal-root")}>
@@ -77,7 +79,7 @@ export function FloatingActions({
           }}
         >
           <Image className="tiptap-button-icon" />
-          <span>Add cover</span>
+          <span>{t("ui.addCover")}</span>
         </Button>
       )}
 
