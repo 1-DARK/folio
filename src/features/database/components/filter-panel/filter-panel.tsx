@@ -87,7 +87,8 @@ function makeFilterRule(property: DatabaseProperty): FilterRule {
         propertyId: property.id,
         propertyType: "relation",
         operator: "contains",
-        value: "",
+        value: [],
+        labels: [],
       };
     case "formula":
       return {
@@ -107,6 +108,15 @@ function makeFilterRule(property: DatabaseProperty): FilterRule {
         operator: "contains",
         value: [],
         labels: [],
+      };
+    case "rollup":
+      // Compared as a number (counts, sums, percents) or a date.
+      return {
+        id: nanoid(),
+        propertyId: property.id,
+        propertyType: "rollup" as never,
+        operator: (operator ?? "equals") as never,
+        value: "",
       };
     default:
       return {

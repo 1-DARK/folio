@@ -939,6 +939,11 @@
       "none": "Aucune personne trouvée",
       "empty": "Vide"
     },
+    "relation": {
+      "search": "Rechercher une page…",
+      "none": "Aucune page trouvée",
+      "untitled": "Sans titre"
+    },
     "rollup": {
       "days_one": "{{count}} jour",
       "days_other": "{{count}} jours"

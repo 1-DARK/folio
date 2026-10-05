@@ -261,6 +261,7 @@ function PropertyRow({
           properties: allProperties,
           cellValues: page.values ?? {},
           page,
+          personName: (id) => findPerson(people, id)?.name,
         });
         return (
           <span className="record-prop-panel__value record-prop-panel__value--text">

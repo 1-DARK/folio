@@ -50,6 +50,11 @@ export const FilterChipButton = forwardRef<
       .join(", ");
   })();
 
+  // Relations: the picked pages' titles (older rules: the typed text).
+  const isRelationPick =
+    rule?.propertyType === "relation" && Array.isArray(rule.value);
+  const relationText = isRelationPick ? (rule.labels ?? []).join(", ") : "";
+
   return (
     <Button
       ref={ref}
@@ -88,7 +93,9 @@ export const FilterChipButton = forwardRef<
               : "Any"
             : isPerson
               ? personText || "Any"
-              : value}
+              : isRelationPick
+                ? relationText || "Any"
+                : value}
       </span>
 
       {!locked && (

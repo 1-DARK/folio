@@ -209,3 +209,53 @@ export function computeRollup(args: {
   );
   return aggregate(values, config.aggregation);
 }
+
+/**
+ * Returns a copy of `rows` with every rollup's value computed into
+ * `values[rollupId]`, so filters, sorts, grouping and formulas can use it.
+ * Derived like formula values: never saved.
+ *
+ * `sources` must hold the related databases (for the property each rollup
+ * reads); `pages` must hold their rows.
+ */
+export function resolveRecordRollups<
+  T extends { id: ID; values?: Record<ID, unknown> | null },
+>(
+  rows: T[],
+  properties: DatabaseProperty[],
+  sources: DataSource[],
+  pages: Page[],
+): T[] {
+  const rollups = properties.filter((p) => p.config.type === "rollup");
+  if (!rollups.length || !pages.length) return rows;
+
+  const plans = rollups.map((prop) => {
+    const config = prop.config as ConfigOf<"rollup">;
+    const relation = properties.find((p) => p.id === config.relationPropertyId);
+    const targetSourceId =
+      relation?.config.type === "relation"
+        ? relation.config.targetSourceId
+        : null;
+    return {
+      prop,
+      config,
+      targetSource: targetSourceId
+        ? sources.find((s) => s.id === targetSourceId)
+        : undefined,
+    };
+  });
+
+  return rows.map((row) => {
+    const values: Record<ID, unknown> = { ...(row.values ?? {}) };
+    for (const { prop, config, targetSource } of plans) {
+      values[prop.id] = computeRollup({
+        record: { id: row.id, values },
+        properties,
+        targetSource,
+        config,
+        pages,
+      });
+    }
+    return { ...row, values } as T;
+  });
+}

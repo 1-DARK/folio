@@ -13,37 +13,97 @@ import type {
 
 const math = create(all);
 
-// Override equal/unequal to use strict JS equality so strings work correctly
+// Override equal/unequal to use strict JS equality so strings work correctly.
+// Ordering comparisons with an empty side are false (an empty date is neither
+// before nor after anything), instead of JS's null → 0.
+const isBlank = (v: unknown) => v === null || v === undefined || v === "";
 math.import(
   {
     equal: (a: unknown, b: unknown) => a === b,
     unequal: (a: unknown, b: unknown) => a !== b,
-    smaller: (a: unknown, b: unknown) => (a as number) < (b as number),
-    larger: (a: unknown, b: unknown) => (a as number) > (b as number),
-    smallerEq: (a: unknown, b: unknown) => (a as number) <= (b as number),
-    largerEq: (a: unknown, b: unknown) => (a as number) >= (b as number),
+    smaller: (a: unknown, b: unknown) =>
+      !isBlank(a) && !isBlank(b) && (a as number) < (b as number),
+    larger: (a: unknown, b: unknown) =>
+      !isBlank(a) && !isBlank(b) && (a as number) > (b as number),
+    smallerEq: (a: unknown, b: unknown) =>
+      !isBlank(a) && !isBlank(b) && (a as number) <= (b as number),
+    largerEq: (a: unknown, b: unknown) =>
+      !isBlank(a) && !isBlank(b) && (a as number) >= (b as number),
   },
   { override: true },
 );
 
+// "a" + "b" joins text, like Notion ("Total: " + 3 → "Total: 3"). Numbers,
+// matrices etc. keep mathjs's own add (typed signatures merge).
+math.import({
+  add: math.typed("add", {
+    "string, string": (a: string, b: string) => a + b,
+    "string, number": (a: string, b: number) => a + String(b),
+    "number, string": (a: number, b: string) => String(a) + b,
+    "string, boolean": (a: string, b: boolean) => a + String(b),
+    "boolean, string": (a: boolean, b: string) => String(a) + b,
+    // An empty value joins as nothing: "Due " + prop("Due") on an empty date.
+    "string, null": (a: string) => a,
+    "null, string": (_a: null, b: string) => b,
+  }),
+});
+
+// Lazy logic: only the branch that's taken is evaluated, so
+// if(empty(prop("Due")), "", dateBetween(prop("Due"), now(), "days")) works
+// on rows without a date. rawArgs functions get the unevaluated argument
+// nodes; they must live on the math instance (scope functions are eager).
+type RawNode = { compile: () => { evaluate: (scope: unknown) => unknown } };
+type RawFn = ((args: RawNode[], m: unknown, scope: unknown) => unknown) & {
+  rawArgs?: boolean;
+};
+const lazy = (fn: RawFn): RawFn => {
+  fn.rawArgs = true;
+  return fn;
+};
+const run = (node: RawNode | undefined, scope: unknown) =>
+  node ? node.compile().evaluate(scope) : null;
+
+math.import({
+  _if: lazy((args, _m, scope) =>
+    run(args[0], scope) ? run(args[1], scope) : run(args[2], scope),
+  ),
+  ifs: lazy((args, _m, scope) => {
+    for (let i = 0; i + 1 < args.length; i += 2) {
+      if (run(args[i], scope)) return run(args[i + 1], scope);
+    }
+    return args.length % 2 !== 0 ? run(args[args.length - 1], scope) : null;
+  }),
+  _and: lazy((args, _m, scope) => args.every((a) => Boolean(run(a, scope)))),
+  _or: lazy((args, _m, scope) => args.some((a) => Boolean(run(a, scope)))),
+});
+
 // ─── expression pre-processing ────────────────────────────────────────────────
 
-// Rename Notion functions that clash with JS/mathjs reserved words
-const RESERVED_RENAMES: [RegExp, string][] = [
-  [/\bif\b/g, "_if"],
-  [/\blet\b/g, "_let"],
-  [/\blets\b/g, "_lets"],
-  [/\band\b/g, "_and"],
-  [/\bor\b/g, "_or"],
-  [/\bnot\b/g, "_not"],
+// Rename Notion functions that clash with JS/mathjs reserved words. Only
+// calls are renamed (`if(` → `_if(`), and never inside "text" or 'text', so
+// a string like "Yes and no" or the operator form `a and b` stay as they are.
+const RESERVED_CALLS: [RegExp, string][] = [
+  [/\bif(\s*\()/g, "_if$1"],
+  [/\blets(\s*\()/g, "_lets$1"],
+  [/\blet(\s*\()/g, "_let$1"],
+  [/\band(\s*\()/g, "_and$1"],
+  [/\bor(\s*\()/g, "_or$1"],
+  [/\bnot(\s*\()/g, "_not$1"],
 ];
 
 function preprocessExpression(expression: string): string {
-  let result = expression;
-  for (const [pattern, replacement] of RESERVED_RENAMES) {
-    result = result.replace(pattern, replacement);
-  }
-  return result;
+  // Split into code and quoted-string parts; rename in code parts only.
+  const parts = expression.split(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/);
+  return parts
+    .map((part, i) => {
+      if (i % 2 === 1) return part; // a string literal
+      let out = part;
+      for (const [pattern, replacement] of RESERVED_CALLS) {
+        out = out.replace(pattern, replacement);
+      }
+      return out;
+    })
+    .join("");
 }
 
 // prop("Name") → __prop_Name__
@@ -67,6 +127,7 @@ function cellToFormulaValue(
   prop: DatabaseProperty,
   value: CellValue,
   page: Page | undefined,
+  personName?: (id: string) => string | undefined,
 ): string | number | boolean | unknown[] | null {
   const type: PropertyType = prop.config.type;
 
@@ -82,13 +143,16 @@ function cellToFormulaValue(
       return t != null ? new Date(t).toISOString() : null;
     }
     case "created_by":
-      return page?.ownerId ?? null;
-    case "edited_by":
-      return (
-        (page as (Page & { editedBy?: string | null }) | undefined)?.editedBy ??
-        page?.ownerId ??
-        null
-      );
+    case "edited_by": {
+      const id =
+        type === "edited_by"
+          ? ((page as (Page & { editedBy?: string | null }) | undefined)
+              ?.editedBy ?? page?.ownerId)
+          : page?.ownerId;
+      if (!id) return null;
+      // The person's name when the caller can look it up, else the id.
+      return personName?.(id) ?? id;
+    }
   }
 
   if (value === null || value === undefined) return null;
@@ -156,6 +220,10 @@ function cellToFormulaValue(
       // Another formula's computed value (resolved before this one).
       return typeof value === "object" ? null : (value as string);
 
+    case "rollup":
+      // The rollup's computed value (resolved into the row upstream).
+      return typeof value === "object" ? null : (value as string | number);
+
     default:
       return null;
   }
@@ -182,22 +250,21 @@ function buildFunctionScope(): Record<string, unknown> {
     throw new Error(`Cannot parse date from ${v}`);
   }
 
+  // Date functions given an empty date give an empty result (Notion does
+  // the same) instead of throwing and blanking the whole formula.
+  const dateFn =
+    <A extends unknown[]>(fn: (d: unknown, ...rest: A) => unknown) =>
+    (d: unknown, ...rest: A) =>
+      d == null || d === "" ? null : fn(d, ...rest);
+
   return {
     // ── Logic (renamed to avoid reserved word conflicts) ───────────────────
-    _if: (cond: boolean, a: unknown, b: unknown) => (cond ? a : b),
-    _and: (a: unknown, b: unknown) => Boolean(a) && Boolean(b),
-    _or: (a: unknown, b: unknown) => Boolean(a) || Boolean(b),
+    // _if, ifs, _and, _or are lazy and live on the math instance (above);
+    // defining them here would shadow those.
     _not: (a: unknown) => !a,
     _let: (_name: unknown, _val: unknown, expr: unknown) => expr,
     _lets: (...args: unknown[]) => args[args.length - 1],
 
-    ifs: (...args: unknown[]) => {
-      for (let i = 0; i + 1 < args.length; i += 2) {
-        if (args[i]) return args[i + 1];
-      }
-      if (args.length % 2 !== 0) return args[args.length - 1];
-      return null;
-    },
     empty: (v: unknown) =>
       v === null ||
       v === undefined ||
@@ -206,33 +273,36 @@ function buildFunctionScope(): Record<string, unknown> {
       v === 0,
 
     // ── Text ───────────────────────────────────────────────────────────────
-    length: (v: string | unknown[]) => (v as any).length,
+    length: (v: string | unknown[]) => (v == null ? 0 : (v as any).length),
     substring: (s: string, start: number, end?: number) =>
-      s.substring(start, end),
-    contains: (s: string, search: string) => s.includes(search),
-    test: (s: string, regex: string) => new RegExp(regex).test(s),
-    match: (s: string, regex: string) => s.match(new RegExp(regex, "g")) ?? [],
+      s == null ? null : String(s).substring(start, end),
+    contains: (s: string, search: string) =>
+      s == null ? false : String(s).includes(search),
+    test: (s: string, regex: string) =>
+      s == null ? false : new RegExp(regex).test(String(s)),
+    match: (s: string, regex: string) =>
+      s == null ? [] : (String(s).match(new RegExp(regex, "g")) ?? []),
     replace: (s: string, regex: string, rep: string) =>
-      s.replace(new RegExp(regex), rep),
+      s == null ? null : String(s).replace(new RegExp(regex), rep),
     replaceAll: (s: string, regex: string, rep: string) =>
-      s.replaceAll(new RegExp(regex, "g"), rep),
-    lower: (s: string) => s.toLowerCase(),
-    upper: (s: string) => s.toUpperCase(),
-    repeat: (s: string, n: number) => s.repeat(n),
+      s == null ? null : String(s).replaceAll(new RegExp(regex, "g"), rep),
+    lower: (s: string) => (s == null ? null : String(s).toLowerCase()),
+    upper: (s: string) => (s == null ? null : String(s).toUpperCase()),
+    repeat: (s: string, n: number) => (s == null ? null : String(s).repeat(n)),
     link: (label: string, url: string) => `[${label}](${url})`,
     style: (s: string, ..._styles: string[]) => s,
     unstyle: (s: string) => s,
-    format: (v: unknown) => String(v),
-    trim: (s: string) => s.trim(),
-    toNumber: (v: unknown) => Number(v),
+    format: (v: unknown) => (v == null ? "" : String(v)),
+    trim: (s: string) => (s == null ? null : String(s).trim()),
+    toNumber: (v: unknown) => (v == null || v === "" ? null : Number(v)),
 
     // ── Date ───────────────────────────────────────────────────────────────
     now: () => new Date().toISOString(),
     today: () => new Date().toISOString().slice(0, 10),
     parseDate: (s: string) => new Date(s).toISOString(),
-    timestamp: (d: unknown) => parseAnyDate(d).getTime(),
+    timestamp: dateFn((d: unknown) => parseAnyDate(d).getTime()),
     fromTimestamp: (ms: number) => new Date(ms).toISOString(),
-    formatDate: (d: unknown, fmt: string) => {
+    formatDate: dateFn((d: unknown, fmt: string) => {
       const date = parseAnyDate(d);
       const weekNum = isoWeek(date);
 
@@ -264,8 +334,9 @@ function buildFunctionScope(): Record<string, unknown> {
       );
 
       return fmt.replace(pattern, (match) => tokens[match] ?? match);
-    },
+    }),
     dateBetween: (a: unknown, b: unknown, unit: string) => {
+      if (a == null || a === "" || b == null || b === "") return null;
       const ms = parseAnyDate(a).getTime() - parseAnyDate(b).getTime();
       const units: Record<string, number> = {
         milliseconds: 1,
@@ -279,7 +350,7 @@ function buildFunctionScope(): Record<string, unknown> {
       };
       return Math.round(ms / (units[unit] ?? 1));
     },
-    dateAdd: (d: unknown, n: number, unit: string) => {
+    dateAdd: dateFn((d: unknown, n: number, unit: string) => {
       const ms: Record<string, number> = {
         minutes: 60_000,
         hours: 3_600_000,
@@ -291,8 +362,8 @@ function buildFunctionScope(): Record<string, unknown> {
       return new Date(
         parseAnyDate(d).getTime() + n * (ms[unit] ?? 0),
       ).toISOString();
-    },
-    dateSubtract: (d: unknown, n: number, unit: string) => {
+    }),
+    dateSubtract: dateFn((d: unknown, n: number, unit: string) => {
       const ms: Record<string, number> = {
         minutes: 60_000,
         hours: 3_600_000,
@@ -304,28 +375,33 @@ function buildFunctionScope(): Record<string, unknown> {
       return new Date(
         parseAnyDate(d).getTime() - n * (ms[unit] ?? 0),
       ).toISOString();
-    },
-    minute: (d: unknown) => parseAnyDate(d).getMinutes(),
-    hour: (d: unknown) => parseAnyDate(d).getHours(),
-    day: (d: unknown) => parseAnyDate(d).getDay() || 7,
-    date: (d: unknown) => parseAnyDate(d).getDate(),
-    month: (d: unknown) => parseAnyDate(d).getMonth() + 1,
-    year: (d: unknown) => parseAnyDate(d).getFullYear(),
-    week: (d: unknown) => isoWeek(parseAnyDate(d)),
+    }),
+    minute: dateFn((d: unknown) => parseAnyDate(d).getMinutes()),
+    hour: dateFn((d: unknown) => parseAnyDate(d).getHours()),
+    day: dateFn((d: unknown) => parseAnyDate(d).getDay() || 7),
+    date: dateFn((d: unknown) => parseAnyDate(d).getDate()),
+    month: dateFn((d: unknown) => parseAnyDate(d).getMonth() + 1),
+    year: dateFn((d: unknown) => parseAnyDate(d).getFullYear()),
+    week: dateFn((d: unknown) => isoWeek(parseAnyDate(d))),
 
     // ── List ───────────────────────────────────────────────────────────────
-    at: (list: unknown[], i: number) => list[i],
-    first: (list: unknown[]) => list[0],
-    last: (list: unknown[]) => list[list.length - 1],
-    slice: (list: unknown[], s: number, e?: number) => list.slice(s, e),
-    concat: (...lists: unknown[][]) => ([] as unknown[]).concat(...lists),
-    sort: (list: unknown[]) => [...list].sort(),
-    reverse: (list: unknown[]) => [...list].reverse(),
-    join: (list: unknown[], sep: string) => list.join(sep),
-    split: (s: string, sep: string) => s.split(sep),
-    unique: (list: unknown[]) => [...new Set(list)],
-    includes: (list: unknown[], v: unknown) => list.includes(v),
-    flat: (list: unknown[][]) => list.flat(),
+    at: (list: unknown[], i: number) => (list == null ? null : list[i]),
+    first: (list: unknown[]) => (list == null ? null : list[0]),
+    last: (list: unknown[]) => (list == null ? null : list[list.length - 1]),
+    slice: (list: unknown[], s: number, e?: number) =>
+      list == null ? [] : list.slice(s, e),
+    concat: (...lists: unknown[][]) =>
+      ([] as unknown[]).concat(...lists.map((l) => l ?? [])),
+    sort: (list: unknown[]) => (list == null ? [] : [...list].sort()),
+    reverse: (list: unknown[]) => (list == null ? [] : [...list].reverse()),
+    join: (list: unknown[], sep: string) =>
+      list == null ? "" : list.join(sep),
+    split: (s: string, sep: string) =>
+      s == null || s === "" ? [] : String(s).split(sep),
+    unique: (list: unknown[]) => (list == null ? [] : [...new Set(list)]),
+    includes: (list: unknown[], v: unknown) =>
+      list == null ? false : list.includes(v),
+    flat: (list: unknown[][]) => (list == null ? [] : list.flat()),
   };
 }
 
@@ -348,6 +424,8 @@ export interface EvaluationContext {
   /** The row itself, for values stored on the page (title, created / edited
    *  time and person). Without it those come out empty. */
   page?: Page;
+  /** Person id → name, so Created by / Edited by read as names. */
+  personName?: (id: string) => string | undefined;
 }
 
 // Shared core. THROWS on any failure (parse error, unknown function, runtime).
@@ -364,7 +442,12 @@ function evaluateFormulaCore(
   for (const prop of ctx.properties) {
     const varName = sanitizePropName(prop.name);
     const raw = ctx.cellValues[prop.id] ?? null;
-    propScope[varName] = cellToFormulaValue(prop, raw, ctx.page);
+    propScope[varName] = cellToFormulaValue(
+      prop,
+      raw,
+      ctx.page,
+      ctx.personName,
+    );
   }
 
   const substituted = preprocessExpression(substitutePropCalls(expression));

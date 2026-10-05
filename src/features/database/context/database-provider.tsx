@@ -31,6 +31,8 @@ import { CardActionsProvider, TimelineViewProvider } from ".";
 import { useListLayout } from "../hooks";
 import type { DragStorage, DropInfo } from "../extensions";
 import { groupValueForColumn } from "../utils/group-value-for-column";
+import { canWriteGroupValue } from "../utils/group-key";
+import { useWorkspacePeople } from "../hooks/use-workspace-people";
 import { CalendarViewProvider } from "./calendar-view-provider";
 
 // ── Provider ───────────────────────────────────────────────────────────────
@@ -113,6 +115,13 @@ export function DatabaseProvider({
     (v: boolean) => setShowSortChips(v),
     [],
   );
+
+  // Dropping a card in a person column stores that person with their name.
+  const people = useWorkspacePeople();
+  const personName = useMemo(() => {
+    const names = new Map(people.map((p) => [p.id, p.name] as const));
+    return (id: string) => names.get(id);
+  }, [people]);
 
   const { editingRecordId } = useNewRowEditState();
 
@@ -262,11 +271,13 @@ export function DatabaseProvider({
 
       if (!groupProp) return;
 
-      if (targetColumnKey) {
+      // Moving a card writes the column's value; computed columns (formula,
+      // rollup, created by, the derived side of a relation) only reorder.
+      if (targetColumnKey && canWriteGroupValue(groupProp)) {
         setCellValue(
           recordId,
           groupProp.id,
-          groupValueForColumn(groupProp, targetColumnKey),
+          groupValueForColumn(groupProp, targetColumnKey, { personName }),
         );
       }
 
@@ -288,7 +299,7 @@ export function DatabaseProvider({
     };
 
     storage.getActiveView = () => db.activeView.type;
-  }, [editor, db, source, setCellValue, sortedRecords]);
+  }, [editor, db, source, setCellValue, sortedRecords, personName]);
 
   const value = useMemo(
     () => ({

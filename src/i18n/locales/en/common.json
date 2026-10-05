@@ -948,6 +948,11 @@
       "none": "No people found",
       "empty": "Empty"
     },
+    "relation": {
+      "search": "Search pages…",
+      "none": "No pages found",
+      "untitled": "Untitled"
+    },
     "rollup": {
       "days_one": "{{count}} day",
       "days_other": "{{count}} days"

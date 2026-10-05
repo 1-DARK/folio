@@ -4,6 +4,7 @@ import type { UseDatabaseReturn } from "./use-database";
 import { recordMatchesFilters } from "../utils/apply-filters";
 import { useSession } from "src/hooks/use-session";
 import { sortRecords } from "../utils/apply-sorts";
+import { usePageTitles } from "./use-page-titles";
 
 // filter → search → sort → pin-editing
 
@@ -16,13 +17,15 @@ export function useResolvedRecords(
   const activeView = db.activeView;
   // For the "Me" person filter.
   const meId = useSession().session?.user.id ?? null;
+  // For relation filters and sorts, which go by the linked pages' titles.
+  const titleOf = usePageTitles();
 
   return useMemo(() => {
     const props = source?.properties ?? [];
 
     const filtered = activeView?.filters?.length
       ? resolvedRecords.filter((r) =>
-          recordMatchesFilters(r, activeView.filters, props, { meId }),
+          recordMatchesFilters(r, activeView.filters, props, { meId, titleOf }),
         )
       : resolvedRecords;
 
@@ -31,7 +34,9 @@ export function useResolvedRecords(
       ? filtered.filter((r) => (r.title ?? "").toLowerCase().includes(q))
       : filtered;
 
-    const sorted = sortRecords(searched, activeView?.sorts ?? [], props);
+    const sorted = sortRecords(searched, activeView?.sorts ?? [], props, {
+      titleOf,
+    });
 
     // Pin the row being created to the end so it doesn't jump under the active
     // sort while its title is still changing.
@@ -42,6 +47,7 @@ export function useResolvedRecords(
   }, [
     editingRecordId,
     meId,
+    titleOf,
     resolvedRecords,
     activeView,
     source?.properties,

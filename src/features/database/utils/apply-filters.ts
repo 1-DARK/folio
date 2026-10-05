@@ -5,6 +5,7 @@ import type {
 } from "src/types/filter-types";
 import { NO_VALUE_OPERATORS } from "src/types/filter-types";
 import type { Page, DatabaseProperty } from "src/types";
+import { relationRecordIds } from "src/lib/relation-ids";
 
 /**
  * A record's value for a property.
@@ -36,6 +37,8 @@ export function getCellValue(
 export type FilterContext = {
   /** The signed-in person's id, for the "Me" person filter value. */
   meId?: string | null;
+  /** Page id → title, for relation filters matched by name. */
+  titleOf?: (id: string) => string | undefined;
 };
 
 /** The "Me" value of a person filter: whoever is looking at the view. */
@@ -110,6 +113,76 @@ function matchesRule(
     const overlap = cellIds.some((id) => ruleIds.includes(id));
     if (op === "contains") return overlap;
     if (op === "does_not_contain") return !overlap;
+    return true;
+  }
+
+  // Rollups are resolved into values upstream (resolveRecordRollups). They
+  // compare as numbers (count, sum, percent…) or, for earliest / latest
+  // date, as days.
+  if ((rule.propertyType as string) === "rollup") {
+    if (hasNoValue) return true;
+    const toComparable = (v: unknown): number | null => {
+      if (typeof v === "number") return v;
+      if (typeof v !== "string" || v.trim() === "") return null;
+      if (!isNaN(Number(v))) return Number(v);
+      const d = new Date(v);
+      return isNaN(d.getTime())
+        ? null
+        : new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    };
+    const a = toComparable(value);
+    const b = toComparable(ruleValue);
+    if (a !== null && b !== null) {
+      switch (op) {
+        case "equals":
+          return a === b;
+        case "does_not_equal":
+          return a !== b;
+        case "greater_than":
+          return a > b;
+        case "greater_than_or_equal":
+          return a >= b;
+        case "less_than":
+          return a < b;
+        case "less_than_or_equal":
+          return a <= b;
+      }
+    }
+    if (op === "does_not_equal") return a === null || a !== b;
+    if (a === null || b === null) {
+      // Text rollups ("Show original"): compare as text.
+      const text = String(value ?? "").toLowerCase();
+      const q = String(ruleValue).toLowerCase();
+      if (op === "equals") return text === q;
+      if (op === "contains") return text.includes(q);
+      return false;
+    }
+  }
+
+  if (rule.propertyType === "relation") {
+    // The cell holds linked page ids (mirror sides are resolved into values
+    // upstream, see resolveMirrorRelations).
+    const cellIds = relationRecordIds(value);
+    if (hasNoValue) return true;
+
+    // Picked pages: matches if any linked page is among them.
+    if (Array.isArray(ruleValue)) {
+      const ruleIds = ruleValue.map(String);
+      const overlap = cellIds.some((id) => ruleIds.includes(id));
+      if (op === "contains") return overlap;
+      if (op === "does_not_contain") return !overlap;
+      return true;
+    }
+
+    // Typed text (older rules, the advanced builder): match the linked pages'
+    // titles, or a raw id.
+    const q = String(ruleValue).trim().toLowerCase();
+    const hit = cellIds.some(
+      (id) =>
+        id === ruleValue || (ctx.titleOf?.(id) ?? "").toLowerCase().includes(q),
+    );
+    if (op === "contains") return hit;
+    if (op === "does_not_contain") return !hit;
     return true;
   }
 

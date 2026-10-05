@@ -1,5 +1,12 @@
 import type { Page, DatabaseProperty, SortRule } from "src/types";
 import { getCellValue } from "./apply-filters";
+import { relationRecordIds } from "src/lib/relation-ids";
+
+/** What a sort may need beyond the rows. */
+export type SortContext = {
+  /** Page id → title, to sort relations by the linked pages' names. */
+  titleOf?: (id: string) => string | undefined;
+};
 
 function compareValues(
   a: unknown,
@@ -62,12 +69,31 @@ export function sortRecords(
   records: Page[],
   sorts: SortRule[],
   properties?: DatabaseProperty[],
+  ctx: SortContext = {},
 ): Page[] {
   if (!sorts || sorts.length === 0) return records;
+
+  // Relations store page ids: sort by the linked pages' titles instead
+  // (A–Z on "Alpha, Beta"), empty relations last.
+  const relationIds = new Set(
+    (properties ?? [])
+      .filter((p) => p.config.type === "relation")
+      .map((p) => p.id),
+  );
+  const sortValue = (record: Page, propertyId: string): unknown => {
+    const v = getCellValue(record, propertyId, properties);
+    if (!relationIds.has(propertyId)) return v;
+    const titles = relationRecordIds(v)
+      .map((id) => ctx.titleOf?.(id) ?? "")
+      .filter(Boolean)
+      .sort((x, y) => x.localeCompare(y));
+    return titles.length ? titles.join(", ") : null;
+  };
+
   return [...records].sort((a, b) => {
     for (const sort of sorts) {
-      const av = getCellValue(a, sort.propertyId, properties);
-      const bv = getCellValue(b, sort.propertyId, properties);
+      const av = sortValue(a, sort.propertyId);
+      const bv = sortValue(b, sort.propertyId);
       const cmp = compareValues(av, bv, sort.direction);
       if (cmp !== 0) return cmp;
     }
