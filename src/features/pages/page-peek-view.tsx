@@ -326,7 +326,7 @@ function PagePeekEditor({
         </CardItemGroup>
         <Spacer orientation="horizontal" />
         <CardItemGroup orientation="horizontal">
-          <ShareButton />
+          <ShareButton page={page} />
           <Spacer orientation="horizontal" size={2} />
           <FavoriteToggle page={page} />
           <Spacer orientation="horizontal" size={2} />

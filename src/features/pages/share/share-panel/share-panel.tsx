@@ -1,4 +1,10 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,11 +15,14 @@ import {
   Globe,
   Users,
   Building2,
+  Link2,
 } from "lucide-react";
 import { usePageAccess, useManagePageAccess } from "src/hooks/use-page-access";
+import { usePageCapabilities } from "src/hooks/use-page-role";
 import { usePeople } from "src/hooks/use-people";
 import { useGroups } from "src/hooks/use-groups";
 import { useCurrentPerson } from "src/hooks/use-session";
+import { useToast } from "src/features/shell/toast";
 import type {
   ID,
   Page,
@@ -31,26 +40,11 @@ import {
 } from "src/components/tiptap-ui-primitive/popover";
 import { Card } from "src/components/tiptap-ui-primitive/card";
 
-const ROLE_LABELS: Record<PageRole, string> = {
-  full: "Full access",
-  edit: "Can edit",
-  comment: "Can comment",
-  view: "Can view",
-};
+// Layers: the panel sits with the other popovers (1100, above the peek and
+// center views); its own menus open above it.
+const MENU_Z = 1110;
 
-const ROLE_DESCRIPTIONS: Record<PageRole, string> = {
-  full: "Edit, suggest, comment, and share",
-  edit: "Edit, suggest, and comment",
-  comment: "Suggest and comment",
-  view: "View only",
-};
-
-const GENERAL_LABELS: Record<GeneralAccess, string> = {
-  private: "Only people invited",
-  teamspace: "Everyone in the teamspace",
-  workspace: "Everyone in the workspace",
-  public: "Anyone with the link",
-};
+const ROLES: PageRole[] = ["full", "edit", "comment", "view"];
 
 const GENERAL_ICON: Record<GeneralAccess, ReactNode> = {
   private: <Lock size={16} />,
@@ -58,6 +52,12 @@ const GENERAL_ICON: Record<GeneralAccess, ReactNode> = {
   workspace: <Building2 size={16} />,
   public: <Globe size={16} />,
 };
+
+/** The address to share: the plain page link, which opens for anyone who has
+ *  access (it isn't tied to a teamspace view). */
+function pageShareUrl(pageId: ID): string {
+  return `${window.location.origin}/page/${pageId}`;
+}
 
 // A small role dropdown reused for grant rows and general access.
 function RoleMenu({
@@ -71,8 +71,8 @@ function RoleMenu({
   onRemove?: () => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const roles: PageRole[] = ["full", "edit", "comment", "view"];
 
   return (
     <div className="share-role">
@@ -82,36 +82,35 @@ function RoleMenu({
             type="button"
             className="share-role__trigger"
             disabled={disabled}
-            onClick={() => setOpen((v) => !v)}
           >
-            {ROLE_LABELS[value]}
-            <ChevronDown size={14} />
+            {t(`share.roles.${value}`)}
+            {!disabled && <ChevronDown size={14} />}
           </button>
         </PopoverTrigger>
         <PopoverPortal container={document.getElementById("root")}>
           <PopoverContent
-            side="top"
-            align="start"
-            style={{ position: "fixed", zIndex: 99999 }}
+            side="bottom"
+            align="end"
+            style={{ position: "fixed", zIndex: MENU_Z }}
           >
             <Card style={{ boxShadow: "var(--tt-shadow-elevated-sm)" }}>
               <div className="share-role__menu" role="menu">
-                {roles.map((r) => (
+                {ROLES.map((r) => (
                   <button
                     key={r}
                     type="button"
                     className="share-role__item"
                     onClick={() => {
-                      onChange(r);
+                      if (r !== value) onChange(r);
                       setOpen(false);
                     }}
                   >
                     <span className="share-role__item-text">
                       <span className="share-role__item-label">
-                        {ROLE_LABELS[r]}
+                        {t(`share.roles.${r}`)}
                       </span>
                       <span className="share-role__item-desc">
-                        {ROLE_DESCRIPTIONS[r]}
+                        {t(`share.roleDescriptions.${r}`)}
                       </span>
                     </span>
                     {r === value && <Check size={15} />}
@@ -129,7 +128,9 @@ function RoleMenu({
                       }}
                     >
                       <Trash2 size={15} />
-                      <span className="share-role__item-label">Remove</span>
+                      <span className="share-role__item-label">
+                        {t("share.remove")}
+                      </span>
                     </button>
                   </>
                 )}
@@ -142,8 +143,73 @@ function RoleMenu({
   );
 }
 
+function GeneralAccessMenu({
+  value,
+  options,
+  onChange,
+  disabled,
+}: {
+  value: GeneralAccess;
+  options: GeneralAccess[];
+  onChange: (v: GeneralAccess) => void;
+  disabled?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="share-role">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="share-general__trigger"
+            disabled={disabled}
+          >
+            {t(`share.general.${value}`)}
+            {!disabled && <ChevronDown size={14} />}
+          </button>
+        </PopoverTrigger>
+        <PopoverPortal container={document.getElementById("root")}>
+          <PopoverContent style={{ zIndex: MENU_Z }}>
+            <Card>
+              <div className="share-role__menu" role="menu">
+                {options.map((o) => (
+                  <button
+                    key={o}
+                    type="button"
+                    className="share-role__item"
+                    onClick={() => {
+                      if (o !== value) onChange(o);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="share-role__item-icon">
+                      {GENERAL_ICON[o]}
+                    </span>
+                    <span className="share-role__item-text">
+                      <span className="share-role__item-label">
+                        {t(`share.general.${o}`)}
+                      </span>
+                      <span className="share-role__item-desc">
+                        {t(`share.generalDescriptions.${o}`)}
+                      </span>
+                    </span>
+                    {o === value && <Check size={15} />}
+                  </button>
+                ))}
+              </div>
+            </Card>
+          </PopoverContent>
+        </PopoverPortal>
+      </Popover>
+    </div>
+  );
+}
+
 function SharePanelInner({ page }: { page: Page }) {
   const { t } = useTranslation();
+  const { show } = useToast();
   const { person } = useCurrentPerson();
   const { data: grants = [] } = usePageAccess(page.id);
   const { data: people = [] } = usePeople();
@@ -151,24 +217,11 @@ function SharePanelInner({ page }: { page: Page }) {
   const { share, changeRole, unshare, setGeneralAccess } = useManagePageAccess(
     page.id,
   );
+  // Your real role on the page, from the server (page owners, full grants,
+  // teamspace and workspace rules all count) — only "Full access" shares.
+  const { canManageAccess: canManage } = usePageCapabilities(page.id);
 
   const [query, setQuery] = useState("");
-
-  // Only full-access may change sharing (Notion). Everyone else sees read-only.
-  const myRole = useMemo<PageRole | null>(() => {
-    // The current user's effective role isn't in `grants` if it comes from
-    // general access; treat page ownership / a full grant as the gate. A
-    // dedicated "my effective role" query would be more precise, but for the
-    // panel, a full grant or workspace-owner is the share gate.
-    const mine = grants.find(
-      (g) => g.subjectType === "person" && g.subjectId === person?.id,
-    );
-    if (mine) return mine.role;
-    if (person?.role === "owner") return "full";
-    return null;
-  }, [grants, person]);
-
-  const canManage = myRole === "full" || person?.role === "owner";
 
   // Resolve the current grants to displayable rows (name + email/label).
   const rows = useMemo(() => {
@@ -179,23 +232,23 @@ function SharePanelInner({ page }: { page: Page }) {
         );
         return {
           grant: g,
-          name: p?.name ?? "Unknown",
+          name: p?.name ?? t("share.unknownPerson"),
           sub: p?.email ?? "",
-          isYou: p?.id === person?.id,
+          isYou: g.subjectId === person?.id,
         };
       }
       const gr = ((groups as Group[]) ?? []).find((x) => x.id === g.subjectId);
       return {
         grant: g,
-        name: gr?.name ?? "Unknown group",
-        sub: `${gr?.memberIds.length ?? 0} members`,
+        name: gr?.name ?? t("share.unknownGroup"),
+        sub: t("share.memberCount", { count: gr?.memberIds.length ?? 0 }),
         isYou: false,
       };
     });
-  }, [grants, people, groups, person]);
+  }, [grants, people, groups, person, t]);
 
-  // Typed-text suggestions: match people by email/name, groups by name, that
-  // aren't already granted.
+  // Typed-text suggestions: people by email/name, groups by name, that
+  // aren't already granted (and never yourself).
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -208,6 +261,7 @@ function SharePanelInner({ page }: { page: Page }) {
     const peopleHits = ((people as Person[]) ?? [])
       .filter(
         (p) =>
+          p.id !== person?.id &&
           !grantedPersonIds.has(p.id) &&
           (p.email.toLowerCase().includes(q) ||
             p.name.toLowerCase().includes(q)),
@@ -228,86 +282,123 @@ function SharePanelInner({ page }: { page: Page }) {
         type: "group" as const,
         id: g.id,
         label: g.name,
-        sub: "Group",
+        sub: t("share.group"),
       }));
     return [...peopleHits, ...groupHits];
-  }, [query, people, groups, grants]);
+  }, [query, people, groups, grants, person, t]);
 
   const addGrant = (subjectType: "person" | "group", subjectId: ID) => {
     share.mutate({ subjectType, subjectId, role: "edit" });
-
     setQuery("");
   };
 
+  // "Everyone in the teamspace" only makes sense for a page in one.
+  const generalOptions = useMemo<GeneralAccess[]>(
+    () =>
+      page.teamspaceId
+        ? ["private", "teamspace", "workspace", "public"]
+        : ["private", "workspace", "public"],
+    [page.teamspaceId],
+  );
+
+  const copyLink = async () => {
+    const url = pageShareUrl(page.id);
+    try {
+      await navigator.clipboard.writeText(url);
+      show(t("share.linkCopied"), "success");
+    } catch {
+      show(url, "info"); // clipboard refused — at least show the address
+    }
+  };
+
+  const trimmed = query.trim();
+
   return (
     <div className="share-panel">
-      {/* Tabs (Publish stubbed) */}
       <div className="share-panel__tabs">
         <button className="share-panel__tab is-active" type="button">
           {t("share.share", "Share")}
         </button>
-        <button
-          className="share-panel__tab"
-          type="button"
-          disabled
-          title="Coming soon"
-        >
-          {t("share.publish", "Publish")}
-        </button>
       </div>
 
-      {/* Add input */}
-      {canManage && (
+      {canManage ? (
         <div className="share-panel__add">
           <input
             className="share-panel__input"
-            placeholder={t("share.addPlaceholder", "Email or group…")}
+            placeholder={t("share.addPlaceholder")}
             value={query}
+            autoFocus
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && suggestions[0]) {
+                e.preventDefault();
+                addGrant(suggestions[0].type, suggestions[0].id);
+              }
+              if (e.key === "Escape" && query) {
+                e.stopPropagation();
+                setQuery("");
+              }
+            }}
           />
-          {suggestions.length > 0 && (
-            <div className="share-panel__suggest">
-              {suggestions.map((s) => (
-                <button
-                  key={`${s.type}:${s.id}`}
-                  type="button"
-                  className="share-panel__suggest-item"
-                  onClick={() => addGrant(s.type, s.id)}
-                >
-                  <span className="share-panel__suggest-label">{s.label}</span>
-                  <span className="share-panel__suggest-sub">{s.sub}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {trimmed &&
+            (suggestions.length > 0 ? (
+              <div className="share-panel__suggest">
+                {suggestions.map((s) => (
+                  <button
+                    key={`${s.type}:${s.id}`}
+                    type="button"
+                    className="share-panel__suggest-item"
+                    onClick={() => addGrant(s.type, s.id)}
+                  >
+                    <span className="share-panel__suggest-label">
+                      {s.label}
+                    </span>
+                    <span className="share-panel__suggest-sub">{s.sub}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="share-panel__suggest">
+                <div className="share-panel__suggest-empty">
+                  {t("share.noMatch")}
+                </div>
+              </div>
+            ))}
         </div>
+      ) : (
+        <div className="share-panel__readonly">{t("share.readOnly")}</div>
       )}
 
-      {/* Grant rows */}
-      <div className="share-panel__list">
-        {rows.map(({ grant, name, sub, isYou }) => (
-          <div key={grant.id} className="share-row">
-            <div className="share-row__avatar">
-              {name.charAt(0).toUpperCase()}
+      {rows.length > 0 && (
+        <div className="share-panel__list">
+          {rows.map(({ grant, name, sub, isYou }) => (
+            <div key={grant.id} className="share-row">
+              <div className="share-row__avatar">
+                {name.charAt(0).toUpperCase()}
+              </div>
+              <div className="share-row__text">
+                <span className="share-row__name">
+                  {name}
+                  {isYou && (
+                    <span className="share-row__you"> {t("share.you")}</span>
+                  )}
+                </span>
+                {sub && <span className="share-row__sub">{sub}</span>}
+              </div>
+              <RoleMenu
+                value={grant.role}
+                disabled={!canManage || isYou}
+                onChange={(r) => changeRole.mutate({ id: grant.id, role: r })}
+                onRemove={
+                  canManage && !isYou
+                    ? () => unshare.mutate(grant.id)
+                    : undefined
+                }
+              />
             </div>
-            <div className="share-row__text">
-              <span className="share-row__name">
-                {name}
-                {isYou && <span className="share-row__you"> (You)</span>}
-              </span>
-              {sub && <span className="share-row__sub">{sub}</span>}
-            </div>
-            <RoleMenu
-              value={grant.role}
-              disabled={!canManage || isYou}
-              onChange={(r) => changeRole.mutate({ id: grant.id, role: r })}
-              onRemove={
-                canManage && !isYou ? () => unshare.mutate(grant.id) : undefined
-              }
-            />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* General access */}
       <div className="share-panel__general">
@@ -321,11 +412,12 @@ function SharePanelInner({ page }: { page: Page }) {
           <div className="share-row__text">
             <GeneralAccessMenu
               value={page.generalAccess}
+              options={generalOptions}
               disabled={!canManage}
               onChange={(ga) => setGeneralAccess.mutate({ generalAccess: ga })}
             />
             <span className="share-row__sub">
-              {GENERAL_LABELS[page.generalAccess]}
+              {t(`share.generalDescriptions.${page.generalAccess}`)}
             </span>
           </div>
           {page.generalAccess !== "private" && (
@@ -339,74 +431,19 @@ function SharePanelInner({ page }: { page: Page }) {
           )}
         </div>
       </div>
+
+      <div className="share-panel__footer">
+        <button type="button" className="share-panel__copy" onClick={copyLink}>
+          <Link2 size={15} />
+          <span>{t("share.copyLink")}</span>
+        </button>
+      </div>
     </div>
   );
 }
 
-function GeneralAccessMenu({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: GeneralAccess;
-  onChange: (v: GeneralAccess) => void;
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const opts: GeneralAccess[] = ["private", "teamspace", "workspace", "public"];
-
-  return (
-    <div className="share-role">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="share-general__trigger"
-            disabled={disabled}
-          >
-            {value === "private"
-              ? "Only people invited"
-              : value === "teamspace"
-                ? "Teamspace"
-                : value === "workspace"
-                  ? "Workspace"
-                  : "Anyone with link"}
-            <ChevronDown size={14} />
-          </button>
-        </PopoverTrigger>
-        <PopoverPortal container={document.getElementById("root")}>
-          <PopoverContent style={{ zIndex: 99999 }}>
-            <Card>
-              <div className="share-role__menu" role="menu">
-                {opts.map((o) => (
-                  <button
-                    key={o}
-                    type="button"
-                    className="share-role__item"
-                    onClick={() => {
-                      onChange(o);
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="share-role__item-icon">
-                      {GENERAL_ICON[o]}
-                    </span>
-                    <span className="share-role__item-label">
-                      {GENERAL_LABELS[o]}
-                    </span>
-                    {o === value && <Check size={15} />}
-                  </button>
-                ))}
-              </div>
-            </Card>
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
-    </div>
-  );
-}
-
-// Popover wrapper — anchors under a trigger, portals to body.
+// Anchored under its trigger, portaled to body. Follows the trigger on
+// scroll / resize, and closes when you click outside or press Escape.
 export function SharePanel({
   page,
   anchorRef,
@@ -418,16 +455,30 @@ export function SharePanel({
   open: boolean;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
 
-  useMemo(() => {
-    // eslint-disable-next-line react-hooks/refs
-    if (!open || !anchorRef.current) return;
-    // eslint-disable-next-line react-hooks/refs
-    const r = anchorRef.current.getBoundingClientRect();
+  const place = useCallback(() => {
+    const el = anchorRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
     setPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
-  }, [open, anchorRef]);
+  }, [anchorRef]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, place, onClose]);
 
   if (!open || !pos) return null;
 
@@ -435,11 +486,11 @@ export function SharePanel({
     <>
       <div className="share-panel__backdrop" onClick={onClose} />
       <div
-        ref={ref}
         className="share-panel__pop"
         style={{ top: pos.top, right: pos.right }}
       >
-        <SharePanelInner page={page} />
+        {/* Keyed by page: switching pages starts with a clean panel. */}
+        <SharePanelInner key={page.id} page={page} />
       </div>
     </>,
     document.body,

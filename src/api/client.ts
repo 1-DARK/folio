@@ -73,7 +73,9 @@ function keysToSnake(obj: unknown): unknown {
   return obj;
 }
 
-function keysToCamel(obj: unknown): unknown {
+/** DB row(s) → app shape (snake_case → camelCase, jsonb left as-is). For
+ *  results that don't go through http(), e.g. RPCs returning table rows. */
+export function keysToCamel(obj: unknown): unknown {
   if (Array.isArray(obj)) return obj.map(keysToCamel);
   if (obj && typeof obj === "object") {
     const out: Record<string, unknown> = {};

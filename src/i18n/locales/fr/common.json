@@ -465,6 +465,47 @@
       "guest": "Invité"
     }
   },
+  "share": {
+    "share": "Partager",
+    "addPlaceholder": "Ajouter des personnes ou des groupes par nom ou e-mail",
+    "noMatch": "Personne dans cet espace de travail ne correspond. Tu peux partager avec les personnes et groupes de l’espace de travail.",
+    "readOnly": "Seules les personnes avec un accès complet peuvent modifier le partage.",
+    "you": "(Toi)",
+    "remove": "Retirer",
+    "group": "Groupe",
+    "unknownPerson": "Personne inconnue",
+    "unknownGroup": "Groupe inconnu",
+    "memberCount_one": "{{count}} membre",
+    "memberCount_other": "{{count}} membres",
+    "generalAccess": "Accès général",
+    "copyLink": "Copier le lien",
+    "linkCopied": "Lien copié",
+    "saveFailed": "Impossible d’enregistrer le partage. Réessaie.",
+    "roles": {
+      "full": "Accès complet",
+      "edit": "Peut modifier",
+      "comment": "Peut commenter",
+      "view": "Peut voir"
+    },
+    "roleDescriptions": {
+      "full": "Modifier, commenter et partager",
+      "edit": "Modifier et commenter",
+      "comment": "Voir et commenter",
+      "view": "Lecture seule"
+    },
+    "general": {
+      "private": "Seulement les personnes invitées",
+      "teamspace": "Tout l’espace d’équipe",
+      "workspace": "Tout l’espace de travail",
+      "public": "Toute personne ayant le lien"
+    },
+    "generalDescriptions": {
+      "private": "Seules les personnes listées ci-dessus peuvent ouvrir cette page.",
+      "teamspace": "Tous les membres de cet espace d’équipe peuvent ouvrir cette page.",
+      "workspace": "Tout le monde dans cet espace de travail peut ouvrir cette page.",
+      "public": "Toute personne connectée à Folio qui a le lien peut ouvrir cette page."
+    }
+  },
   "pageLocation": {
     "noTeamspaces": "Aucun espace d’équipe pour l’instant",
     "teamspaceRoot": "Ceci est un espace d’équipe. Déplace-le vers un autre espace de travail depuis Paramètres → Espaces d’équipe."

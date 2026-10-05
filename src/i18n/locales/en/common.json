@@ -520,6 +520,47 @@
       "guest": "Guest"
     }
   },
+  "share": {
+    "share": "Share",
+    "addPlaceholder": "Add people or groups by name or email",
+    "noMatch": "No one in this workspace matches. You can share with people and groups in the workspace.",
+    "readOnly": "Only people with full access can change sharing.",
+    "you": "(You)",
+    "remove": "Remove",
+    "group": "Group",
+    "unknownPerson": "Unknown person",
+    "unknownGroup": "Unknown group",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "generalAccess": "General access",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "saveFailed": "Couldn't save the sharing change. Try again.",
+    "roles": {
+      "full": "Full access",
+      "edit": "Can edit",
+      "comment": "Can comment",
+      "view": "Can view"
+    },
+    "roleDescriptions": {
+      "full": "Edit, comment and share",
+      "edit": "Edit and comment",
+      "comment": "View and comment",
+      "view": "View only"
+    },
+    "general": {
+      "private": "Only people invited",
+      "teamspace": "Everyone in the teamspace",
+      "workspace": "Everyone in the workspace",
+      "public": "Anyone with the link"
+    },
+    "generalDescriptions": {
+      "private": "Only the people listed above can open this page.",
+      "teamspace": "Every member of this teamspace can open this page.",
+      "workspace": "Everyone in this workspace can open this page.",
+      "public": "Anyone signed in to Folio who has the link can open this page."
+    }
+  },
   "pageLocation": {
     "noTeamspaces": "No teamspaces yet",
     "teamspaceRoot": "This is a teamspace. Move it to another workspace from Settings → Teamspaces."

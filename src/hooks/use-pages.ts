@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Page, PageCategory, ID } from "../types";
 import { queryKeys } from "../lib/queryKeys";
-import { fetchPages, fetchPage } from "../api/pages";
+import { fetchPages, fetchPageOrShared } from "../api/pages";
 import { useMemo } from "react";
 import type { PageTreeNode } from "../types";
 import { useCurrentWorkspace } from "./use-workspaces";
@@ -62,7 +62,8 @@ export function usePage(id: ID | null) {
   const listKey = queryKeys.pages.lists(workspaceId ?? "");
   return useQuery({
     queryKey: queryKeys.pages.detail(id ?? ""),
-    queryFn: () => fetchPage(id!),
+    // Also finds pages shared with you from another workspace.
+    queryFn: () => fetchPageOrShared(id!),
     enabled: id != null,
     initialData: () =>
       id != null

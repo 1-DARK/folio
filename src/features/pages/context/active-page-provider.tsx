@@ -59,13 +59,25 @@ export function ActivePageProvider({ children }: { children: ReactNode }) {
     [navigate, location],
   );
 
+  // The open page is gone (deleted, or no access) → fall back to a recent
+  // page. A page shared with you from another workspace isn't in this
+  // workspace's list, so wait for its own fetch before deciding.
   useEffect(() => {
-    if (activePageId == null || allPages == null) return;
-    const stillExists = allPages.some((p) => p.id === activePageId);
+    if (activePageId == null || allPages == null || isLoading) return;
+    const stillExists =
+      allPages.some((p) => p.id === activePageId) ||
+      activePage?.id === activePageId;
     if (stillExists) return;
     const fallback = recentPages?.find((p) => p.id !== activePageId);
     setActivePageId(fallback ? fallback.id : null);
-  }, [activePageId, allPages, recentPages, setActivePageId]);
+  }, [
+    activePageId,
+    allPages,
+    recentPages,
+    setActivePageId,
+    isLoading,
+    activePage,
+  ]);
 
   const activePageRef = useRef(activePage);
   useEffect(() => {
@@ -78,7 +90,7 @@ export function ActivePageProvider({ children }: { children: ReactNode }) {
   );
 
   const state = useMemo<ActivePageState>(
-    () => ({ activePageId, activePage, isLoading }),
+    () => ({ activePageId, activePage: activePage ?? undefined, isLoading }),
     [activePageId, activePage, isLoading],
   );
 

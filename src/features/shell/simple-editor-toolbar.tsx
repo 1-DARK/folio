@@ -26,14 +26,14 @@ import {
   useEditorLayoutTransient,
 } from "./context/editor-layout-context";
 import { useIsMobile, useIsTablet } from "src/hooks/use-breakpoint";
-import { SharePanel } from "../pages/share/share-panel";
+import { ShareButton } from "../pages/share/share-button";
 import { useEffect, useRef, useState } from "react";
 import { usePageCapabilities } from "src/hooks/use-page-role";
 import { OfflineIndicator } from "./offline/offline-indicator";
 import { ToolbarPresence } from "../editor/presence/toolbar-presence";
 import { useLayoutMode } from "./hooks/use-layout-mode";
 import { calculateSidebarWidth } from "src/lib/utils";
-import { LockIcon, StarIcon } from "src/components/tiptap-icons";
+import { StarIcon } from "src/components/tiptap-icons";
 import { QuickOpenTrigger } from "./search/quick-open-trigger";
 import { useSearch } from "./search/search-context";
 import { requestFindFocus } from "src/lib/find-store";
@@ -128,50 +128,6 @@ function DiscussionTrigger() {
         style={{ color: "var(--tt-text-primary)" }}
       />
     </Button>
-  );
-}
-
-function ShareButton() {
-  const { activePage } = useActivePageState();
-  const { t } = useTranslation();
-  const anchorRef = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
-
-  if (!activePage) return null;
-
-  return (
-    <>
-      <Button
-        ref={anchorRef}
-        variant="ghost"
-        onClick={() => setOpen((v) => !v)}
-        tooltip={t("share.share", "Share")}
-        size="large"
-        style={{
-          border: "1px solid var(--tt-border-color)",
-          borderRadius: "var(--tt-radius-sm)",
-          minHeight: 22,
-          height: 25,
-          color: "var(--tt-text-primary)",
-        }}
-      >
-        <LockIcon
-          className="tiptap-button-icon"
-          style={{
-            width: 14,
-            height: 14,
-            color: "var(--tt-text-primary)",
-          }}
-        />
-        <span className="tiptap-button-text">{t("share.share", "Share")}</span>
-      </Button>
-      <SharePanel
-        page={activePage}
-        anchorRef={anchorRef}
-        open={open}
-        onClose={() => setOpen(false)}
-      />
-    </>
   );
 }
 
