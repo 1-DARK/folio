@@ -164,3 +164,13 @@ The editor is in good shape. The next steps are the databases (closing gaps in p
 ## Contributing
 
 Folio is mostly built by [Jule](https://github.com/Jule-25). Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up, the conventions, and how to open a pull request.
+
+## Licence
+
+Folio is free software, licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
+
+In short: you can use, study, change and share Folio, including running it for other people. If you run a modified version that people use over a network, you have to make your modified source code available to them, under the same licence.
+
+If you'd like to use Folio under different terms (for example, to build it into a closed-source product), contact the maintainer through [GitHub](https://github.com/Jule-25).
+
+Copyright © 2026 Jule and the Folio contributors.
