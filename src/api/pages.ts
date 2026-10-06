@@ -1,4 +1,5 @@
-import type { ID, Page } from "src/types";
+import type { ID, Page, PageCover, PageSettings } from "src/types";
+import type { JSONContent } from "@tiptap/react";
 import { http, keysToCamel } from "./client";
 import { supabase } from "./supabase-client";
 
@@ -38,3 +39,53 @@ export const deletePage = (id: ID) =>
 
 export const createPage = (page: Page) =>
   http<Page>("/pages", { method: "POST", body: JSON.stringify(page) });
+
+// ── Publish to the web (migration 042) ──────────────────────────────────
+
+/** Publish or unpublish a page (full access only; the server checks). */
+export async function setPagePublished(
+  id: ID,
+  published: boolean,
+  includeSubpages = false,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_page_published", {
+    p_id: id,
+    p_published: published,
+    p_subpages: includeSubpages,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export type PublishedPageLink = {
+  id: ID;
+  title: string;
+  cover: PageCover | null;
+};
+
+export type PublishedPage = {
+  page: {
+    id: ID;
+    title: string;
+    cover: PageCover | null;
+    content: JSONContent | null;
+    settings: PageSettings | null;
+    updatedAt: number | null;
+  };
+  rootId: ID;
+  /** Published ancestors, from the published page down to the parent. */
+  trail: PublishedPageLink[];
+  /** Visible subpages (only when the subpages are published). */
+  subpages: PublishedPageLink[];
+};
+
+/** A published page as a visitor sees it — works signed out. Null when the
+ *  page isn't published (or doesn't exist). */
+export async function fetchPublishedPage(
+  id: ID,
+): Promise<PublishedPage | null> {
+  const { data, error } = await supabase.rpc("get_published_page", {
+    p_id: id,
+  });
+  if (error) throw new Error(error.message);
+  return data ? (keysToCamel(data) as PublishedPage) : null;
+}

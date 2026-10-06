@@ -14,6 +14,11 @@ import {
 // downloaded only after sign-in; see signed-in-app.tsx.
 const SignedInApp = lazy(() => import("./signed-in-app"));
 
+// /p/<id>: a published page — public, for signed-in people and visitors
+// alike, so it skips the sign-in gate and the signed-in app entirely.
+const PublishedPage = lazy(() => import("../features/publish/published-page"));
+const isPublishedPath = window.location.pathname.startsWith("/p/");
+
 // gcTime must be at least the persisted maxAge, or restored queries would be
 // garbage-collected (and dropped from disk) before anything uses them.
 const client = new QueryClient({
@@ -42,11 +47,17 @@ function App() {
       // Anything queued while restoring goes out once the cache is back.
       onSuccess={() => void client.resumePausedMutations()}
     >
-      <AuthGate>
+      {isPublishedPath ? (
         <Suspense fallback={<GateLoading />}>
-          <SignedInApp />
+          <PublishedPage />
         </Suspense>
-      </AuthGate>
+      ) : (
+        <AuthGate>
+          <Suspense fallback={<GateLoading />}>
+            <SignedInApp />
+          </Suspense>
+        </AuthGate>
+      )}
       <ReactQueryDevtools initialIsOpen={false} />
     </PersistQueryClientProvider>
   );

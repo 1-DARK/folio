@@ -38,6 +38,9 @@
     color: var(--tt-text-color-subtle, color-mix(in srgb, var(--tt-text-color) 55%, transparent));
     cursor: pointer;
     border-bottom: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 
     &.is-active {
       color: var(--tt-text-primary);
@@ -231,5 +234,185 @@
 
   &:hover {
     background: color-mix(in srgb, var(--tt-text-color) 6%, transparent);
+  }
+}
+
+// A small dot on the Publish tab while the page is published.
+.share-panel__tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #30a46c;
+}
+
+// ── Publish tab ───────────────────────────────────────────────────────────
+.publish-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+
+  &__intro,
+  &__status {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  &__badge {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--tt-radius-md, 6px);
+    background: color-mix(in srgb, var(--tt-brand-color-500, #7c3aed) 14%, transparent);
+    color: var(--tt-brand-color-500, #7c3aed);
+  }
+
+  &__live {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    margin: 5px 4px 0;
+    border-radius: 50%;
+    background: #30a46c;
+    box-shadow: 0 0 0 4px color-mix(in srgb, #30a46c 22%, transparent);
+  }
+
+  &__intro-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tt-text-primary);
+  }
+
+  &__desc,
+  &__hint,
+  &__note {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--tt-text-color-subtle, color-mix(in srgb, var(--tt-text-color) 60%, transparent));
+  }
+
+  &__note {
+    margin: 0;
+  }
+
+  &__option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 0.5px solid var(--tt-border-color);
+    border-radius: var(--tt-radius-md, 6px);
+    font-size: 13.5px;
+    color: var(--tt-text-primary);
+    cursor: pointer;
+
+    input {
+      margin-top: 2px;
+      accent-color: var(--tt-brand-color-500, #7c3aed);
+    }
+  }
+
+  &__option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__url {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--tt-text-primary);
+    background: var(--tt-bg-color);
+    border: 0.5px solid var(--tt-border-color);
+    border-radius: var(--tt-radius-md, 6px);
+    outline: none;
+
+    &:focus {
+      border-color: var(--tt-brand-color-500, #7c3aed);
+    }
+  }
+
+  &__icon-btn {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    color: var(--tt-text-primary);
+    background: transparent;
+    border: 0.5px solid var(--tt-border-color);
+    border-radius: var(--tt-radius-md, 6px);
+    cursor: pointer;
+
+    &:hover {
+      background: color-mix(in srgb, var(--tt-text-color) 6%, transparent);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__primary,
+  &__danger {
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--tt-radius-md, 6px);
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: progress;
+    }
+  }
+
+  &__primary {
+    color: #fff;
+    background: var(--tt-brand-color-500, #7c3aed);
+    border: 0;
+
+    &:hover:not(:disabled) {
+      background: var(--tt-brand-color-600, #6d28d9);
+    }
+  }
+
+  &__danger {
+    color: #e5484d;
+    background: transparent;
+    border: 0.5px solid var(--tt-border-color);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, #e5484d 10%, transparent);
+    }
+  }
+
+}
+
+.publish-tab__icon-btn,
+.publish-tab__primary,
+.publish-tab__danger {
+  &:focus-visible {
+    outline: 2px solid var(--tt-brand-color-500, #7c3aed);
+    outline-offset: 2px;
   }
 }
