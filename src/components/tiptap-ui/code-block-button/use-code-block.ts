@@ -5,6 +5,7 @@ import { type Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 
 // --- Hooks ---
+import { useTranslation } from "react-i18next";
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
 
 // --- Lib ---
@@ -232,6 +233,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useCodeBlock(config?: UseCodeBlockConfig) {
+  const { t } = useTranslation();
   const {
     editor: providedEditor,
     hideWhenUnavailable = false,
@@ -274,7 +276,7 @@ export function useCodeBlock(config?: UseCodeBlockConfig) {
     isActive,
     handleToggle,
     canToggle: canToggleState,
-    label: "Code Block",
+    label: t("toolbar.codeBlock"),
     shortcutKeys: CODE_BLOCK_SHORTCUT_KEY,
     Icon: CodeBlockIcon,
   };
