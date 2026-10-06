@@ -5,6 +5,7 @@ import type { Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 
 // --- Hooks ---
+import { useTranslation } from "react-i18next";
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
 
 // --- Icons ---
@@ -222,6 +223,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useBlockquote(config?: UseBlockquoteConfig) {
+  const { t } = useTranslation();
   const {
     editor: providedEditor,
     hideWhenUnavailable = false,
@@ -264,7 +266,7 @@ export function useBlockquote(config?: UseBlockquoteConfig) {
     isActive,
     handleToggle,
     canToggle,
-    label: "Blockquote",
+    label: t("toolbar.blockquote"),
     shortcutKeys: BLOCKQUOTE_SHORTCUT_KEY,
     Icon: BlockquoteIcon,
   };
