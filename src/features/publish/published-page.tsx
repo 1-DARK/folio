@@ -5,9 +5,10 @@ import type { PageCover } from "src/types";
 import type { PublishedPageLink } from "src/api/pages";
 import { usePublishedPage } from "src/hooks/use-publish-page";
 import { ShowcaseViewer } from "src/features/showcase/showcase-viewer";
-import { PageItemIcon } from "src/features/pages/page-item/page-item-icon";
 import { DynamicIcon } from "src/features/pages/cover/dynamic-icon";
 import { GateLoading } from "src/features/auth/auth-gate";
+import { FolioMark } from "src/components/brand/folio-mark/folio-mark";
+import { supabase } from "src/api/supabase-client";
 import { toPublishedDoc } from "./published-content";
 import "./published-page.scss";
 
@@ -42,6 +43,23 @@ function useSystemTheme() {
   }, []);
 }
 
+// The editor's global styles (pulled in by the renderer) lock html and body
+// to the app's fixed layout, where only inner panes scroll. A published page
+// is a normal document: let the window scroll again while it's shown.
+function useWindowScroll() {
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = [html.style.overflowY, body.style.overflowY];
+    html.style.overflowY = "auto";
+    body.style.overflowY = "auto";
+    return () => {
+      html.style.overflowY = prev[0];
+      body.style.overflowY = prev[1];
+    };
+  }, []);
+}
+
 // Published pages aren't meant for search engines (for now).
 function useNoIndex() {
   useEffect(() => {
@@ -53,13 +71,23 @@ function useNoIndex() {
   }, []);
 }
 
-// The page's icon above the title, at page size (the shared icon component
-// is sized for rows).
-function BigIcon({ cover }: { cover: PageCover }) {
-  if (!cover.iconName) return null;
+// A page's own icon at any size (the shared row icon has fixed inner sizes,
+// which clip in the breadcrumb). Nothing when the page has no icon.
+function PageIcon({
+  cover,
+  size,
+}: {
+  cover: PageCover | null | undefined;
+  size: number;
+}) {
+  if (!cover?.iconName) return null;
   if (cover.target === "Emoji") {
     return (
-      <span className="published__emoji" aria-hidden>
+      <span
+        className="published__emoji"
+        style={{ fontSize: size, width: size, height: size }}
+        aria-hidden
+      >
         {cover.iconName}
       </span>
     );
@@ -67,8 +95,11 @@ function BigIcon({ cover }: { cover: PageCover }) {
   return (
     <DynamicIcon
       name={cover.iconName}
-      size={64}
+      size={size}
       style={{
+        flex: "none",
+        width: size,
+        height: size,
         color:
           !cover.color || cover.color === "var(--tt-text-color)"
             ? "var(--tt-text-primary)"
@@ -78,12 +109,63 @@ function BigIcon({ cover }: { cover: PageCover }) {
   );
 }
 
+// Signed in or not (only decides between "Sign in" and "Open in Folio").
+function useSignedIn() {
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (alive) setSignedIn(!!data.session);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return signedIn;
+}
+
+// Top bar: the Folio logo (to the landing page), the page's breadcrumb, and
+// Sign in — or Open in Folio for someone already signed in.
+function PublishedBar({
+  pageId,
+  children,
+}: {
+  pageId: string | null;
+  children?: React.ReactNode;
+}) {
+  const { t } = useTranslation();
+  const signedIn = useSignedIn();
+  return (
+    <header className="published__bar">
+      <a className="published__logo" href="/">
+        <FolioMark size={22} title="" />
+        <span>Folio</span>
+      </a>
+      {children && <span className="published__divider" aria-hidden />}
+      <div className="published__crumbs-slot">{children}</div>
+      {signedIn ? (
+        <a
+          className="published__action"
+          href={pageId ? `/page/${encodeURIComponent(pageId)}` : "/"}
+        >
+          {t("publish.openInFolio", "Open in Folio")}
+        </a>
+      ) : (
+        <a className="published__action is-primary" href="/signin">
+          {t("publish.signIn", "Sign in")}
+        </a>
+      )}
+    </header>
+  );
+}
+
 export default function PublishedPage() {
   const { t } = useTranslation();
   const [id, setId] = useState(() => idFromPath(window.location.pathname));
   const { data, isLoading, isError } = usePublishedPage(id);
   useSystemTheme();
   useNoIndex();
+  useWindowScroll();
 
   useEffect(() => {
     const onPop = () => setId(idFromPath(window.location.pathname));
@@ -143,7 +225,8 @@ export default function PublishedPage() {
 
   if (!id || isError || (!isLoading && !data)) {
     return (
-      <div className="published published--empty">
+      <div className="published">
+        <PublishedBar pageId={null} />
         <div className="published__missing">
           <FileText size={28} aria-hidden />
           <h1>{t("publish.notFoundTitle", "This page isn't published")}</h1>
@@ -169,7 +252,7 @@ export default function PublishedPage() {
 
   return (
     <div className="published" onClickCapture={onClickCapture}>
-      <header className="published__bar">
+      <PublishedBar pageId={data.page.id}>
         <nav
           className="published__crumbs"
           aria-label={t("publish.path", "Path")}
@@ -177,31 +260,18 @@ export default function PublishedPage() {
           {crumbs.map((c) => (
             <span key={c.id} className="published__crumb-wrap">
               <a className="published__crumb" href={`/p/${c.id}`}>
-                {c.cover && (
-                  <PageItemIcon
-                    cover={c.cover}
-                    styles={{ width: 15, height: 15, fontSize: 15 }}
-                  />
-                )}
+                <PageIcon cover={c.cover} size={16} />
                 <span>{c.title || untitled}</span>
               </a>
               <ChevronRight size={14} aria-hidden />
             </span>
           ))}
           <span className="published__crumb is-current" aria-current="page">
-            {data.page.cover && (
-              <PageItemIcon
-                cover={data.page.cover}
-                styles={{ width: 15, height: 15, fontSize: 15 }}
-              />
-            )}
+            <PageIcon cover={data.page.cover} size={16} />
             <span>{title}</span>
           </span>
         </nav>
-        <a className="published__brand" href="/">
-          {t("publish.madeWith", "Made with Folio")}
-        </a>
-      </header>
+      </PublishedBar>
 
       {banner && (
         <div className="published__cover" style={{ background: banner }} />
@@ -210,7 +280,7 @@ export default function PublishedPage() {
       <main className={`published__main${full ? " is-full" : ""}`}>
         {data.page.cover?.iconName && (
           <div className={`published__icon${banner ? " on-cover" : ""}`}>
-            <BigIcon cover={data.page.cover} />
+            <PageIcon cover={data.page.cover} size={64} />
           </div>
         )}
 
@@ -225,11 +295,8 @@ export default function PublishedPage() {
               {data.subpages.map((p) => (
                 <li key={p.id}>
                   <a className="published__subpage" href={`/p/${p.id}`}>
-                    {p.cover ? (
-                      <PageItemIcon
-                        cover={p.cover}
-                        styles={{ width: 18, height: 18, fontSize: 18 }}
-                      />
+                    {p.cover?.iconName ? (
+                      <PageIcon cover={p.cover} size={18} />
                     ) : (
                       <FileText size={18} aria-hidden />
                     )}

@@ -557,6 +557,8 @@
     }
   },
   "publish": {
+    "signIn": "Sign in",
+    "openInFolio": "Open in Folio",
     "tab": "Publish",
     "title": "Publish to the web",
     "description": "Anyone with the link can view this page, without a Folio account. It stays read-only and always shows the latest version.",
