@@ -327,6 +327,7 @@
   "inbox.unavailable": "Cette page ou ce chat n’est plus disponible.",
   "inbox.switchFailed": "Impossible de changer d’espace de travail. Réessaie.",
   "sidebar": {
+    "navigation": "Navigation de la barre latérale",
     "home": "Accueil",
     "search": "Rechercher",
     "inbox": "Notifications",
@@ -484,7 +485,7 @@
     },
     "columns": {
       "group": "Groupe",
-      "teamspaces": "Espaces d’équipe",
+      "teamspaces": "Espaces d'équipe",
       "members": "Membres"
     },
     "roles": {
@@ -681,7 +682,7 @@
       "myConnections": "Mes connexions",
       "language": "Langue et région",
       "settings": "Paramètres",
-      "teamspaces": "Espaces d’équipe",
+      "teamspaces": "Espaces d'équipe",
       "people": "Membres",
       "sites": "Sites",
       "security": "Sécurité",
@@ -724,6 +725,13 @@
     "pinned": "Épinglées",
     "recent": "Récent",
     "showMore": "Afficher plus",
+    "pageCount_one": "{{count}} page",
+    "pageCount_other": "{{count}} pages",
+    "viewAll": "Tout voir",
+    "allChats": "Toutes les discussions",
+    "rooms": "Salons",
+    "noRooms": "Aucun salon pour le moment",
+    "teamspaces": "Espaces d'équipe",
     "readMinutes": "{{count}} min de lecture",
     "learnProgress": "Découvrir Folio · {{read}} sur {{total}}",
     "learnStart": "Commencez par « {{title}} »",

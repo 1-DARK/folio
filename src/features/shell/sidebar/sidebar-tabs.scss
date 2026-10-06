@@ -1,34 +1,47 @@
 $ease-out: cubic-bezier(0.32, 0.72, 0, 1);
 $dur: 0.3s;
 
-:root{
-  --sb-row-h: 34px;
+// ── Top navigation: Home · Inbox · Chats side by side + search ──────────────
+// No bar behind the tabs: only the selected tab gets a raised pill.
+:root {
+  --sb-tab-h: 30px;
+  --sb-tab-active-bg: #ffffff;
+  --sb-tab-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  --sb-tab-badge-bg: #6d28d9;
 }
 
-
-// ── Top navigation: Search · Home · Inbox · Chats as rows ──────────────────
-// The rows themselves are SidebarNavRow (sidebar-nav-row.scss). The 5px
-// left inset lines their backgrounds up with the page rows in the body
-// (the header has 5px of padding, the body 10px).
-.sb-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  width: 100%;
-  min-width: 0;
-  padding-left: 5px;
-  box-sizing: border-box;
+.dark {
+  --sb-tab-active-bg: #353533;
+  --sb-tab-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  --sb-tab-badge-bg: #7c3aed;
 }
 
-// Search row and the find input share one grid cell and cross-fade.
+@media (max-width: 768px) {
+  :root {
+    --sb-tab-h: 36px;
+  }
+}
+
+// The tab bar and the find input share one grid cell and cross-fade. The
+// 5px left inset lines the bar up with the page rows in the body.
 .sb-nav-search {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  height: var(--sb-row-h);
+  height: calc(var(--sb-tab-h) + 4px);
+  padding-left: 5px;
+  box-sizing: border-box;
 
   > * {
     grid-area: 1 / 1;
     min-width: 0;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   &__row,
@@ -63,16 +76,16 @@ $dur: 0.3s;
     .sb-search {
       flex: 1;
       min-width: 0;
-      height: var(--sb-row-h);
+      height: var(--sb-tab-h);
       min-height: 0;
       padding: 0 2px 0 8px;
-      border-radius: var(--sb-row-radius);
+      border-radius: 8px;
       font-family: var(--sb-font);
     }
 
     .sb-search__input {
       font-family: var(--sb-font);
-      font-size: var(--sb-font-size);
+      font-size: 13px;
     }
   }
 
@@ -87,9 +100,9 @@ $dur: 0.3s;
     align-items: center;
     justify-content: center;
     flex: none;
-    width: var(--sb-row-h);
-    height: var(--sb-row-h);
-    border-radius: var(--sb-row-radius);
+    width: var(--sb-tab-h);
+    height: var(--sb-tab-h);
+    border-radius: 8px;
     color: var(--sb-icon-color);
     cursor: pointer;
 
@@ -102,6 +115,123 @@ $dur: 0.3s;
       outline: 2px solid var(--tt-brand-color-500);
       outline-offset: -2px;
     }
+  }
+}
+
+.sb-tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  // The search button, after the tabs.
+  &__search {
+    all: unset;
+    box-sizing: border-box;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--sb-tab-h);
+    height: var(--sb-tab-h);
+    border-radius: 8px;
+    color: var(--sb-icon-color);
+    cursor: pointer;
+    transition:
+      background 0.12s ease,
+      color 0.12s ease;
+
+    &:hover {
+      background: var(--sb-hover-bg);
+      color: var(--sb-active-color);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tt-brand-color-500);
+      outline-offset: -2px;
+    }
+  }
+}
+
+.sb-tab {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: var(--sb-tab-h);
+  padding: 0 6px;
+  border-radius: 8px;
+  font-family: var(--sb-font);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--sb-row-color);
+  cursor: pointer;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background 0.12s ease,
+    box-shadow 0.12s ease,
+    color 0.12s ease;
+
+  &:hover {
+    color: var(--sb-active-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tt-brand-color-500);
+    outline-offset: -2px;
+  }
+
+  &.is-active {
+    background: var(--sb-tab-active-bg);
+    box-shadow: var(--sb-tab-active-shadow);
+    color: var(--sb-active-color);
+    font-weight: 600;
+  }
+
+  &__icon {
+    display: flex;
+    flex: none;
+    color: var(--sb-icon-color);
+    transition: color 0.12s ease;
+
+    svg {
+      display: block;
+    }
+  }
+
+  &:hover &__icon,
+  &.is-active &__icon {
+    color: var(--sb-active-color);
+  }
+
+  &__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-top: 1px; // optical centring against the icon
+  }
+
+  &__badge {
+    flex: none;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: var(--sb-tab-badge-bg);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 15px;
+    text-align: center;
   }
 }
 
@@ -244,6 +374,7 @@ $dur: 0.3s;
 @media (prefers-reduced-motion: reduce) {
   .sb-nav-search > *,
   .sb-nav-row,
+  .sb-tab,
   .sb-top__collapse,
   .sb-top__back {
     transition-duration: 0s !important;

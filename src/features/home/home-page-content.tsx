@@ -3,12 +3,14 @@ import type { Page, PageCover } from "src/types";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
-  ChevronRight,
-  FileText,
+  BookOpen,
+  Check,
+  ChevronDown,
+  Clock,
   LayoutTemplate,
-  MessagesSquare,
   Plus,
   Search,
+  Star,
 } from "lucide-react";
 import { useRecentPages } from "src/hooks/use-pages";
 import { useCreatePage } from "src/hooks/use-create-page";
@@ -21,25 +23,23 @@ import { HOME_GUIDES, type HomeGuide } from "./home-guides";
 import { ShowcaseReader } from "src/features/showcase/showcase-reader";
 import type { ShowcaseId } from "src/features/showcase/showcases";
 import { Greeting } from "src/features/home/greeting/greeting";
-import { getPageExcerpt } from "src/lib/get-page-excerpt";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useEditorLayout } from "../shell/context/editor-layout-context";
 import { useCurrentWorkspace } from "src/hooks/use-workspaces";
 import { useCurrentSpace } from "src/hooks/use-current-space";
 import { useIsMobile } from "src/hooks/use-breakpoint";
 import { useTeamspacePins } from "src/hooks/use-teamspace-pins";
-import { useNotificationState } from "src/features/inbox/notification/notification-context";
-import { useUnreadCounts } from "src/hooks/use-chat";
-import { InboxIcon } from "src/components/tiptap-icons";
+import { HomeInboxCard, HomeRoomsCard, HomeTeamspaces } from "./home-rail";
+import { formatRelativeTime } from "src/utils/format-relative";
 import { useGuidesRead } from "./use-guides-read";
 import "./home-page-content.scss";
-import { Spacer } from "src/components/tiptap-ui-primitive/spacer";
 
-// Home: search or create first, then favourite (or pinned) pages, then
+// Home, one calm centred column: search or create, favourite (or pinned)
+// pages, what's waiting (inbox and rooms), the workspace's teamspaces,
 // recent pages grouped by day, then the next guide to read.
 
 const RECENT_STEP = 10;
-const PINNED_MAX = 6;
+const PINNED_MAX = 12;
 const SEARCH_MAX = 6;
 
 // cover → CSS background (image > gradient > color), same as the gallery
@@ -110,9 +110,6 @@ export function HomePageContent({ userName }: { userName?: string }) {
 
   const { data: templates = [] } = useTemplates();
   const { clone, cloning } = useClonePage();
-  const { unreadCount } = useNotificationState();
-  const { data: chatUnread = {} } = useUnreadCounts();
-  const chatTotal = Object.values(chatUnread).reduce((a, b) => a + b, 0);
   const guidesRead = useGuidesRead();
 
   const allPages = useMemo(() => data ?? [], [data]);
@@ -239,7 +236,6 @@ export function HomePageContent({ userName }: { userName?: string }) {
       <div className="home-calm">
         <header className="home-calm__header">
           <Greeting name={userName} />
-          {!isMobile && <Spacer size={13} />}
           {space.kind === "teamspace" && (
             <div className="home-calm__space">
               {space.page && (
@@ -279,28 +275,6 @@ export function HomePageContent({ userName }: { userName?: string }) {
                 {t("home.actions.template")}
               </button>
             )}
-            <button
-              type="button"
-              className="home-chip"
-              onClick={() => openSidebar("inbox")}
-            >
-              <InboxIcon className="home-chip__icon" aria-hidden />
-              {t("home.actions.inbox")}
-              {unreadCount > 0 && (
-                <span className="home-chip__badge">{unreadCount}</span>
-              )}
-            </button>
-            <button
-              type="button"
-              className="home-chip"
-              onClick={() => openSidebar("chats")}
-            >
-              <MessagesSquare size={15} aria-hidden />
-              {t("home.actions.chats")}
-              {chatTotal > 0 && (
-                <span className="home-chip__badge">{chatTotal}</span>
-              )}
-            </button>
           </div>
 
           {showTemplates && templates.length > 0 && (
@@ -331,87 +305,87 @@ export function HomePageContent({ userName }: { userName?: string }) {
           )}
         </header>
 
+        {!isPending && pinned.length > 0 && (
+          <section className="home-calm__section" aria-labelledby="home-pinned">
+            <h2 id="home-pinned" className="home-calm__label">
+              <Star size={14} aria-hidden />
+              {teamspaceId ? t("home.pinned") : t("home.favorites")}
+            </h2>
+            <div className="home-pinned">
+              {pinned.map((p) => (
+                <PinnedCard
+                  key={p.id}
+                  page={p}
+                  onOpen={() => setActivePageId(p.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* What's waiting for you */}
+        <div className="home-activity">
+          <HomeInboxCard onViewAll={() => openSidebar("inbox")} />
+          <HomeRoomsCard onViewAll={() => openSidebar("chats")} />
+        </div>
+
+        <HomeTeamspaces pages={allPages} currentId={teamspaceId} />
+
         {isPending ? (
           <RecentSkeleton />
         ) : pages.length === 0 ? (
           <EmptyState />
         ) : (
-          <>
-            {pinned.length > 0 && (
-              <section
-                className="home-calm__section"
-                aria-labelledby="home-pinned"
+          <section className="home-calm__section" aria-labelledby="home-recent">
+            <h2 id="home-recent" className="home-calm__label">
+              <Clock size={14} aria-hidden />
+              {t("home.recent")}
+            </h2>
+            {groups.map((g) => (
+              <div key={g.id} className="home-recent__group">
+                <h3 className="home-recent__day">{t(`home.day.${g.id}`)}</h3>
+                <ul className="home-recent">
+                  {g.items.map((p) => {
+                    const place = placeOf(p);
+                    return (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          className="home-recent__row"
+                          onClick={() => setActivePageId(p.id)}
+                        >
+                          <span className="home-recent__icon">
+                            <PageItemIcon
+                              cover={p.cover}
+                              styles={{ width: 16, height: 16, fontSize: 16 }}
+                            />
+                          </span>
+                          <span className="home-recent__title">
+                            {p.title || t("page.untitled")}
+                          </span>
+                          {place && (
+                            <span className="home-recent__place">{place}</span>
+                          )}
+                          <span className="home-recent__when">
+                            {whenLabel(editedAt(p), g.id, t, i18n.language)}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+            {pages.length > recentLimit && (
+              <button
+                type="button"
+                className="home-calm__more"
+                onClick={() => setRecentLimit((n) => n + RECENT_STEP)}
               >
-                <h2 id="home-pinned" className="home-calm__label">
-                  {teamspaceId ? t("home.pinned") : t("home.favorites")}
-                </h2>
-                <div className="home-pinned">
-                  {pinned.map((p) => (
-                    <PinnedCard
-                      key={p.id}
-                      page={p}
-                      onOpen={() => setActivePageId(p.id)}
-                    />
-                  ))}
-                </div>
-              </section>
+                {t("home.showMore")}
+              </button>
             )}
-
-            <section
-              className="home-calm__section"
-              aria-labelledby="home-recent"
-            >
-              <h2 id="home-recent" className="home-calm__label">
-                {t("home.recent")}
-              </h2>
-              {groups.map((g) => (
-                <div key={g.id} className="home-recent__group">
-                  <h3 className="home-recent__day">{t(`home.day.${g.id}`)}</h3>
-                  <ul className="home-recent">
-                    {g.items.map((p) => {
-                      const place = placeOf(p);
-                      return (
-                        <li key={p.id}>
-                          <button
-                            type="button"
-                            className="home-recent__row"
-                            onClick={() => setActivePageId(p.id)}
-                          >
-                            <span className="home-recent__icon">
-                              <PageItemIcon
-                                cover={p.cover}
-                                styles={{ width: 16, height: 16, fontSize: 16 }}
-                              />
-                            </span>
-                            <span className="home-recent__title">
-                              {p.title || t("page.untitled")}
-                            </span>
-                            {place && (
-                              <span className="home-recent__place">
-                                {place}
-                              </span>
-                            )}
-                            <span className="home-recent__when">
-                              {whenLabel(editedAt(p), g.id, t, i18n.language)}
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-              {pages.length > recentLimit && (
-                <button
-                  type="button"
-                  className="home-calm__more"
-                  onClick={() => setRecentLimit((n) => n + RECENT_STEP)}
-                >
-                  {t("home.showMore")}
-                </button>
-              )}
-            </section>
-          </>
+          </section>
         )}
 
         <LearnBanner
@@ -551,9 +525,10 @@ function HomeSearch({
   );
 }
 
+// A favourite (or pinned) page as a small card: a strip of its cover, its
+// icon and title, and when it was last edited. Cards keep their own width.
 function PinnedCard({ page, onOpen }: { page: Page; onOpen: () => void }) {
-  const { t } = useTranslation();
-  const excerpt = getPageExcerpt(page);
+  const { t, i18n } = useTranslation();
   return (
     <button type="button" className="home-pin" onClick={onOpen}>
       <span
@@ -564,19 +539,23 @@ function PinnedCard({ page, onOpen }: { page: Page; onOpen: () => void }) {
         <span className="home-pin__title">
           <PageItemIcon
             cover={page.cover}
-            styles={{ width: 16, height: 16, fontSize: 16 }}
+            styles={{ width: 15, height: 15, fontSize: 15 }}
           />
           <span>{page.title || t("page.untitled")}</span>
         </span>
-        {excerpt && <span className="home-pin__excerpt">{excerpt}</span>}
+        <span className="home-pin__meta">
+          {t("home.edited", {
+            time: formatRelativeTime(editedAt(page), t, i18n.language),
+          })}
+        </span>
       </span>
     </button>
   );
 }
 
 // ── Learn Folio ─────────────────────────────────────────────────────────────
-// One line: how many guides you've opened and the next one to read. With
-// every guide read it becomes a quiet link to the full list.
+// One card: how many guides you've opened and the next one to read, with the
+// full list behind All guides / Hide guides.
 function LearnBanner({
   guides,
   readIds,
@@ -593,37 +572,37 @@ function LearnBanner({
   const read = available.filter((g) => readIds.includes(g.id)).length;
   const next = available.find((g) => !readIds.includes(g.id));
 
+  const percent = Math.round((read / available.length) * 100);
+
   return (
-    <section className="home-calm__section" aria-labelledby="home-learn">
-      <div className="home-learn">
+    <section className="home-learn" aria-labelledby="home-learn">
+      <div className="home-learn__head">
+        <span className="home-learn__badge" aria-hidden>
+          <BookOpen size={19} />
+        </span>
         {next ? (
           <button
             type="button"
             className="home-learn__next"
             onClick={() => onOpen(next)}
           >
-            <span className="home-learn__text">
-              <span id="home-learn" className="home-learn__kicker">
-                {t("home.learnProgress", {
-                  read,
-                  total: available.length,
-                })}
-              </span>
-              <span className="home-learn__title">
-                {read === 0
-                  ? t("home.learnStart", {
-                      title: t(next.titleKey, next.title),
-                    })
-                  : t("home.learnContinue", {
-                      title: t(next.titleKey, next.title),
-                    })}
-              </span>
+            <span id="home-learn" className="home-learn__kicker">
+              {t("home.learnProgress", { read, total: available.length })}
+            </span>
+            <span className="home-learn__title">
+              {read === 0
+                ? t("home.learnStart", { title: t(next.titleKey, next.title) })
+                : t("home.learnContinue", {
+                    title: t(next.titleKey, next.title),
+                  })}
             </span>
             <span className="home-learn__meta">
+              <span className="home-learn__bar" aria-hidden>
+                <span style={{ width: `${percent}%` }} />
+              </span>
               {t("home.readMinutes", "{{count}} min read", {
                 count: next.readMinutes,
               })}
-              <ChevronRight size={16} aria-hidden />
             </span>
           </button>
         ) : (
@@ -635,36 +614,48 @@ function LearnBanner({
           type="button"
           className="home-learn__toggle"
           aria-expanded={showAll}
+          aria-controls="home-learn-list"
           onClick={() => setShowAll((v) => !v)}
         >
           {showAll ? t("home.learnHide") : t("home.learnAll")}
+          <ChevronDown
+            size={14}
+            aria-hidden
+            className={showAll ? "is-open" : undefined}
+          />
         </button>
       </div>
       {showAll && (
-        <ul className="home-recent">
-          {available.map((g) => (
-            <li key={g.id}>
-              <button
-                type="button"
-                className="home-recent__row"
-                onClick={() => onOpen(g)}
-              >
-                <span className="home-recent__icon">
-                  <FileText size={16} aria-hidden />
-                </span>
-                <span className="home-recent__title">
-                  {t(g.titleKey, g.title)}
-                </span>
-                <span className="home-recent__when">
-                  {readIds.includes(g.id)
-                    ? t("home.learnRead")
-                    : t("home.readMinutes", "{{count}} min read", {
-                        count: g.readMinutes,
-                      })}
-                </span>
-              </button>
-            </li>
-          ))}
+        <ul id="home-learn-list" className="home-learn__list">
+          {available.map((g) => {
+            const done = readIds.includes(g.id);
+            return (
+              <li key={g.id}>
+                <button
+                  type="button"
+                  className="home-learn__row"
+                  onClick={() => onOpen(g)}
+                >
+                  <span
+                    className={`home-learn__check${done ? " is-done" : ""}`}
+                    aria-hidden
+                  >
+                    {done && <Check size={11} strokeWidth={3} />}
+                  </span>
+                  <span className="home-learn__row-title">
+                    {t(g.titleKey, g.title)}
+                  </span>
+                  <span className="home-learn__row-meta">
+                    {done
+                      ? t("home.learnRead")
+                      : t("home.readMinutes", "{{count}} min read", {
+                          count: g.readMinutes,
+                        })}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
