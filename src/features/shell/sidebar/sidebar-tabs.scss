@@ -157,8 +157,10 @@ $dur: 0.3s;
 .sb-tab {
   all: unset;
   box-sizing: border-box;
-  flex: 1 1 auto;
-  min-width: 0;
+  // Every tab fits its content; the free space sits before the search
+  // button (the tab row itself takes the remaining width).
+  flex: none;
+  min-width: var(--sb-tab-h);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,6 +184,10 @@ $dur: 0.3s;
 
   &:hover {
     color: var(--sb-active-color);
+  }
+
+  &:not(.is-active):hover {
+    background: var(--sb-hover-bg);
   }
 
   &:focus-visible {
