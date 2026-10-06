@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { usePageAccess, useManagePageAccess } from "src/hooks/use-page-access";
 import { usePageCapabilities } from "src/hooks/use-page-role";
-import { usePeople } from "src/hooks/use-people";
+import { usePeople, usePeopleById } from "src/hooks/use-people";
 import { useGroups } from "src/hooks/use-groups";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useToast } from "src/features/shell/toast";
@@ -214,6 +214,14 @@ function SharePanelInner({ page }: { page: Page }) {
   const { data: grants = [] } = usePageAccess(page.id);
   const { data: people = [] } = usePeople();
   const { data: groups = [] } = useGroups();
+  // Names for everyone with access — including teamspace members from
+  // another workspace, who aren't in this workspace's people list.
+  const grantPersonIds = useMemo(
+    () =>
+      grants.filter((g) => g.subjectType === "person").map((g) => g.subjectId),
+    [grants],
+  );
+  const peopleById = usePeopleById(grantPersonIds);
   const { share, changeRole, unshare, setGeneralAccess } = useManagePageAccess(
     page.id,
   );
@@ -227,9 +235,7 @@ function SharePanelInner({ page }: { page: Page }) {
   const rows = useMemo(() => {
     return grants.map((g) => {
       if (g.subjectType === "person") {
-        const p = ((people as Person[]) ?? []).find(
-          (x) => x.id === g.subjectId,
-        );
+        const p = peopleById.get(g.subjectId);
         return {
           grant: g,
           name: p?.name ?? t("share.unknownPerson"),
@@ -245,7 +251,7 @@ function SharePanelInner({ page }: { page: Page }) {
         isYou: false,
       };
     });
-  }, [grants, people, groups, person, t]);
+  }, [grants, peopleById, groups, person, t]);
 
   // Typed-text suggestions: people by email/name, groups by name, that
   // aren't already granted (and never yourself).
