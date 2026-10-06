@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import { type Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
@@ -296,6 +297,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useHeading(config: UseHeadingConfig) {
+  const { t } = useTranslation();
   const {
     editor: providedEditor,
     level,
@@ -339,7 +341,10 @@ export function useHeading(config: UseHeadingConfig) {
     isActive,
     handleToggle,
     canToggle: canToggleState,
-    label: `Heading ${level}`,
+    label: t("toolbar.headingLevel", {
+      level,
+      defaultValue: `Heading ${level}`,
+    }),
     shortcutKeys: HEADING_SHORTCUT_KEYS[level],
     Icon: headingIcons[level],
   };

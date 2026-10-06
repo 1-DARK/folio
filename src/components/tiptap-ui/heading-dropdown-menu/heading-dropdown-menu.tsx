@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
 } from "src/components/tiptap-ui-primitive/dropdown-menu";
 import { Card, CardBody } from "src/components/tiptap-ui-primitive/card";
+import { useTranslation } from "react-i18next";
 
 export interface HeadingDropdownMenuProps
   extends Omit<ButtonProps, "type">, UseHeadingDropdownMenuConfig {
@@ -63,6 +64,7 @@ export const HeadingDropdownMenu = forwardRef<
       levels,
       hideWhenUnavailable,
     });
+    const { t } = useTranslation();
 
     const handleOpenChange = useCallback(
       (open: boolean) => {
@@ -88,9 +90,9 @@ export const HeadingDropdownMenu = forwardRef<
             tabIndex={-1}
             disabled={!canToggle}
             data-disabled={!canToggle}
-            aria-label="Format text as heading"
+            aria-label={t("toolbar.formatAsHeading")}
             aria-pressed={isActive}
-            tooltip="Heading"
+            tooltip={t("toolbar.heading")}
             {...buttonProps}
             ref={ref}
           >
@@ -114,7 +116,7 @@ export const HeadingDropdownMenu = forwardRef<
                     <HeadingButton
                       editor={editor}
                       level={level}
-                      text={`Heading ${level}`}
+                      text={t("toolbar.headingLevel", { level })}
                       showTooltip={false}
                     />
                   </DropdownMenuItem>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { forwardRef, useCallback, useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
 
@@ -78,6 +79,7 @@ export interface LinkPopoverProps
  */
 export const LinkButton = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, children, ...props }, ref) => {
+    const { t } = useTranslation();
     return (
       <Button
         type="button"
@@ -85,8 +87,8 @@ export const LinkButton = forwardRef<HTMLButtonElement, ButtonProps>(
         variant="ghost"
         role="button"
         tabIndex={-1}
-        aria-label="Link"
-        tooltip="Link"
+        aria-label={t("toolbar.link")}
+        tooltip={t("toolbar.link")}
         ref={ref}
         {...props}
       >
