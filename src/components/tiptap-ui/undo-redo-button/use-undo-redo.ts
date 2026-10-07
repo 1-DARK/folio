@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { type Editor } from "@tiptap/react";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -141,6 +142,7 @@ export function useUndoRedo(config: UseUndoRedoConfig) {
     onExecuted,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canExecute = canExecuteUndoRedoAction(editor, action);
@@ -175,7 +177,7 @@ export function useUndoRedo(config: UseUndoRedoConfig) {
     isVisible,
     handleAction,
     canExecute,
-    label: historyActionLabels[action],
+    label: t(`toolbar.${action}`),
     shortcutKeys: UNDO_REDO_SHORTCUT_KEYS[action],
     Icon: historyIcons[action],
   };
