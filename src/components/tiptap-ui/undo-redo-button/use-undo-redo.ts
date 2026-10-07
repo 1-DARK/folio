@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import { type Editor } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
@@ -177,7 +178,9 @@ export function useUndoRedo(config: UseUndoRedoConfig) {
     isVisible,
     handleAction,
     canExecute,
-    label: t(`toolbar.${action}`),
+    label: t(`toolbar.${action}`, {
+      defaultValue: historyActionLabels[action],
+    }),
     shortcutKeys: UNDO_REDO_SHORTCUT_KEYS[action],
     Icon: historyIcons[action],
   };

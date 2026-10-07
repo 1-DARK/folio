@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import { type Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
@@ -346,7 +347,7 @@ export function useList(config: UseListConfig) {
     isActive,
     handleToggle,
     canToggle,
-    label: t(`toolbar.${type}`),
+    label: t(`toolbar.${type}`, { defaultValue: listLabels[type] }),
     shortcutKeys: LIST_SHORTCUT_KEYS[type],
     Icon: listIcons[type],
   };

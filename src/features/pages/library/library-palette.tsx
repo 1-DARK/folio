@@ -20,7 +20,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import "./library-palette.scss";
 import { useChildPages, usePages } from "src/hooks/use-pages";
-import { usePeople } from "src/hooks/use-people";
+import { usePeopleById } from "src/hooks/use-people";
 import { useLibrary } from "./library-context";
 import { formatRelativeTime } from "src/utils/format-relative";
 import { FileIcon } from "src/components/tiptap-icons";
@@ -365,7 +365,6 @@ const byRecency = (a: Page, b: Page) =>
 export function LibraryPalette({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation();
   const { data: pages } = usePages();
-  const { data: people = [] } = usePeople();
   const { person } = useCurrentPerson();
   const { setActivePageId } = useActivePageActions();
   const { activeTab } = useLibrary();
@@ -388,10 +387,9 @@ export function LibraryPalette({ onClose }: { onClose?: () => void }) {
     () => new Set(presenceUsers.map((u) => u.id)),
     [presenceUsers],
   );
-  const peopleById = useMemo(
-    () => new Map((people as Person[]).map((p) => [p.id, p])),
-    [people],
-  );
+  // Workspace people plus the authors of teamspace pages from elsewhere.
+  const ownerIds = useMemo(() => (pages ?? []).map((p) => p.ownerId), [pages]);
+  const peopleById = usePeopleById(ownerIds);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

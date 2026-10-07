@@ -18,6 +18,11 @@ import {
   useEditorLayout,
   type SidebarView,
 } from "../context/editor-layout-context";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "src/components/tiptap-ui-primitive/tooltip";
 import { SidebarSearchInput } from "./sidebar-search-input";
 import { requestFindFocus } from "src/lib/find-store";
 import "./sidebar-tabs.scss";
@@ -41,26 +46,40 @@ function Tab({
   tabIndex?: number;
   onClick: () => void;
 }) {
-  return (
+  const button = (
     <button
       type="button"
       role="tab"
       aria-selected={active}
+      // Inactive tabs show only their icon, so they carry the name here.
+      aria-label={active ? undefined : label}
       tabIndex={tabIndex}
       className={`sb-tab${active ? " is-active" : ""}`}
       onClick={onClick}
     >
       <span className="sb-tab__icon">{icon}</span>
-      <span className="sb-tab__label">{label}</span>
+      {active && <span className="sb-tab__label">{label}</span>}
       {count > 0 && (
         <span className="sb-tab__badge">{count > 99 ? "99+" : count}</span>
       )}
     </button>
   );
+
+  if (active) return button;
+
+  // Icon only: the name shows in a tooltip on hover or focus.
+  return (
+    <Tooltip delay={200}>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 // The sidebar's top navigation: Home · Inbox · Chats side by side, with a
-// search button at the end. Each tab swaps what the sidebar body shows.
+// search button at the end. Each tab swaps what the sidebar body shows. The
+// selected tab shows its icon and name; the others show only their icon
+// (name in a tooltip) and its unread count.
 // Search swaps the tab bar for the find input; × or Esc puts it back.
 export const SidebarTabs = memo(() => {
   const { t } = useTranslation();

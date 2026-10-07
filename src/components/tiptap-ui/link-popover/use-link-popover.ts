@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
 
@@ -268,6 +269,7 @@ export function useLinkState(props: {
  * ```
  */
 export function useLinkPopover(config?: UseLinkPopoverConfig) {
+  const { t } = useTranslation();
   const {
     editor: providedEditor,
     hideWhenUnavailable = false,
@@ -290,7 +292,7 @@ export function useLinkPopover(config?: UseLinkPopoverConfig) {
     isVisible,
     canSet,
     isActive,
-    label: "Link",
+    label: t("toolbar.link"),
     Icon: LinkIcon,
     ...linkHandler,
   };

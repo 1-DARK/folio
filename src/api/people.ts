@@ -12,6 +12,18 @@ export async function fetchPeople(workspaceId: ID): Promise<Person[]> {
   return keysToCamel(data ?? []) as Person[];
 }
 
+/** Specific people by id, from any workspace — e.g. the author of a
+ *  teamspace page who isn't a member of your current workspace. */
+export async function fetchPeopleByIds(ids: ID[]): Promise<Person[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from("people")
+    .select("*")
+    .in("id", ids);
+  if (error) throw new Error(error.message);
+  return keysToCamel(data ?? []) as Person[];
+}
+
 export const fetchPerson = (id: ID) => http<Person>(`/people/${id}`);
 
 export const deletePerson = (id: ID) =>

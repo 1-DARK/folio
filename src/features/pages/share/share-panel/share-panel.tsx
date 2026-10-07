@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { usePageAccess, useManagePageAccess } from "src/hooks/use-page-access";
 import { usePageCapabilities } from "src/hooks/use-page-role";
-import { usePeople } from "src/hooks/use-people";
+import { usePeople, usePeopleById } from "src/hooks/use-people";
 import { useGroups } from "src/hooks/use-groups";
 import { useCurrentPerson } from "src/hooks/use-session";
 import { useToast } from "src/features/shell/toast";
@@ -32,6 +32,7 @@ import type {
   Group,
 } from "src/types";
 import "./share-panel.scss";
+import { PublishTab } from "./publish-tab";
 import {
   Popover,
   PopoverContent,
@@ -214,6 +215,14 @@ function SharePanelInner({ page }: { page: Page }) {
   const { data: grants = [] } = usePageAccess(page.id);
   const { data: people = [] } = usePeople();
   const { data: groups = [] } = useGroups();
+  // Names for everyone with access — including teamspace members from
+  // another workspace, who aren't in this workspace's people list.
+  const grantPersonIds = useMemo(
+    () =>
+      grants.filter((g) => g.subjectType === "person").map((g) => g.subjectId),
+    [grants],
+  );
+  const peopleById = usePeopleById(grantPersonIds);
   const { share, changeRole, unshare, setGeneralAccess } = useManagePageAccess(
     page.id,
   );
@@ -222,14 +231,13 @@ function SharePanelInner({ page }: { page: Page }) {
   const { canManageAccess: canManage } = usePageCapabilities(page.id);
 
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"share" | "publish">("share");
 
   // Resolve the current grants to displayable rows (name + email/label).
   const rows = useMemo(() => {
     return grants.map((g) => {
       if (g.subjectType === "person") {
-        const p = ((people as Person[]) ?? []).find(
-          (x) => x.id === g.subjectId,
-        );
+        const p = peopleById.get(g.subjectId);
         return {
           grant: g,
           name: p?.name ?? t("share.unknownPerson"),
@@ -245,7 +253,7 @@ function SharePanelInner({ page }: { page: Page }) {
         isYou: false,
       };
     });
-  }, [grants, people, groups, person, t]);
+  }, [grants, peopleById, groups, person, t]);
 
   // Typed-text suggestions: people by email/name, groups by name, that
   // aren't already granted (and never yourself).
@@ -315,129 +323,166 @@ function SharePanelInner({ page }: { page: Page }) {
 
   return (
     <div className="share-panel">
-      <div className="share-panel__tabs">
-        <button className="share-panel__tab is-active" type="button">
+      <div className="share-panel__tabs" role="tablist">
+        <button
+          className={`share-panel__tab${tab === "share" ? " is-active" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={tab === "share"}
+          onClick={() => setTab("share")}
+        >
           {t("share.share", "Share")}
         </button>
-      </div>
-
-      {canManage ? (
-        <div className="share-panel__add">
-          <input
-            className="share-panel__input"
-            placeholder={t("share.addPlaceholder")}
-            value={query}
-            autoFocus
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && suggestions[0]) {
-                e.preventDefault();
-                addGrant(suggestions[0].type, suggestions[0].id);
-              }
-              if (e.key === "Escape" && query) {
-                e.stopPropagation();
-                setQuery("");
-              }
-            }}
-          />
-          {trimmed &&
-            (suggestions.length > 0 ? (
-              <div className="share-panel__suggest">
-                {suggestions.map((s) => (
-                  <button
-                    key={`${s.type}:${s.id}`}
-                    type="button"
-                    className="share-panel__suggest-item"
-                    onClick={() => addGrant(s.type, s.id)}
-                  >
-                    <span className="share-panel__suggest-label">
-                      {s.label}
-                    </span>
-                    <span className="share-panel__suggest-sub">{s.sub}</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="share-panel__suggest">
-                <div className="share-panel__suggest-empty">
-                  {t("share.noMatch")}
-                </div>
-              </div>
-            ))}
-        </div>
-      ) : (
-        <div className="share-panel__readonly">{t("share.readOnly")}</div>
-      )}
-
-      {rows.length > 0 && (
-        <div className="share-panel__list">
-          {rows.map(({ grant, name, sub, isYou }) => (
-            <div key={grant.id} className="share-row">
-              <div className="share-row__avatar">
-                {name.charAt(0).toUpperCase()}
-              </div>
-              <div className="share-row__text">
-                <span className="share-row__name">
-                  {name}
-                  {isYou && (
-                    <span className="share-row__you"> {t("share.you")}</span>
-                  )}
-                </span>
-                {sub && <span className="share-row__sub">{sub}</span>}
-              </div>
-              <RoleMenu
-                value={grant.role}
-                disabled={!canManage || isYou}
-                onChange={(r) => changeRole.mutate({ id: grant.id, role: r })}
-                onRemove={
-                  canManage && !isYou
-                    ? () => unshare.mutate(grant.id)
-                    : undefined
-                }
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* General access */}
-      <div className="share-panel__general">
-        <div className="share-panel__general-label">
-          {t("share.generalAccess", "General access")}
-        </div>
-        <div className="share-row">
-          <div className="share-row__avatar is-icon">
-            {GENERAL_ICON[page.generalAccess]}
-          </div>
-          <div className="share-row__text">
-            <GeneralAccessMenu
-              value={page.generalAccess}
-              options={generalOptions}
-              disabled={!canManage}
-              onChange={(ga) => setGeneralAccess.mutate({ generalAccess: ga })}
-            />
-            <span className="share-row__sub">
-              {t(`share.generalDescriptions.${page.generalAccess}`)}
-            </span>
-          </div>
-          {page.generalAccess !== "private" && (
-            <RoleMenu
-              value={page.generalAccessRole}
-              disabled={!canManage}
-              onChange={(r) =>
-                setGeneralAccess.mutate({ generalAccessRole: r })
-              }
-            />
+        <button
+          className={`share-panel__tab${tab === "publish" ? " is-active" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={tab === "publish"}
+          onClick={() => setTab("publish")}
+        >
+          {t("publish.tab")}
+          {page.publishedAt && (
+            <span className="share-panel__tab-dot" aria-hidden />
           )}
-        </div>
-      </div>
-
-      <div className="share-panel__footer">
-        <button type="button" className="share-panel__copy" onClick={copyLink}>
-          <Link2 size={15} />
-          <span>{t("share.copyLink")}</span>
         </button>
       </div>
+
+      {tab === "publish" ? (
+        <PublishTab page={page} canManage={canManage} />
+      ) : (
+        <>
+          {canManage ? (
+            <div className="share-panel__add">
+              <input
+                className="share-panel__input"
+                placeholder={t("share.addPlaceholder")}
+                value={query}
+                autoFocus
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && suggestions[0]) {
+                    e.preventDefault();
+                    addGrant(suggestions[0].type, suggestions[0].id);
+                  }
+                  if (e.key === "Escape" && query) {
+                    e.stopPropagation();
+                    setQuery("");
+                  }
+                }}
+              />
+              {trimmed &&
+                (suggestions.length > 0 ? (
+                  <div className="share-panel__suggest">
+                    {suggestions.map((s) => (
+                      <button
+                        key={`${s.type}:${s.id}`}
+                        type="button"
+                        className="share-panel__suggest-item"
+                        onClick={() => addGrant(s.type, s.id)}
+                      >
+                        <span className="share-panel__suggest-label">
+                          {s.label}
+                        </span>
+                        <span className="share-panel__suggest-sub">
+                          {s.sub}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="share-panel__suggest">
+                    <div className="share-panel__suggest-empty">
+                      {t("share.noMatch")}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="share-panel__readonly">{t("share.readOnly")}</div>
+          )}
+
+          {rows.length > 0 && (
+            <div className="share-panel__list">
+              {rows.map(({ grant, name, sub, isYou }) => (
+                <div key={grant.id} className="share-row">
+                  <div className="share-row__avatar">
+                    {name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="share-row__text">
+                    <span className="share-row__name">
+                      {name}
+                      {isYou && (
+                        <span className="share-row__you">
+                          {" "}
+                          {t("share.you")}
+                        </span>
+                      )}
+                    </span>
+                    {sub && <span className="share-row__sub">{sub}</span>}
+                  </div>
+                  <RoleMenu
+                    value={grant.role}
+                    disabled={!canManage || isYou}
+                    onChange={(r) =>
+                      changeRole.mutate({ id: grant.id, role: r })
+                    }
+                    onRemove={
+                      canManage && !isYou
+                        ? () => unshare.mutate(grant.id)
+                        : undefined
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* General access */}
+          <div className="share-panel__general">
+            <div className="share-panel__general-label">
+              {t("share.generalAccess", "General access")}
+            </div>
+            <div className="share-row">
+              <div className="share-row__avatar is-icon">
+                {GENERAL_ICON[page.generalAccess]}
+              </div>
+              <div className="share-row__text">
+                <GeneralAccessMenu
+                  value={page.generalAccess}
+                  options={generalOptions}
+                  disabled={!canManage}
+                  onChange={(ga) =>
+                    setGeneralAccess.mutate({ generalAccess: ga })
+                  }
+                />
+                <span className="share-row__sub">
+                  {t(`share.generalDescriptions.${page.generalAccess}`)}
+                </span>
+              </div>
+              {page.generalAccess !== "private" && (
+                <RoleMenu
+                  value={page.generalAccessRole}
+                  disabled={!canManage}
+                  onChange={(r) =>
+                    setGeneralAccess.mutate({ generalAccessRole: r })
+                  }
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="share-panel__footer">
+            <button
+              type="button"
+              className="share-panel__copy"
+              onClick={copyLink}
+            >
+              <Link2 size={15} />
+              <span>{t("share.copyLink")}</span>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

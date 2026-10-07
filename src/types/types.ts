@@ -637,6 +637,11 @@ export type Page = {
    *  never written by the client. Missing on pages loaded before it. */
   editedBy?: ID | null;
   deletedAt?: number | null;
+  /** When the page was published to the web (/p/<id>); null = not
+   *  published. Changed only through set_page_published (migration 042). */
+  publishedAt?: string | null;
+  /** Its subpages are published with it. */
+  publishSubpages?: boolean;
 };
 
 /** Derived tree shape — built at read time from parentId, never stored. */

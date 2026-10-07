@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import type { ChainedCommands } from "@tiptap/react";
 import { type Editor } from "@tiptap/react";
@@ -61,7 +62,8 @@ export const textAlignLabels: Record<TextAlign, string> = {
   justify: "Align justify",
 };
 
-const textAlignKeyMap: Record<TextAlign, string> = {
+// Translation keys for the labels above (toolbar.* in common.json).
+const TEXT_ALIGN_KEYS: Record<TextAlign, string> = {
   left: "toolbar.alignLeft",
   center: "toolbar.alignCenter",
   right: "toolbar.alignRight",
@@ -226,7 +228,7 @@ export function useTextAlign(config: UseTextAlignConfig) {
     isActive,
     handleTextAlign,
     canAlign,
-    label: t(textAlignKeyMap[align]),
+    label: t(TEXT_ALIGN_KEYS[align], { defaultValue: textAlignLabels[align] }),
     shortcutKeys: TEXT_ALIGN_SHORTCUT_KEYS[align],
     Icon: textAlignIcons[align],
   };

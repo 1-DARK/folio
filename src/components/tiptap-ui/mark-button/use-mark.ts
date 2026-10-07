@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
@@ -212,7 +213,7 @@ export function useMark(config: UseMarkConfig) {
     isActive,
     handleMark,
     canToggle,
-    label: t(`toolbar.${type}`),
+    label: t(`toolbar.${type}`, { defaultValue: getFormattedMarkName(type) }),
     shortcutKeys: MARK_SHORTCUT_KEYS[type],
     Icon: markIcons[type],
   };
