@@ -153,10 +153,20 @@ export function DatabaseLoadingSkeleton({
     }
   })();
 
+  // First load: the real view's alignment (.db-node padded by
+  // useDatabaseAlign) isn't there yet, so sit in the text column like any
+  // other block (.top-level-block) and clip anything wider than it.
+  // Switching views: the skeleton renders inside the already-aligned
+  // database chrome, so it keeps the container's layout.
   return (
-    <NodeViewWrapper className="db-container" contentEditable={false}>
+    <NodeViewWrapper
+      className={switching ? "db-container" : "db-skeleton-node"}
+      contentEditable={false}
+    >
       <div
-        className="db-skeleton"
+        className={
+          switching ? "db-skeleton" : "db-skeleton db-skeleton--column top-level-block"
+        }
         aria-label="Loading database"
         aria-busy="true"
         aria-live="polite"

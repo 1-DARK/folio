@@ -1,4 +1,10 @@
 .db-skeleton {
+  // In the text column (first load): never wider than the column.
+  &--column {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
   &__toolbar {
     display: flex;
     align-items: center;

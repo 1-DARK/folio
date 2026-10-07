@@ -32,6 +32,17 @@ export default defineConfig({
     },
   },
   server: {
+    // Dev only. The database (and its ~350 files and stylesheets) loads
+    // lazily, so the first database you open used to wait while Vite compiled
+    // every one of them. Warmup compiles them in the background as soon as the
+    // dev server starts, so that first open only has to download them.
+    warmup: {
+      clientFiles: [
+        "./src/features/database/nodes/database-node/database-node-view.tsx",
+        "./src/features/database/nodes/database-record-node-view/database-record-node-view.tsx",
+        "./src/features/database/nodes/database-node/database-cell-node-view.tsx",
+      ],
+    },
     proxy: {
       "/api": {
         target: "http://localhost:3001",
