@@ -513,7 +513,8 @@ export const EmojiExtension = Emoji.extend({
             // closed explicitly, so this can no longer strand the element.
             if (stillSlash && cursorInside) return;
           } catch {
-            console.log("Invalid insertion");
+            // The range is stale (the document changed under it): fall through
+            // and close the menu.
           }
 
           destroyMenu();
