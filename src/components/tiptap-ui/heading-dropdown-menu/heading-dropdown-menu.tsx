@@ -1,5 +1,4 @@
 import { forwardRef, useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
 
 // --- Icons ---
 import { ChevronDownIcon } from "src/components/tiptap-icons/chevron-down-icon";
@@ -60,7 +59,7 @@ export const HeadingDropdownMenu = forwardRef<
   ) => {
     const { editor } = useTiptapEditor(providedEditor);
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    const { isVisible, isActive, canToggle, label, Icon } = useHeadingDropdownMenu({
+    const { isVisible, isActive, canToggle, Icon } = useHeadingDropdownMenu({
       editor,
       levels,
       hideWhenUnavailable,
