@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 // --- Lib ---
 import { parseShortcutKeys } from "src/lib/tiptap-utils";
@@ -37,6 +38,13 @@ export function ColorTextShortcutBadge({
   shortcutKeys?: string;
 }) {
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
+}
+
+function getTextColorKey(value?: string): string | null {
+  if (!value) return null;
+  if (value === "var(--tt-bg-color)" || value === "#ffffff") return "default";
+  const m = value.match(/--tt-color-text-([a-z]+)/);
+  return m ? m[1] : null;
 }
 
 /**
@@ -89,7 +97,11 @@ export const ColorTextButton = forwardRef<
     },
     ref,
   ) => {
+    const { t } = useTranslation();
     const { editor } = useTiptapEditor(providedEditor);
+    const colorKey = getTextColorKey(textColor);
+    const resolvedLabel = text || (colorKey ? t(`toolbar.colorText.${colorKey}`) : t("colors.label"));
+
     const {
       isVisible,
       canColortext,
@@ -101,7 +113,7 @@ export const ColorTextButton = forwardRef<
       editor,
       textColor,
       useColorValue,
-      label: text || `Toggle text (${textColor})`,
+      label: resolvedLabel,
       hideWhenUnavailable,
       mode,
       onApplied,
