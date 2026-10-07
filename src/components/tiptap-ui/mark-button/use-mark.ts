@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -174,6 +175,7 @@ export function useMark(config: UseMarkConfig) {
     onToggled,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canToggle = canToggleMark(editor, type);
@@ -210,7 +212,7 @@ export function useMark(config: UseMarkConfig) {
     isActive,
     handleMark,
     canToggle,
-    label: getFormattedMarkName(type),
+    label: t(`toolbar.${type}`),
     shortcutKeys: MARK_SHORTCUT_KEYS[type],
     Icon: markIcons[type],
   };
