@@ -1,4 +1,5 @@
 import type { Editor } from "@tiptap/core";
+import { useTranslation } from "react-i18next";
 import { CodeBlockButton } from "src/components/tiptap-ui/code-block-button";
 import {
   MarkButton,
@@ -40,6 +41,7 @@ function MoreOptionsPopover({
   editor,
   hideWhenUnavailable = false,
 }: MoreOptionsPopoverProps) {
+  const { t } = useTranslation();
   const { isVisible } = useMark({ hideWhenUnavailable, type: "bold" });
 
   if (!isVisible) return null;
@@ -52,8 +54,8 @@ function MoreOptionsPopover({
           data-appearance="default"
           role="button"
           tabIndex={-1}
-          aria-label="More options"
-          tooltip="More"
+          aria-label={t("toolbar.more")}
+          tooltip={t("toolbar.more")}
         >
           <MoreOptionsIcon className="tiptap-button-icon" />
         </Button>
