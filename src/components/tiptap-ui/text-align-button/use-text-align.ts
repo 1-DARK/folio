@@ -1,7 +1,7 @@
-import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import type { ChainedCommands } from "@tiptap/react";
 import { type Editor } from "@tiptap/react";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -183,7 +183,6 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useTextAlign(config: UseTextAlignConfig) {
-  const { t } = useTranslation();
   const {
     editor: providedEditor,
     align,
@@ -191,6 +190,7 @@ export function useTextAlign(config: UseTextAlignConfig) {
     onAligned,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canAlign = canSetTextAlign(editor, align);

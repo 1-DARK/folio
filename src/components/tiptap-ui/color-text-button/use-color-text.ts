@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { type Editor } from "@tiptap/react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -314,6 +315,7 @@ export function useColorText(config: UseColorTextConfig) {
     onApplied,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const isMobile = useIsBreakpoint();
   const [isVisible, setIsVisible] = useState<boolean>(true);
@@ -415,7 +417,7 @@ export function useColorText(config: UseColorTextConfig) {
     handleColorText,
     handleRemovetext,
     canColortext: canColortextState,
-    label: label || `text`,
+    label: label || t("colors.label"),
     shortcutKeys: COLOR_TEXT_SHORTCUT_KEY,
     Icon: TextIcon,
     mode,

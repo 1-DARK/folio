@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import { type Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -302,7 +302,6 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useList(config: UseListConfig) {
-  const { t } = useTranslation();
   const {
     editor: providedEditor,
     type,
@@ -310,6 +309,7 @@ export function useList(config: UseListConfig) {
     onToggled,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canToggle = canToggleList(editor, type);

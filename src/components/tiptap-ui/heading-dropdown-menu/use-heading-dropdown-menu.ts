@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -95,6 +96,7 @@ export function useHeadingDropdownMenu(config?: UseHeadingDropdownMenuConfig) {
     hideWhenUnavailable = false,
   } = config || {};
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState(true);
 
@@ -126,7 +128,7 @@ export function useHeadingDropdownMenu(config?: UseHeadingDropdownMenuConfig) {
     isActive,
     canToggle: canToggleState,
     levels,
-    label: "Heading",
+    label: t("toolbar.heading"),
     Icon: activeLevel ? headingIcons[activeLevel] : HeadingIcon,
   };
 }
