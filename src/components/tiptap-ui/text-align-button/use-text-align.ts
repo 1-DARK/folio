@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import type { ChainedCommands } from "@tiptap/react";
 import { type Editor } from "@tiptap/react";
