@@ -1,6 +1,6 @@
-import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -168,7 +168,6 @@ export function getFormattedMarkName(type: Mark): string {
  * ```
  */
 export function useMark(config: UseMarkConfig) {
-  const { t } = useTranslation();
   const {
     editor: providedEditor,
     type,
@@ -176,6 +175,7 @@ export function useMark(config: UseMarkConfig) {
     onToggled,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canToggle = canToggleMark(editor, type);
