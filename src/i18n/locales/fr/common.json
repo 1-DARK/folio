@@ -1251,8 +1251,6 @@
     "codeBlock": "Bloc de code",
     "heading": "Titre",
     "headingLevel": "Titre {{level}}",
-    "superscript": "Exposant",
-    "subscript": "Indice",
     "formatAsHeading": "Mettre le texte en titre",
     "link": "Lien",
     "duplicate": "Dupliquer",
