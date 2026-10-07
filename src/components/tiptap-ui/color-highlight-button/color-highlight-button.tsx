@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 // --- Lib ---
 import { parseShortcutKeys } from "src/lib/tiptap-utils";
@@ -40,6 +41,13 @@ export function ColorHighlightShortcutBadge({
   shortcutKeys?: string;
 }) {
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
+}
+
+function getHighlightColorKey(value?: string): string | null {
+  if (!value) return null;
+  if (value === "var(--tt-bg-color)" || value === "#ffffff") return "default";
+  const m = value.match(/--tt-color-highlight-([a-z]+)/);
+  return m ? m[1] : null;
 }
 
 /**
@@ -92,7 +100,11 @@ export const ColorHighlightButton = forwardRef<
     },
     ref,
   ) => {
+    const { t } = useTranslation();
     const { editor } = useTiptapEditor(providedEditor);
+    const colorKey = getHighlightColorKey(highlightColor);
+    const resolvedLabel = text || (colorKey ? t(`toolbar.colorHighlight.${colorKey}`) : t("colors.highlight"));
+
     const {
       isVisible,
       canColorHighlight,
@@ -104,7 +116,7 @@ export const ColorHighlightButton = forwardRef<
       editor,
       highlightColor,
       useColorValue,
-      label: text || `Toggle highlight (${highlightColor})`,
+      label: resolvedLabel,
       hideWhenUnavailable,
       mode,
       onApplied,
