@@ -1261,8 +1261,6 @@
     "heading": "Heading",
     "headingLevel": "Heading {{level}}",
     "formatAsHeading": "Format text as heading",
-    "superscript": "Superscript",
-    "subscript": "Subscript",
     "link": "Link",
     "duplicate": "Duplicate",
     "removeText": "Remove text",
