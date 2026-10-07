@@ -20,7 +20,7 @@ You don't need an account to work on the editor: the landing page (`/` when sign
 
 ## Branches and commits
 
-- Branch from an up-to-date `main`, one branch per change:
+- Branch from an up-to-date `main`, one branch per change. To catch up with `main` later, rebase (`git fetch upstream` then `git rebase upstream/main`) rather than merging `main` into your branch: merges are how duplicate code sneaks in.
 
   | Prefix      | For                                      |
   | ----------- | ---------------------------------------- |
@@ -73,7 +73,8 @@ These rules come from real bugs:
 ### Text and languages
 
 - Every string a user can see goes through i18next, with both languages: `src/i18n/locales/en/common.json` and `src/i18n/locales/fr/common.json`.
-- Add new keys by hand, next to related ones. Some sections appear twice in these files, so a script that parses and rewrites the whole JSON would silently drop keys.
+- Add new keys by hand, next to related ones. Search both files first and reuse a key that already says what you need (`colors.*`, `blockTypes.*`, `toolbar.*`).
+- Run `node scripts/check-i18n.mjs` after changing them: it fails on a duplicate key or a key that's in one language but not the other.
 - Write plainly: short sentences, everyday words, no jargon in the interface.
 
 ### Data and security
@@ -86,10 +87,13 @@ These rules come from real bugs:
 ## Before you open a pull request
 
 1. **Type check:** `npx tsc -p tsconfig.app.json --noEmit` with no errors.
-2. **Lint:** `npm run lint` with no errors.
-3. **Format only what you changed:** `npx prettier --write <your files>`. Don't run it on the whole repo.
-4. **Try it in the browser.** Use the landing editor for editor changes, and a signed-in page for anything that needs data. Check the console for errors, and try light and dark themes, and English and French when you've added text.
-5. **Build:** `npm run build` succeeds.
+2. **Translations:** `node scripts/check-i18n.mjs` passes.
+3. **Lint your files:** `npx eslint <your files>` with no new errors. (`npm run lint` on the whole repo still reports older errors; fixing those is welcome in its own pull request.)
+4. **Format only what you changed:** `npx prettier --write <your files>`. Don't run it on the whole repo.
+5. **Try it in the browser.** Use the landing editor for editor changes, and a signed-in page for anything that needs data. Check the console for errors, and try light and dark themes, and English and French when you've added text.
+6. **Build:** `npm run build` succeeds.
+
+The same typecheck, translation check and build run automatically on every pull request (GitHub Actions). A pull request is reviewed once those checks are green.
 
 ## Pull requests
 
@@ -97,7 +101,9 @@ These rules come from real bugs:
 - In the description, say what changed and why, how you tested it, and anything you couldn't test. Add a screenshot or a short recording for visual changes.
 - Link the issue it closes (`Closes #12`).
 - Sign off every commit (`git commit -s`). See [Licence and contributor terms](#licence-and-contributor-terms).
-- Expect review comments. They're about the code, not you.
+- Expect review comments. They're about the code, not you. You'll get a first reply within a couple of days.
+- Pull requests are squashed into one commit when merged, so don't worry about tidying your commit history.
+- A pull request waiting on changes with no reply for 14 days is closed, and its issue goes back to open. You can always reopen it.
 
 ## Reporting a bug
 

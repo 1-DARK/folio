@@ -875,6 +875,15 @@
     "taskList": "Liste de tâches",
     "turnIntoPage": "Transformer en page"
   },
+  "alignment": {
+    "label": "Alignement",
+    "left": "Aligner à gauche",
+    "center": "Aligner au centre",
+    "right": "Aligner à droite",
+    "top": "Aligner en haut",
+    "middle": "Aligner au milieu",
+    "bottom": "Aligner en bas"
+  },
   "slash": {
     "appendix": "Annexe",
     "sections": {

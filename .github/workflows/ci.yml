@@ -1,0 +1,45 @@
+# Runs on every pull request and every push to main. A pull request can only
+# be merged when this passes (turn on "Require status checks" for main).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck, translations, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Translations (no duplicate or missing keys)
+        run: node scripts/check-i18n.mjs
+
+      - name: Build
+        run: npm run build
+        env:
+          # Placeholders: the build only needs the variables to exist.
+          # Real keys never go in CI or in the repository.
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: placeholder

@@ -877,12 +877,12 @@
   },
   "alignment": {
     "label": "Alignment",
-    "left": "Aligner à gauche",
-    "center": "Aligner au centre",
-    "right": "Aligner à droite",
-    "top": "Aligner en haut",
-    "middle": "Aligner au milieu",
-    "bottom": "Aligner en bas"
+    "left": "Align left",
+    "center": "Align center",
+    "right": "Align right",
+    "top": "Align top",
+    "middle": "Align middle",
+    "bottom": "Align bottom"
   },
   "slash": {
     "appendix": "Appendix",
