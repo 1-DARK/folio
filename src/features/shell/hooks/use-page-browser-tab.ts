@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { dynamicIconImports } from "lucide-react/dynamic";
 import { useBrowserTab, type BrowserTabIcon } from "./use-browser-tab";
 import { useActivePageState } from "../../pages/context/active-page-context";
+import { resolveIconName } from "../../pages/cover/icon-name";
 
 function resolveColor(raw: string | null): string {
   const FALLBACK = "#5b5b5b";
@@ -20,50 +22,67 @@ function resolveColor(raw: string | null): string {
   return resolved || FALLBACK;
 }
 
-// Draw the Material Symbols glyph to a canvas and export it as a favicon
-// data-URL. The font renders the ligature as a glyph, so we paint text, not SVG.
-async function materialIconToFaviconHref(
+type IconNode = [tag: string, attrs: Record<string, string>][];
+
+const escapeAttr = (v: string) =>
+  v
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+// Page icons are Lucide icons (see DynamicIcon). Load the same icon's shapes
+// and turn them into an SVG data-URL, so the tab shows exactly the icon the
+// page shows — for every icon, not only the few names an icon font knows.
+async function lucideIconToFaviconHref(
   name: string,
   color: string,
-  size = 64,
 ): Promise<string | null> {
-  if (typeof document === "undefined") return null;
+  const key = resolveIconName(name) as keyof typeof dynamicIconImports;
+  const load = dynamicIconImports[key];
+  if (!load) return null;
 
-  // The font must be loaded before we paint, or canvas draws tofu/nothing.
+  let node: IconNode | undefined;
   try {
-    await document.fonts.load(`${size}px "Material Symbols Rounded"`);
-    await document.fonts.ready;
+    node = ((await load()) as { __iconNode?: IconNode }).__iconNode;
   } catch {
     return null;
   }
+  if (!node?.length) return null;
 
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
+  const children = node
+    .map(([tag, attrs]) => {
+      const a = Object.entries(attrs)
+        .filter(([k]) => k !== "key")
+        .map(([k, v]) => `${k}="${escapeAttr(String(v))}"`)
+        .join(" ");
+      return `<${tag} ${a}/>`;
+    })
+    .join("");
 
-  ctx.font = `${size}px "Material Symbols Rounded"`;
-  ctx.fillStyle = color;
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" ` +
+    `fill="none" stroke="${escapeAttr(color)}" stroke-width="2" ` +
+    `stroke-linecap="round" stroke-linejoin="round">${children}</svg>`;
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(name, size / 2, size / 2);
-
-  return canvas.toDataURL("image/png");
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 /**
  * Mount once, high in the tree (the page view that wraps the editor), so it
  * re-runs when the active page changes. Drives the browser tab title + favicon,
  * branching on cover.target exactly like PageItemIcon.
+ *
+ * With `providedTitle` (a view that isn't a page: inbox, trash, chat…) the tab
+ * shows that title and the default Folio icon.
  */
 export function usePageBrowserTab(
   appName: string | null = "Folio",
   providedTitle?: string,
 ) {
   const { activePage } = useActivePageState();
-  const cover = activePage?.cover;
+  const isPage = providedTitle === undefined;
+  const cover = isPage ? activePage?.cover : undefined;
   const title = providedTitle ?? activePage?.title;
 
   const target = cover?.target ?? null;
@@ -71,12 +90,14 @@ export function usePageBrowserTab(
   const color = cover?.color ?? null;
 
   // Only the "Icons" case is async; we store the resolved favicon keyed by the
-  // icon name so a stale result is ignored once the page changes. setState
-  // happens ONLY inside the async callback — never synchronously in the effect.
+  // icon name and colour so a stale result is ignored once the page changes.
+  // setState happens ONLY inside the async callback — never synchronously in
+  // the effect.
   const [resolved, setResolved] = useState<{
-    name: string;
+    key: string;
     href: string;
   } | null>(null);
+  const iconKey = `${iconName ?? ""}|${color ?? ""}`;
 
   useEffect(() => {
     if (target !== "Icons" || !iconName) return;
@@ -84,20 +105,20 @@ export function usePageBrowserTab(
     const resolvedColor = resolveColor(color);
 
     let cancelled = false;
-    materialIconToFaviconHref(iconName, resolvedColor).then((href) => {
-      if (!cancelled && href) setResolved({ name: iconName, href });
+    lucideIconToFaviconHref(iconName, resolvedColor).then((href) => {
+      if (!cancelled && href) setResolved({ key: iconKey, href });
     });
     return () => {
       cancelled = true;
     };
-  }, [target, iconName, color]);
+  }, [target, iconName, color, iconKey]);
 
   // Derived synchronously — no setState needed for emoji / empty cases.
   let icon: BrowserTabIcon = null;
   if (iconName) {
     if (target === "Emoji") {
       icon = { kind: "emoji", value: iconName };
-    } else if (target === "Icons" && resolved?.name === iconName) {
+    } else if (target === "Icons" && resolved?.key === iconKey) {
       icon = { kind: "href", value: resolved.href };
     }
   }

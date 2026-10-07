@@ -72,7 +72,9 @@ function SimpleEditorMain({ view }: { view: View }) {
 
 export function SimpleEditor({ view }: { view: View }) {
   const capitalized = view.charAt(0).toUpperCase() + view.slice(1);
-  usePageBrowserTab("Folio", capitalized);
+  // On a page the tab shows the page's own title and icon; other views
+  // (inbox, trash, chat…) show their name and the Folio icon.
+  usePageBrowserTab("Folio", view === "page" ? undefined : capitalized);
   useLeaveMissingTeamspace();
   const { workspace } = useCurrentWorkspace();
 
