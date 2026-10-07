@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { type Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -303,6 +304,7 @@ export function useHeading(config: UseHeadingConfig) {
     onToggled,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canToggleState = canToggle(editor, level);
@@ -339,7 +341,7 @@ export function useHeading(config: UseHeadingConfig) {
     isActive,
     handleToggle,
     canToggle: canToggleState,
-    label: `Heading ${level}`,
+    label: `${t("toolbar.heading")} ${level}`,
     shortcutKeys: HEADING_SHORTCUT_KEYS[level],
     Icon: headingIcons[level],
   };
