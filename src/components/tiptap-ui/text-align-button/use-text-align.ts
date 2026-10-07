@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ChainedCommands } from "@tiptap/react";
 import { type Editor } from "@tiptap/react";
+import { useTranslation } from "react-i18next";
 
 // --- Hooks ---
 import { useTiptapEditor } from "src/hooks/use-tiptap-editor";
@@ -58,6 +59,13 @@ export const textAlignLabels: Record<TextAlign, string> = {
   center: "Align center",
   right: "Align right",
   justify: "Align justify",
+};
+
+const textAlignKeyMap: Record<TextAlign, string> = {
+  left: "toolbar.alignLeft",
+  center: "toolbar.alignCenter",
+  right: "toolbar.alignRight",
+  justify: "toolbar.alignJustify",
 };
 
 /**
@@ -181,6 +189,7 @@ export function useTextAlign(config: UseTextAlignConfig) {
     onAligned,
   } = config;
 
+  const { t } = useTranslation();
   const { editor } = useTiptapEditor(providedEditor);
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const canAlign = canSetTextAlign(editor, align);
@@ -217,7 +226,7 @@ export function useTextAlign(config: UseTextAlignConfig) {
     isActive,
     handleTextAlign,
     canAlign,
-    label: textAlignLabels[align],
+    label: t(textAlignKeyMap[align]),
     shortcutKeys: TEXT_ALIGN_SHORTCUT_KEYS[align],
     Icon: textAlignIcons[align],
   };
