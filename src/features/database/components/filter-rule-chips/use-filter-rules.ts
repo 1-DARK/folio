@@ -43,7 +43,6 @@ export function useFilterRules(
         r.id === id ? ({ ...r, ...patch } as FilterRule) : r,
       ),
     });
-    console.log("UPDATE RULE");
   }
 
   function deleteRule(id: ID) {

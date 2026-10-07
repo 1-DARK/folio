@@ -13,6 +13,8 @@ export function useWhyDidYouRender(
       }
     });
     if (Object.keys(changes).length) {
+      // Dev-only debugging hook: logging is its whole purpose.
+      // eslint-disable-next-line no-console
       console.log(`[${name}] re-render caused by:`, changes);
     }
     prev.current = props;
