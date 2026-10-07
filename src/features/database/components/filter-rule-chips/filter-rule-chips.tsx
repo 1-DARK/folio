@@ -109,8 +109,6 @@ function FilterChip({
   }
 
   const rule = rules[0];
-  console.log("properties", properties);
-  console.log("rule", rule);
   const property = properties.find((p) => p.id === rule?.propertyId);
 
   if (!property) return null;

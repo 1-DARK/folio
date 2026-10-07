@@ -114,7 +114,7 @@ function DatabaseToolbarImpl() {
   const handleNewPage = useCallback(async () => {
     addRecordAsync({ title: "" })
       .then((page) => setTarget({ pageId: page.id, view: "Center" }))
-      .catch(() => console.log("Failed to create page"));
+      .catch((error) => console.error("Failed to create page", error));
   }, [addRecordAsync, setTarget]);
 
   const onToggle = useCallback(() => setCollapsed((v) => !v), []);

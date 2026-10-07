@@ -224,7 +224,8 @@ export const SlashCommand = Extension.create<
 
         if (stillSlash && cursorInside) return;
       } catch {
-        console.log("range is stale");
+        // The range is stale (the document changed under it): fall through
+        // and close the menu.
       }
 
       if (reactRenderer) {
@@ -232,14 +233,14 @@ export const SlashCommand = Extension.create<
           reactRenderer.destroy();
           resizeObserver?.disconnect();
           resizeObserver = null;
-        } catch {
-          console.log("Failed to destroy reactRenderer");
+        } catch (error) {
+          console.warn("Failed to destroy reactRenderer", error);
         }
         try {
           if (reactRenderer.element?.parentNode)
             reactRenderer.element.parentNode.removeChild(reactRenderer.element);
-        } catch {
-          console.log("Failed to remove element");
+        } catch (error) {
+          console.warn("Failed to remove element", error);
         }
         reactRenderer = null;
       }

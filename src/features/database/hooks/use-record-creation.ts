@@ -76,7 +76,7 @@ export function useRecordCreation({
         insertNode(page);
         setEditingRecordId(page.id);
       })
-      .catch(() => console.log("Failed to create page"));
+      .catch((error) => console.error("Failed to create page", error));
   }, [addRecordAsync, insertNode, setEditingRecordId, source]);
 
   const onNewRecordInGroup = useCallback(
@@ -98,7 +98,7 @@ export function useRecordCreation({
           }
           setEditingRecordId(page.id);
         })
-        .catch(() => console.log("Failed to create page"));
+        .catch((error) => console.error("Failed to create page", error));
     },
     [
       addRecordAsync,
